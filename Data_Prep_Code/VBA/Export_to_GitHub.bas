@@ -16,7 +16,7 @@ Public Sub ExportVisualBasicCode()
     Dim fso As New FileSystemObject
     'Set fso = CreateObject("Scripting.FileSystemObject")
     
-    directory = "J:\groups\udotfy19\BYU-UDOT-Highway-Safety-Data-Prep-and-Report-Compiler\Data_Prep_Code\VBA"
+    directory = "J:\groups\udotfy19\GitHub\Data_Prep_Code\VBA"
     count = 0
     
     If Not fso.FolderExists(directory) Then

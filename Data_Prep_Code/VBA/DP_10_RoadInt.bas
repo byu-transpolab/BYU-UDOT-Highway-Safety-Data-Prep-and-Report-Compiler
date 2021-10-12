@@ -2084,13 +2084,19 @@ End Sub
 
 Function FindColumn(colName As String, wksht As String, HeadRow As Integer, Necessary As Boolean)
     Dim col1 As Integer
+    Dim continue As Integer
     col1 = 1
     Do Until Left(Worksheets(wksht).Cells(HeadRow, col1), Len(colName)) = colName
         col1 = col1 + 1
         If col1 > 200 Then
             If Necessary = True Then
-                MsgBox "The column heading " & colName & " was not found on the " & wksht & " worksheet. Macros terminated.", , "Heading Not Found"
-                End
+                continue = MsgBox("The column heading " & colName & " was not found on the " & wksht & " worksheet. Continuing without this data could result in errors. Do you wish to continue anyways?", vbYesNo, "Warning")
+                If continue = vbNo Then
+                    MsgBox "The column heading " & colName & " was not found on the " & wksht & " worksheet. Macros terminated.", , "Heading Not Found"
+                    End
+                Else
+                    col1 = 0
+                End If
             Else
                 col1 = 0
             End If

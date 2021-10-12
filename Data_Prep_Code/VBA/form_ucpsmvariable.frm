@@ -580,7 +580,7 @@ Dim inputfile As String
 Dim guiwb As String
 
     guiwb = ActiveWorkbook.Name
-    guiwb = replace(guiwb, ".xlsm", "")
+    'guiwb = replace(guiwb, ".xlsm", "")
     
     txt_inputfilepath = ""
     txt_ucpsmrscript = ""

@@ -2147,7 +2147,7 @@ Do Until Sheets("Key").Cells(row1, CHeadCol + 2) = ""
     row1 = row1 + 1
 Loop
 
-'Find columns
+'Find columns                                                              'FLAGGED: This hard codes the condition for if a column is necessary
 IntRoute0Col = FindColumn("ROUTE", datasheet, 1, True)
 IntRoute1Col = FindColumn("INT_RT_1", datasheet, 1, True)
 IntRoute2Col = FindColumn("INT_RT_2", datasheet, 1, True)
@@ -2957,7 +2957,7 @@ datasheet = "CAMSinput"
 CrashSheet = "CrashInput"
 PSheet = "Parameters"
 
-'Find columns and paste appropriate headers to the segment sheet
+'Find columns and paste appropriate headers to the segment sheet                'FLAGGED: This hard codes whether the column is necessary.
     'columns on the crash sheet
         'columns to go only on the Parameters sheet
 crashlabelcol = FindColumn("LABEL", CrashSheet, 1, True)
@@ -3431,7 +3431,7 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
                 For i = 0 To NumYears - 1
                     SegYear = Sheets(datasheet).Cells(SegRow + i, YearCol).Value
                     
-                    If SegYear = CrashYear Then
+                    If SegYear = CrashYear Then                                         'FLAGGED: This code assumes certain columns exist.
                         'Total crashes
                         Sheets(datasheet).Cells(SegRow + i, TotCrashCol) = Sheets(datasheet).Cells(SegRow + i, TotCrashCol) + 1
                         
@@ -3446,9 +3446,9 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
                          End If
                                               
                         'Work zone related
-                         If Sheets(CrashSheet).Cells(CrashRow, WorkZoneCol2) = "Y" Then
-                             Sheets(datasheet).Cells(SegRow + i, WorkZoneCol1) = Sheets(datasheet).Cells(SegRow + i, WorkZoneCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, WorkZoneCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(SegRow + i, WorkZoneCol1) = Sheets(datasheet).Cells(SegRow + i, WorkZoneCol1) + 1
+                         'End If
                          
                         'Pedestrian Involved
                          If Sheets(CrashSheet).Cells(CrashRow, PedInvCol2) = "Y" Then
@@ -3466,9 +3466,9 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
                          End If
                          
                         'Improper restraint
-                         If Sheets(CrashSheet).Cells(CrashRow, ImpResCol2) = "Y" Then
-                             Sheets(datasheet).Cells(SegRow + i, ImpResCol1) = Sheets(datasheet).Cells(SegRow + i, ImpResCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, ImpResCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(SegRow + i, ImpResCol1) = Sheets(datasheet).Cells(SegRow + i, ImpResCol1) + 1
+                         'End If
                          
                         'Unrestrained
                          If Sheets(CrashSheet).Cells(CrashRow, UnrestCol2) = "Y" Then
@@ -3561,9 +3561,9 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
                          End If
                          
                         'Urban county
-                         If Sheets(CrashSheet).Cells(CrashRow, UrbanCol2) = "Y" Then
-                             Sheets(datasheet).Cells(SegRow + i, UrbanCol1) = Sheets(datasheet).Cells(SegRow + i, UrbanCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, UrbanCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(SegRow + i, UrbanCol1) = Sheets(datasheet).Cells(SegRow + i, UrbanCol1) + 1
+                         'End If
                          
                         'Night dark condition
                          If Sheets(CrashSheet).Cells(CrashRow, NightCol2) = "Y" Then
@@ -3596,9 +3596,9 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
                          End If
                          
                          'Work Zone with workers present
-                         If Sheets(CrashSheet).Cells(CrashRow, WZworkerCol2) = "Y" Then
-                             Sheets(datasheet).Cells(SegRow + i, WZworkerCol1) = Sheets(datasheet).Cells(SegRow + i, WZworkerCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, WZworkerCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(SegRow + i, WZworkerCol1) = Sheets(datasheet).Cells(SegRow + i, WZworkerCol1) + 1
+                         'End If
                     End If
                 Next i
             End If
@@ -5656,14 +5656,21 @@ End Sub
 
 Function FindColumn(colName As String, wksht As String, HeadRow As Integer, Necessary As Boolean)
     Dim col1 As Integer
+    Dim continue As Integer
     col1 = 1
     If colName <> "" Then
         Do Until Left(Worksheets(wksht).Cells(HeadRow, col1), Len(colName)) = colName
             col1 = col1 + 1
             If col1 > 200 Then
                 If Necessary = True Then
-                    MsgBox "The column heading " & colName & " was not found on the " & wksht & " worksheet. Macros terminated.", , "Heading Not Found"
-                    End
+                    continue = MsgBox("The column heading " & colName & " was not found on the " & wksht & " worksheet. Continuing without this data could result in errors. Do you wish to continue anyways?", vbYesNo, "Warning")
+                    If continue = vbNo Then
+                        MsgBox "The column heading " & colName & " was not found on the " & wksht & " worksheet. Macros terminated.", , "Heading Not Found"
+                        End
+                    Else
+                        col1 = 0
+                        Exit Do
+                    End If
                 Else
                     col1 = 0
                     Exit Do

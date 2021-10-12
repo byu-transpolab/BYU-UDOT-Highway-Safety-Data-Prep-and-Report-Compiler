@@ -285,6 +285,21 @@ StartTime = Time
 'Pavement Messages: 12
 'CAMS Intersections: 13
 
+'Delete previous worksheets
+Application.DisplayAlerts = False
+For Each wksht In Worksheets
+    If wksht.Name = "Crash" Then
+        wksht.Delete
+    ElseIf wksht.Name = "Location" Then
+        wksht.Delete
+    ElseIf wksht.Name = "Rollups" Then
+        wksht.Delete
+    ElseIf wksht.Name = "Vehicle" Then
+        wksht.Delete
+    End If
+Next wksht
+Application.DisplayAlerts = True
+
 'Update progress screen
 guiwb = ActiveWorkbook.Name
 Workbooks(guiwb).Sheets("Progress").Activate

@@ -41,7 +41,7 @@ Application.ScreenUpdating = True
 Workbooks.Open (FileName)
     
     Rows("1:2").Delete shift:=xlUp
-    Range("H5").Copy                                                                                'FLAGGED: This seems like it will crash
+    Range("H5").Copy                                                                                'FLAGGED: This code is only for the old kind of fc file
     Columns("A:G").PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, _
         SkipBlanks:=False, Transpose:=False
     Application.CutCopyMode = False

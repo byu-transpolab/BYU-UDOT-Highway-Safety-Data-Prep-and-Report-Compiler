@@ -9,3 +9,21 @@ output: html_document
 library(tidyverse)
 source("RGUI_Functions.R")
 ```
+
+```{r}
+my_directory <- file.choose(new = TRUE)
+#23
+len <- nchar(my_directory) - 22
+new_dir <- substr(my_directory, 1, len)
+setwd(new_dir)
+```
+
+```{r}
+crash <- read.xlsx(my_directory,1)
+rollups <- read.xlsx("C:\\Users\\barri\\Documents\\Research\\Projects\\BYU-UDOT-Highway-Safety-Data-Prep-and-Report-Compiler\\2014-2021_Crash_Data\\Rollups_14-20(updated).xlsx",1)
+```
+
+```{r}
+joined_dat <- join(crash,rollups,by='crash_id')
+```
+

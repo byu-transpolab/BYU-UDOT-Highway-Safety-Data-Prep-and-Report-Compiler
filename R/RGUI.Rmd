@@ -11,11 +11,23 @@ source("RGUI_Functions.R")
 ```
 
 ```{r}
-crash <- read_csv(file.choose())
-rollups <- read_csv(file.choose())
+location <- read_csv(file.choose(),show_col_types = F)
+vehicle <- read_csv(file.choose(),show_col_types = F)
+rollups <- read_csv(file.choose(),show_col_types = F)
 ```
 
 ```{r}
-joined_dat <- left_join(crash,rollups,by='crash_id')
+location <- check_location(location)
+vehicle <- check_vehicle(vehicle)
+rollups <- check_rollups(rollups)
+```
+
+```{r}
+joinprep <- left_join(location,rollups,by='crash_id')
+crash <- left_join(joinprep,vehicle,by='crash_id')
+```
+
+```{r}
+write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
 ```
 

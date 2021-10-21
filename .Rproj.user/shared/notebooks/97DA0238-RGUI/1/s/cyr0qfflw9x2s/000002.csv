@@ -1,0 +1,3 @@
+"0","location <- read_csv(file.choose(),show_col_types = F)"
+"0","vehicle <- read_csv(file.choose(),show_col_types = F)"
+"0","rollups <- read_csv(file.choose(),show_col_types = F)"

@@ -1,0 +1,33 @@
+---
+title: "RGUI"
+author: "Tomas Barriga"
+date: "10/14/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+source("RGUI_Functions.R")
+```
+
+```{r}
+location <- read_csv(file.choose(),show_col_types = F)
+vehicle <- read_csv(file.choose(),show_col_types = F)
+rollups <- read_csv(file.choose(),show_col_types = F)
+```
+
+```{r}
+location <- check_location(location)
+vehicle <- check_vehicle(vehicle)
+rollups <- check_rollups(rollups)
+```
+
+```{r}
+joinprep <- left_join(location,rollups,by='crash_id')
+crash <- left_join(joinprep,vehicle,by='crash_id')
+```
+
+```{r}
+write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
+```
+

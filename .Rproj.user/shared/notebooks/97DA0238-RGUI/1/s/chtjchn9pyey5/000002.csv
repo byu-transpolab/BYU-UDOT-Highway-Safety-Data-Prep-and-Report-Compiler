@@ -1,0 +1,2 @@
+"0","joinprep <- left_join(location,rollups,by='crash_id')"
+"0","crash <- left_join(joinprep,vehicle,by='crash_id')"

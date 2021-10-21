@@ -1,0 +1,3 @@
+"0","location <- check_location(location)"
+"0","vehicle <- check_vehicle(vehicle)"
+"0","rollups <- check_rollups(rollups)"

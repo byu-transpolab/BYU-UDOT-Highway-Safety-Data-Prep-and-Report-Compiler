@@ -28,6 +28,16 @@ crash <- left_join(joinprep,vehicle,by='crash_id')
 ```
 
 ```{r}
-write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
+# write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
+```
+
+```{r}
+aadt <- read_csv(file.choose(),show_col_types = F)
+functional_class <- read_csv(file.choose(),show_col_types = F)
+intersections <- read_csv(file.choose(),show_col_types = F)
+lanes <- read_csv(file.choose(),show_col_types = F)
+pavement_messages <- read_csv(file.choose(),show_col_types = F)
+speed_limit <- read_csv(file.choose(),show_col_types = F)
+urban_code <- read_csv(file.choose(),show_col_types = F)
 ```
 

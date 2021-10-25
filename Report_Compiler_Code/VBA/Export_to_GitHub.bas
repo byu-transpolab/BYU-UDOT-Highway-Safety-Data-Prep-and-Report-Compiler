@@ -16,7 +16,11 @@ Public Sub ExportVisualBasicCode()
     Dim fso As New FileSystemObject
     'Set fso = CreateObject("Scripting.FileSystemObject")
     
+<<<<<<< Updated upstream
     directory = "J:\groups\udotfy19\BYU-UDOT-Highway-Safety-Data-Prep-and-Report-Compiler\Report_Compiler_Code\VBA"
+=======
+    directory = ActiveWorkbook.path & "\Report_Compiler_Code\VBA"
+>>>>>>> Stashed changes
     count = 0
     
     If Not fso.FolderExists(directory) Then

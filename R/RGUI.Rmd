@@ -41,3 +41,13 @@ speed_limit <- read_csv(file.choose(),show_col_types = F)
 urban_code <- read_csv(file.choose(),show_col_types = F)
 ```
 
+```{r}
+aadr <- check_aadt(aadt)
+functional_class <- check_functionalclass(functional_class)
+intersections <- check_intersections(intersections)
+lanes <- check_lanes(lanes)
+pavement_messages <- check_pavementmessages(pavement_messages)
+speed_limit <- check_speedlimit(speed_limit)
+urban_code <- check_urbancode(urban_code)
+```
+

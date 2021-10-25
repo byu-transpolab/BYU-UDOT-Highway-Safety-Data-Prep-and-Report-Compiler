@@ -3,13 +3,13 @@
 # Keeps the following columns from the aadt file
 check_aadt <- function(table){
   table %>%
-    select()
+    select(rt_num, start_accu,end_accum, station, aadrt2020 ,aadt2019, aadt2018, aadt2017, aadt2016,sutrk2020, cutrk2020)
 }
 
 # Keeps the following columns from the functional class file
 check_functionalclass <- function(table){
   table %>%
-    select()
+    select(from_measure, to_measure, functional_class)
 }
 
 # Keeps the following columns from the intersections file

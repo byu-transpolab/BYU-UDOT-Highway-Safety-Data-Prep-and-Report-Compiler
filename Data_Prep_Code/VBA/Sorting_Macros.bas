@@ -896,7 +896,7 @@ Sub autofilterLocation(rampcol As Integer, crashroutecol As Integer, crashMPcol 
     Range(Cells(1, 1), Cells(1, Lnumcol)).AutoFilter
     
     Worksheets(combo).Range(Cells(1, 1), Cells(Lnumrow, Lnumcol)).AutoFilter
-    Worksheets(combo).Range(Cells(1, 1), Cells(Lnumrow, Lnumcol)).AutoFilter Field:=rampcol, Criteria1:="<>NA", Operator:=xlAnd, Criteria2:="<>0", Operator:=xlAnd, Criteria3:="<>"
+    Worksheets(combo).Range(Cells(1, 1), Cells(Lnumrow, Lnumcol)).AutoFilter Field:=rampcol, Criteria1:="<>NA", Operator:=xlAnd, Criteria2:="<>0"      ', Operator:=xlAnd, Criteria3:="<>" FLAGGED: this would help if it's blank but cant do it.
     Range(Range(Range("A2"), Range("A2").End(xlDown)), Range(Range("A2"), Range("A2").End(xlDown)).End(xlToRight)).EntireRow.Delete
     Range(Cells(1, 1), Cells(1, Lnumcol)).AutoFilter
 

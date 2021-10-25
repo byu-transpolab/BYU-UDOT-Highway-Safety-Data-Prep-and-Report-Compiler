@@ -372,7 +372,7 @@ Do Until Cells(1, col1) = "ROUTE_ID"       'Find ROUTE_ID column
 Loop
 row1 = 2
 Route = 0
-Do Until Cells(row1, col1) = ""         'Assign labels to array
+Do Until Cells(row1, col1) = ""         'Assign labels to array                 'FLAGGED: aFClass only goes to 500 so crashes if bigger than that.
     If Cells(row1, col1) <> Route Then
         Route = Cells(row1, col1)
         aFClass(Route) = Route

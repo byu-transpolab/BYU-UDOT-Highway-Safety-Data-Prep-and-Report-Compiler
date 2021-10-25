@@ -89,7 +89,7 @@ Private Sub cmdNotAvail_Click()
             Do Until Worksheets("OtherData").Cells(row1, numcol) = strHeader
                row1 = row1 + 1
             Loop
-            Worksheets("OtherData").Cells(row1, numcol + 3) = "NOT USED"
+            Worksheets("OtherData").Cells(row1, numcol + 3) = "NOT USED"                                                'FLAGGED: I worry about this. What if they were wrong not to include it? should we say "no" instead?
         ElseIf BtnChoice = vbNo Then
             Worksheets("Home").Activate
             Workbooks(FileName1).Close False

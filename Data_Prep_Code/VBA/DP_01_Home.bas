@@ -41,7 +41,7 @@ Application.ScreenUpdating = True
 Workbooks.Open (FileName)
     
     Rows("1:2").Delete shift:=xlUp
-    Range("H5").Copy                                                                                'FLAGGED: This seems like it will crash
+    Range("H5").Copy                                                                                'FLAGGED: This code is only for the old kind of fc file
     Columns("A:G").PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, _
         SkipBlanks:=False, Transpose:=False
     Application.CutCopyMode = False
@@ -225,7 +225,6 @@ Dim HeadCount As Integer                                'Number of headers count
 Dim FirstRow As Integer                                 'Row number used in AADT simplification
 Dim header, Header2 As String                           'Header values used in AADT simplification
 Dim FY1, FY2, FY3, FY4, FY5, FY6, FY7 As Boolean        'Boolean variables for AADT simplification
-
 
 'Clear temporary headings list. Clear previous heading data from check headers info
 Workbooks(CurrentWkbk).Activate
@@ -972,39 +971,48 @@ End If
 
 'Assign column order for rearranging the columns to RCol() array. Order is based on OtherData sheet order
 row2 = 4
-i = 1
+i = 0
 Do While Worksheets("OtherData").Cells(row2, col1) <> ""
     'If the header is AADT, then assign header names for each AADT year of data
-    If row2 = 8 And col1 = 1 Then
+    If row2 = 8 And col1 = 1 Then                                                                   'FLAGGED: It may be better if this is outside the loop but I don't quite understand what it does
         For j = 0 To AADTCount - 1
-            RCol(i) = "AADT_" & CStr(DYear1 - j)
             i = i + 1
+            RCol(i) = "AADT_" & CStr(DYear1 - j)
         Next j
     'If necessary criteria isn't NOT USED, then assign the header name to the next array value
     ElseIf Worksheets("OtherData").Cells(row2, col1 + 3) <> "NOT USED" Then
-        RCol(i) = Worksheets("OtherData").Cells(row2, col1 + 2)
         i = i + 1
+        RCol(i) = Worksheets("OtherData").Cells(row2, col1 + 2)
     End If
     row2 = row2 + 1
 Loop
 
-'Rearrange columns based on RCol() order
+'Rearrange columns based on RCol() order                                                            FLAGGED: This code could be optimized better.
 For k = 1 To i
-col1 = 1
+    col1 = 1
     Do While Worksheets(SheetName).Cells(1, col1) <> ""
         If Worksheets(SheetName).Cells(1, col1) = RCol(k) Then
-            Worksheets(SheetName).Columns(col1).Cut
             Exit Do
         End If
         col1 = col1 + 1
     Loop
-    If Worksheets(SheetName).Cells(1, col1) = Worksheets(SheetName).Cells(1, k) Then
-        Application.CutCopyMode = False
-    Else
+    If Worksheets(SheetName).Cells(1, col1) <> Worksheets(SheetName).Cells(1, k) Then
+        Worksheets(SheetName).Columns(col1).Cut
         Worksheets(SheetName).Columns(k).Insert shift:=xlToRight
     End If
 Next k
 Application.CutCopyMode = False
+'If there are empty columns, give error message
+col1 = 1
+For k = 1 To i
+    If Worksheets(SheetName).Cells(1, col1) = "" Then
+        Worksheets("Home").Activate
+        MsgBox "While reordering the headers one or more columns were accidentally deleted or shifted leaving an empty column. We are working on fixing this problem, but in the meantime please make sure the order on your input file and the the order on the OtherData sheet match" & _
+        vbCrLf & "Please reorder columns.", , "Reorder columns before continuing and run RGUI from the beginning."
+        End
+    End If
+    col1 = col1 + 1
+Next k
 
 'If working dataset is Crash Vehicle, run the Vehicle Data Prep macro to format vehicle data
 If Data = 9 Then

@@ -14,13 +14,15 @@ if (!require("pacman")) install.packages("pacman")
 # packages (including pacman) with pacman
 pacman::p_load(magrittr, pacman, tidyverse)
 
+source("RGUI_CrashPrep.R")
+source("RGUI_RoadwayPrep.R")
 source("RGUI_Functions.R")
 ```
 
 ```{r}
-location <- read_csv(file.choose(),show_col_types = F)
-vehicle <- read_csv(file.choose(),show_col_types = F)
-rollups <- read_csv(file.choose(),show_col_types = F)
+location <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F)
+vehicle <- read_csv("data/Vehicle_Data_14-20.csv",show_col_types = F)
+rollups <- read_csv("data/Rollups_14-20.csv",show_col_types = F)
 ```
 
 ```{r}

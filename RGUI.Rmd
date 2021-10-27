@@ -14,9 +14,9 @@ if (!require("pacman")) install.packages("pacman")
 # packages (including pacman) with pacman
 pacman::p_load(magrittr, pacman, tidyverse)
 
-source("RGUI_CrashPrep.R")
-source("RGUI_RoadwayPrep.R")
-source("RGUI_Functions.R")
+source("R/RGUI_CrashPrep.R")
+source("R/RGUI_RoadwayPrep.R")
+source("R/RGUI_Functions.R")
 ```
 
 ```{r}

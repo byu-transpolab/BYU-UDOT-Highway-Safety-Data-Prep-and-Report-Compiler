@@ -32,3 +32,16 @@ check_rollups <- function(table){
            transit_vehicle_involved,	collision_with_fixed_object)
 }
 
+# FILTER CAMS CRASH DATA
+filter_CAMS <- function(df){
+  # change route 089A to 0011... There seems to be more to this though
+  df$ROUTE_ID[df$ROUTE_ID == '089A'] <- 0011
+  
+  # change route ID to 194 from 0085 for milepoint less than 2.977 
+  df$ROUTE_ID[df$MILEPOINT < 2.977 & df$ROUTE_ID == 0085] <- 0194
+  
+  # eliminate rows with ramps
+  df %>%
+    as_tibble() %>%
+    filter(RAMP_ID == 0 & is.na(RAMP_ID))
+}

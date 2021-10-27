@@ -42,7 +42,7 @@ urban_code <- read_csv(file.choose(),show_col_types = F)
 ```
 
 ```{r}
-aadr <- check_aadt(aadt)
+aadt <- check_aadt(aadt)
 functional_class <- check_functionalclass(functional_class)
 intersections <- check_intersections(intersections)
 lanes <- check_lanes(lanes)

@@ -34,7 +34,7 @@ rollups <- check_rollups(rollups)
 ```{r}
 joinprep <- left_join(location,rollups,by='crash_id')
 crash <- left_join(joinprep,vehicle,by='crash_id')
-crash <- filter_CAMS(crash)
+# crash <- filter_CAMS(crash)
 ```
 
 ```{r}
@@ -42,13 +42,15 @@ crash <- filter_CAMS(crash)
 ```
 
 ```{r}
-aadt <- read_csv(file.choose(),show_col_types = F)
-functional_class <- read_csv(file.choose(),show_col_types = F)
-intersections <- read_csv(file.choose(),show_col_types = F)
-lanes <- read_csv(file.choose(),show_col_types = F)
-pavement_messages <- read_csv(file.choose(),show_col_types = F)
-speed_limit <- read_csv(file.choose(),show_col_types = F)
-urban_code <- read_csv(file.choose(),show_col_types = F)
+aadt <- read_csv("data/AADT_Rounded.csv",show_col_types = F)
+functional_class <- read_csv("data/Functional_Class_ALRS.csv",show_col_types = F)
+intersections <- read_csv("data/Intersections.csv",show_col_types = F)
+lanes <- read_csv("data/Lanes.csv",show_col_types = F)
+pavement_messages <- read_csv("data/Pavement_Messages.csv",show_col_types = F)
+speed_limit <- read_csv("data/UDOT_Speed_Limits_2019.csv",show_col_types = F)
+# urban_code_large <- read_sf("data/Urban_Boundaries_Large.shp")
+# urban_code_small <- read_sf("data/Urban_Boundaries_Small.shp")
+urban_code_test <- shapefile("data/Urban_Boundaries_Large")
 ```
 
 ```{r}
@@ -58,6 +60,5 @@ intersections <- check_intersections(intersections)
 lanes <- check_lanes(lanes)
 pavement_messages <- check_pavementmessages(pavement_messages)
 speed_limit <- check_speedlimit(speed_limit)
-urban_code <- check_urbancode(urban_code)
 ```
 

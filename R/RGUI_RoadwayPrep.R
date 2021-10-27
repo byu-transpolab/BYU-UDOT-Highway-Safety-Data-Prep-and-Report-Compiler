@@ -35,9 +35,3 @@ check_speedlimits <- function(table){
   table %>%
     select()
 }
-
-# Keeps the following columns from the urban code file
-check_urbancode <- function(table){
-  table %>%
-    select()
-}

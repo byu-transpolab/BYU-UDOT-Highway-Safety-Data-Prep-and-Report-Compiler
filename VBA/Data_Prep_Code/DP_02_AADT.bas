@@ -396,15 +396,17 @@ Cells(1, ising + 5) = "Total_Count_Trucks"
 
 'For each row, calculates the Total Percent Trucks and Total Count Trucks
 n = 2
-Do Until Cells(n, ising) = ""
+Do Until Cells(n, 1) = ""
     singp = Cells(n, ising)
     combp = Cells(n, icomb)
     singc = Round(Cells(n, iAADT) * Cells(n, ising), 0)
-    Cells(n, ising + 2) = singc
     combc = Round(Cells(n, iAADT) * Cells(n, icomb), 0)
-    Cells(n, ising + 3) = combc
-    Cells(n, ising + 4) = singp + combp
-    Cells(n, ising + 5) = singc + combc
+    If combc <> 0 And singc <> 0 Then
+        Cells(n, ising + 3) = combc
+        Cells(n, ising + 2) = singc
+        Cells(n, ising + 4) = singp + combp
+        Cells(n, ising + 5) = singc + combc
+    End If
     n = n + 1
 Loop
 Application.CutCopyMode = False

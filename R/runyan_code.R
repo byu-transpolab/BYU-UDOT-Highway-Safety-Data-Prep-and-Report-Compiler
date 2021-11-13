@@ -74,9 +74,17 @@ plot(intersections["ID"])
 # COMBINE
 
 # modify intersections object
-intersections <- st_join(intersections, schools, join = st_within)
+intersections <- st_join(intersections, schools, join = st_within) %>%
+  group_by(OBJECTID) %>%
+  mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID)
+
 intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-  st_drop_geometry()
+  group_by(OBJECTID) %>%
+  mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+  select(-UTA_StopID)
+
+st_drop_geometry(intersections)
 
 # remove old dfs
 rm("crash_sf","df","schools","UTA_stops","ints_near_schools","ints_near_UTA")

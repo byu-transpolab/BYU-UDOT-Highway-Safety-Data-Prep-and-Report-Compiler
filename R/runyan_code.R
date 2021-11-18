@@ -63,7 +63,7 @@ schools <- read_sf("data/Utah_Schools_PreK_to_12/Utah_Schools_PreK_to_12.shp") %
 ints_near_schools <- st_join(intersections, schools, join = st_within) %>%
   filter(!is.na(SchoolID))
 
-# detemine which intersections are 1000 ft from a UTA stop
+# determine which intersections are 1000 ft from a UTA stop
 ints_near_UTA <- st_join(intersections, UTA_stops, join = st_within) %>%
   filter(!is.na(UTA_StopID))
 
@@ -90,8 +90,8 @@ st_drop_geometry(intersections)
 rm("crash_sf","df","schools","UTA_stops","ints_near_schools","ints_near_UTA")
 
 # additional intersection data
-#ints_extra <- read_csv("data/Intersection_w_ID_MEV_MP.csv")
-#intersections <- full_join(intersections, ints_extra)
+# ints_extra <- read_csv("data/Intersection_w_ID_MEV_MP.csv")
+# intersections <- full_join(intersections, ints_extra)
  
 # save csv file
 write_csv(intersections, file = "data/Intersections_Compiled.csv")

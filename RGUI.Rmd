@@ -12,28 +12,29 @@ output: html_document
 if (!require("pacman")) install.packages("pacman")
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse)
+pacman::p_load(magrittr, pacman, tidyverse, readxl, sf)
 
 source("R/RGUI_CrashPrep.R")
 source("R/RGUI_RoadwayPrep.R")
 source("R/RGUI_Functions.R")
 ```
 
-```{r}
+```{r Load Crash Data}
 location <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F)
 vehicle <- read_csv("data/Vehicle_Data_14-20.csv",show_col_types = F)
 rollups <- read_csv("data/Rollups_14-20.csv",show_col_types = F)
 ```
 
-```{r}
+```{r Check Crash Data Headers}
 location <- check_location(location)
 vehicle <- check_vehicle(vehicle)
 rollups <- check_rollups(rollups)
 ```
 
-```{r}
-joinprep <- left_join(location,rollups,by='crash_id')
-crash <- left_join(joinprep,vehicle,by='crash_id')
+```{r Join Crash Data}
+crash <- left_join(location,rollups,by='crash_id')
+crash <- left_join(crash,vehicle,by='crash_id')
+rm("location","vehicle","rollups")
 # crash <- filter_CAMS(crash)
 ```
 
@@ -41,19 +42,42 @@ crash <- left_join(joinprep,vehicle,by='crash_id')
 # write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
 ```
 
-```{r}
+```{r Load Roadway Data}
+# load AADT csv
 aadt <- read_csv("data/AADT_Rounded.csv",show_col_types = F)
+# load functional class csv
 functional_class <- read_csv("data/Functional_Class_ALRS.csv",show_col_types = F)
-intersections <- read_csv("data/Intersections.csv",show_col_types = F)
+# load intersections shapefile
+intersections <- read_sf("data/Intersections/Intersections.shp") %>%
+  st_transform(crs = 26912)
+# load UTA stops shapefile
+UTA_stops <- read_sf("data/UTA_Stops/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(UTA_StopID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# load schools (not college) shapefile
+schools <- read_sf("data/Utah_Schools_PreK_to_12/Utah_Schools_PreK_to_12.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(SchoolID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# modify intersections to include bus stops and schools nearby
+intersections <- mod_intersections(intersections,UTA_Stops,schools)
+# remove unneeded dfs
+rm("schools","UTA_stops")
+# load lanes csv
 lanes <- read_csv("data/Lanes.csv",show_col_types = F)
+# load pavement messages csv
 pavement_messages <- read_csv("data/Pavement_Messages.csv",show_col_types = F)
+# load speed limit csv
 speed_limit <- read_csv("data/UDOT_Speed_Limits_2019.csv",show_col_types = F)
+
 # urban_code_large <- read_sf("data/Urban_Boundaries_Large.shp")
 # urban_code_small <- read_sf("data/Urban_Boundaries_Small.shp")
-urban_code_test <- shapefile("data/Urban_Boundaries_Large")
+
+# urban_code_test <- shapefile("data/Urban_Boundaries_Large")
 ```
 
-```{r}
+```{r Check Roadway Data Headers}
 aadt <- check_aadt(aadt)
 functional_class <- check_functionalclass(functional_class)
 intersections <- check_intersections(intersections)
@@ -62,3 +86,11 @@ pavement_messages <- check_pavementmessages(pavement_messages)
 speed_limit <- check_speedlimit(speed_limit)
 ```
 
+```{r Join Roadway Data}
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(road,,by='')
+rm("aadt","functional_class","intersections","lanes","pavement_messages","speed_limit")
+```

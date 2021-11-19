@@ -19,6 +19,8 @@ source("R/RGUI_RoadwayPrep.R")
 source("R/RGUI_Functions.R")
 ```
 
+# CRASH DATA
+
 ```{r Load Crash Data}
 location <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F)
 vehicle <- read_csv("data/Vehicle_Data_14-20.csv",show_col_types = F)
@@ -41,6 +43,8 @@ rm("location","vehicle","rollups")
 ```{r}
 # write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
 ```
+
+# Roadway Data
 
 ```{r Load Roadway Data}
 # load AADT csv

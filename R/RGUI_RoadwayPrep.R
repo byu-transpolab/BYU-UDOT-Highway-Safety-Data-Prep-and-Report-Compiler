@@ -3,16 +3,16 @@
 # Keeps the following columns from the aadt file
 check_aadt <- function(df){
   df %>%
-    select(rt_num, 
-           start_accu,
-           end_accum, 
-           station, 
+    select(route_id = rt_num, 
+           beg_milepoint = start_accu,
+           end_milepoint = end_accum, 
+           station = station, 
            starts_with('aadt'),
            #aadt2020, aadt2019, aadt2018, aadt2017, aadt2016,
            starts_with('sutrk'),
-           starts_with('cutrk'),
-           #sutrk2020, cutrk2020, sutrk2019, cutrk2019, sutrk2018, cutrk2018, sutrk2017, cutrk2017, sutrk2016, cutrk2016,
-           rt_type)
+           starts_with('cutrk')
+           #sutrk2020, cutrk2020, sutrk2019, cutrk2019, sutrk2018, cutrk2018, sutrk2017, cutrk2017, sutrk2016, cutrk2016
+           )
 }
 
 # Keeps the following columns from the functional class file

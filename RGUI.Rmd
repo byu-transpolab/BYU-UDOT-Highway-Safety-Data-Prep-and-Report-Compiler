@@ -51,8 +51,12 @@ rm("location","vehicle","rollups")
 aadt <- read_csv("data/AADT_Rounded.csv",show_col_types = F)
 # load functional class csv
 functional_class <- read_csv("data/Functional_Class_ALRS.csv",show_col_types = F)
-# load intersections shapefile
-intersections <- read_sf("data/Intersections/Intersections.shp") %>%
+# load intersections csv and convert to spatial frame
+intersections <- read_csv("data/Intersection_w_ID_MEV_MP.csv") %>%
+  st_as_sf(
+    coords = c("BEG_LONG", "BEG_LAT"), 
+    crs = 4326,
+    remove = F) %>%
   st_transform(crs = 26912)
 # load UTA stops shapefile
 UTA_stops <- read_sf("data/UTA_Stops/UTA_Stops_and_Most_Recent_Ridership.shp") %>%

@@ -28,23 +28,22 @@ crash %>%
 
 
 # Combine Additional Variables to Final Output #############
-
 # SPATIAL ANALYSIS
 
-rm("joinprep","location","vehicle","rollups")
+#LOAD DATA
 
-df <- crash %>%
-  select(crash_id,lat,long,crash_severity_id,weather_condition_id,manner_collision_id,pedalcycle_involved) %>%
-  filter(lat > 30 & long < -95 & !is.na(lat) & !is.na(long))
+crashes <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F) %>%
+  st_as_sf(
+    coords = c("long", "lat"), 
+    crs = 4326,
+    remove = F) %>%
+  st_transform(crs = 26912) #convert to UTM zone 12
 
-crash_sf <- st_as_sf(df, 
-               coords = c("long", "lat"), 
-               crs = 4326,
-               remove = F)
-
-crash_sf <- st_transform(crash_sf, crs = 26912) #convert to UTM zone 12
-
-intersections <- read_sf("data/Intersections/Intersections.shp") %>%
+intersections <- read_csv("data/Intersection_w_ID_MEV_MP.csv") %>%
+  st_as_sf(
+    coords = c("BEG_LONG", "BEG_LAT"), 
+    crs = 4326,
+    remove = F) %>%
   st_transform(crs = 26912)
 
 UTA_stops <- read_sf("data/UTA_Stops/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
@@ -58,6 +57,20 @@ schools <- read_sf("data/Utah_Schools_PreK_to_12/Utah_Schools_PreK_to_12.shp") %
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
 
 # VISUALIZE
+
+# visualize crashes
+rm("joinprep","location","vehicle","rollups")
+
+df <- crash %>%
+  select(crash_id,lat,long,crash_severity_id,weather_condition_id,manner_collision_id,pedalcycle_involved) %>%
+  filter(lat > 30 & long < -95 & !is.na(lat) & !is.na(long))
+
+crash_sf <- st_as_sf(df, 
+                     coords = c("long", "lat"), 
+                     crs = 4326,
+                     remove = F)
+
+crash_sf <- st_transform(crash_sf, crs = 26912) #convert to UTM zone 12
 
 # determine which intersections are 1000 ft from a school
 ints_near_schools <- st_join(intersections, schools, join = st_within) %>%
@@ -75,23 +88,38 @@ plot(intersections["ID"])
 
 # modify intersections object
 intersections <- st_join(intersections, schools, join = st_within) %>%
-  group_by(OBJECTID) %>%
+  group_by(Int_ID) %>%
   mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
   select(-SchoolID)
 
 intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-  group_by(OBJECTID) %>%
+  group_by(Int_ID) %>%
   mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
   select(-UTA_StopID)
 
+intersections <- unique(intersections)
 st_drop_geometry(intersections)
+ 
+# save csv file
+write_csv(intersections, file = "data/Intersections_Compiled.csv")
+
+
+# modify crash data frame
+crashes <- st_join(crashes, schools, join = st_within) %>%
+  group_by(crash_id) %>%
+  mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID)
+
+crashes <- st_join(crashes, UTA_stops, join = st_within) %>%
+  group_by(crash_id) %>%
+  mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+  select(-UTA_StopID)
+
+crashes <- unique(crashes)
+st_drop_geometry(crashes)
 
 # remove old dfs
 rm("crash_sf","df","schools","UTA_stops","ints_near_schools","ints_near_UTA")
 
-# additional intersection data
-# ints_extra <- read_csv("data/Intersection_w_ID_MEV_MP.csv")
-# intersections <- full_join(intersections, ints_extra)
- 
 # save csv file
-write_csv(intersections, file = "data/Intersections_Compiled.csv")
+write_csv(crashes, file = "data/Crashes_Compiled_14-21.csv")

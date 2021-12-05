@@ -32,7 +32,10 @@ crash %>%
 
 #LOAD DATA
 
-crashes <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F) %>%
+crashes <- read_csv("data/CAMS_Crashes_14-21.csv",show_col_types = F)
+loc <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F) %>%
+  select(crash_id,lat,long)
+crashes <- left_join(crashes,loc, by = c("CRASH_ID" = "crash_id")) %>%
   st_as_sf(
     coords = c("long", "lat"), 
     crs = 4326,
@@ -106,12 +109,12 @@ write_csv(intersections, file = "data/Intersections_Compiled.csv")
 
 # modify crash data frame
 crashes <- st_join(crashes, schools, join = st_within) %>%
-  group_by(crash_id) %>%
+  group_by(CRASH_ID) %>%
   mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
   select(-SchoolID)
 
 crashes <- st_join(crashes, UTA_stops, join = st_within) %>%
-  group_by(crash_id) %>%
+  group_by(CRASH_ID) %>%
   mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
   select(-UTA_StopID)
 

@@ -51,13 +51,38 @@ intersections <- read_csv("data/Intersection_w_ID_MEV_MP.csv") %>%
 
 UTA_stops <- read_sf("data/UTA_Stops/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
   st_transform(crs = 26912) %>%
-  select(UTA_StopID) %>%
+  select(UTA_StopID, Mode) %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+
+bus_stops <- UTA_stops %>%
+  filter(Mode == "Bus") %>%
+  select(-Mode)
+
+rail_stops <- UTA_stops %>%
+  filter(Mode == "Rail") %>%
+  select(-Mode)
 
 schools <- read_sf("data/Utah_Schools_PreK_to_12/Utah_Schools_PreK_to_12.shp") %>%
   st_transform(crs = 26912) %>%
-  select(SchoolID) %>%
+  select(SchoolID, SchoolLeve, OnlineScho, SchoolType, TotalK12) %>%
+  filter(is.na(OnlineScho), SchoolType == "Vocational" | SchoolType == "Special Education" | SchoolType == "Residential Treatment" | SchoolType == "Regular Education" | SchoolType == "Alternative") %>%
+  select(-OnlineScho, -SchoolType, -TotalK12) %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+
+high_schools <- schools %>%
+  filter(SchoolLeve == "HIGH")
+
+mid_schools <- schools %>%
+  filter(SchoolLeve == "MID")
+
+elem_schools <- schools %>%
+  filter(SchoolLeve == "ELEM")
+
+prek_schools <- schools %>%
+  filter(SchoolLeve == "PREK")
+
+ktwelve_schools <- schools %>%
+  filter(SchoolLeve == "K12")
 
 # VISUALIZE
 
@@ -83,9 +108,9 @@ ints_near_schools <- st_join(intersections, schools, join = st_within) %>%
 ints_near_UTA <- st_join(intersections, UTA_stops, join = st_within) %>%
   filter(!is.na(UTA_StopID))
 
-plot(ints_near_schools["ID"])
-plot(ints_near_UTA["ID"])
-plot(intersections["ID"])
+plot(ints_near_schools["Int_ID"])
+plot(ints_near_UTA["Int_ID"])
+plot(intersections["Int_ID"])
 
 # COMBINE
 
@@ -93,12 +118,58 @@ plot(intersections["ID"])
 intersections <- st_join(intersections, schools, join = st_within) %>%
   group_by(Int_ID) %>%
   mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-  select(-SchoolID)
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+intersections <- st_join(intersections, prek_schools, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_PREK_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+intersections <- st_join(intersections, elem_schools, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_ELEM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+intersections <- st_join(intersections, mid_schools, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_MID_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+intersections <- st_join(intersections, high_schools, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_HIGH_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+intersections <- st_join(intersections, ktwelve_schools, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_K12_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+  select(-SchoolID, -SchoolLeve) %>%
+  unique()
+
+
 
 intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
   group_by(Int_ID) %>%
-  mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-  select(-UTA_StopID)
+  mutate(NUM_UTA_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+  select(-UTA_StopID, -Mode) %>%
+  unique()
+
+intersections <- st_join(intersections, bus_stops, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_BUS_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+  select(-UTA_StopID) %>%
+  unique()
+
+intersections <- st_join(intersections, rail_stops, join = st_within) %>%
+  group_by(Int_ID) %>%
+  mutate(NUM_RAIL_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+  select(-UTA_StopID) %>%
+  unique()
 
 intersections <- unique(intersections)
 st_drop_geometry(intersections)
@@ -121,8 +192,8 @@ crashes <- st_join(crashes, UTA_stops, join = st_within) %>%
 crashes <- unique(crashes)
 st_drop_geometry(crashes)
 
-# remove old dfs
-rm("crash_sf","df","schools","UTA_stops","ints_near_schools","ints_near_UTA")
-
 # save csv file
 write_csv(crashes, file = "data/Crashes_Compiled_14-21.csv")
+
+# remove old dfs
+rm("crash_sf","df","schools", "high_schools", "mid_schools", "elem_schools", "prek_schools", "ktwelve_schools", "UTA_stops","ints_near_schools","ints_near_UTA", "bus_stops", "rail_stops")

@@ -197,3 +197,44 @@ write_csv(crashes, file = "data/Crashes_Compiled_14-21.csv")
 
 # remove old dfs
 rm("crash_sf","df","schools", "high_schools", "mid_schools", "elem_schools", "prek_schools", "ktwelve_schools", "UTA_stops","ints_near_schools","ints_near_UTA", "bus_stops", "rail_stops")
+
+
+
+
+
+
+# PATCH THE EXCEL OUTPUT
+# unless we can move everything to R, this will at least allow us to fix the 
+# excel output file so it gives us more variables
+
+# Load excel output file for UICPM
+df <- read_csv("data/UICPMinput.csv") #%>%
+  #st_as_sf(
+  #  coords = c("LONGITUDE", "LATITUDE"), 
+  #  crs = 4326,
+  #  remove = F) %>%
+  #st_transform(crs = 26912)
+
+# Load pavement messages
+cw <- read_csv("data/Pavement_Messages.csv") #%>%
+  #st_as_sf(
+  #  coords = c("BEG_LONG", "BEG_LAT"), 
+  #  crs = 4326,
+  #  remove = F) %>%
+  #st_transform(crs = 26912) %>%
+  #st_buffer(dist = 20) %>%       #buffer 20 meters to cover intersection
+  select(MILEPOINT = START_ACCUM, TYPE) %>%
+  filter(grepl("CROSSWALK",TYPE)) %>%
+  mutate(crosswalk = 1) %>%
+  select(-TYPE)
+
+# add presence of crosswalks
+df <- left_join(df, cw, by = c("UDOT_BMP" = "MILEPOINT"))
+
+#df <- st_join(df, cw, join = st_within) %>%
+#  group_by(INT_ID) %>%
+#  mutate(CROSSWALK_PRESENT = sum(crosswalk)) %>%
+#  select(-crosswalk, -MILEPOINT, -geometry) %>%
+#  unique()
+#st_drop_geometry(df)
+

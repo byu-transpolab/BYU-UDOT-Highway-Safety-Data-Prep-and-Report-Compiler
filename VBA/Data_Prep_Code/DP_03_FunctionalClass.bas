@@ -35,12 +35,12 @@ AssignInfo
 FileName1 = FN2                             'Assign FileName1
 Sheets(FileName1).Activate                  'Activate working dataset (Functional Class)
 
-'change route 194 to route 85 (will be changed back at the end of the roadway process)
+'change route 194 to route 85 (will be changed back at the end of the roadway process)        'FLAGGED: routes 194 and 85 are still causing problems. I'm not sure how much of a role this plays
 If Sheets("Inputs").Cells(2, 16) = "CAMS" Then
     myrow = 2
     Do Until Sheets(FileName1).Cells(myrow, 1) = ""
         If Left(Sheets(FileName1).Cells(myrow, 1), 4) = "0194" Then
-            Sheets(FileName1).Cells(myrow, 1) = replace(Sheets(FileName1).Cells(myrow, 1), "0194", "0085")
+            Sheets(FileName1).Cells(myrow, 1) = Replace(Sheets(FileName1).Cells(myrow, 1), "0194", "0085")
         End If
         myrow = myrow + 1
     Loop

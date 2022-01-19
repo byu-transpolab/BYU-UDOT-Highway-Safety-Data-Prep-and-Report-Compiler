@@ -65,7 +65,7 @@ Do While Cells(row1, colRoute0) <> ""
     Else
         Route = Left(Route, 4)
         
-        If Route = "089A" Then      'Corrects strange route ID. 089A previously called SR-11.
+        If Route = "089A" Then      'Corrects strange route ID. 089A previously called SR-11.  FLAGGED: we need to figured out what this is about.
             Route = "0011"          'Change route to 0011 for the purpose of this process.
         End If
         
@@ -164,12 +164,12 @@ Next
 
 'Save dataset as separate workbook
 Sheets("Dataset").Move
-sname = wd & "/Intersection_Input" & "_" & replace(Date, "/", "-") & "_" & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
-sname = replace(sname, "/", "\")
+sname = wd & "/Intersection_Input" & "_" & Replace(Date, "/", "-") & "_" & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
+sname = Replace(sname, "/", "\")
 Application.DisplayAlerts = False
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("I5").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("I5").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 ActiveWorkbook.Close
 Application.DisplayAlerts = True
 
@@ -840,7 +840,7 @@ EntVehCol1 = PercTrkCol + 3
 col1 = EntVehCol1
 col2 = AADTCol
 Do Until InStr(1, Sheets(AADTSheet).Cells(1, col2), "AADT") < 1       'finds the last column of AADT data
-    Sheets(datasheet).Cells(1, col1) = replace(Sheets(AADTSheet).Cells(1, col2), "AADT", "ENT_VEH")
+    Sheets(datasheet).Cells(1, col1) = Replace(Sheets(AADTSheet).Cells(1, col2), "AADT", "ENT_VEH")
     col1 = col1 + 1
     col2 = col2 + 1
 Loop
@@ -1839,7 +1839,7 @@ For j = 0 To 4
         
     End If
         
-    'Assign internal intersection distance to intersections
+    'Assign internal intersection distance to intersections      FLAGGED: there are a lot of do until "" loops which don't work when using R cleaned data because R turns "" into "NA"
     Do While Sheets(datasheet).Cells(row1, 1) <> ""
         RouteNum = Sheets(datasheet).Cells(row1, routecol)
         IntMP = Sheets(datasheet).Cells(row1, MPcol)

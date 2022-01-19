@@ -126,7 +126,7 @@ Dim crashrange As Integer
 
 ' Set the name of the GUI workbook
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Dim bainput As String
 bainput = "BAinput"
@@ -168,9 +168,9 @@ End With
     Set dataworkbook = Workbooks.Open(analysisfilepath) 'Opens the file in Read Only mode
     segwb = ActiveWorkbook.Name
     segsheet = ActiveSheet.Name
-    segwb = replace(segwb, ".xlsx", "")  'Removes the ".xls" so later codes will work
-    segwb = replace(segwb, ".xls", "")  'Removes the ".xls" so later codes will work
-    segwb = replace(segwb, ".csv", "")  'Removes the ".xls" so later codes will work
+    segwb = Replace(segwb, ".xlsx", "")  'Removes the ".xls" so later codes will work
+    segwb = Replace(segwb, ".xls", "")  'Removes the ".xls" so later codes will work
+    segwb = Replace(segwb, ".csv", "")  'Removes the ".xls" so later codes will work
 ' Keeps it open
 
 Workbooks(guiwb).Activate
@@ -199,9 +199,9 @@ Loop
     Application.Wait (Now + TimeValue("00:00:01"))
     crashwb = ActiveWorkbook.Name
     CrashSheet = ActiveSheet.Name
-    crashwb = replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
-    crashwb = replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
-    crashwb = replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
+    crashwb = Replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
+    crashwb = Replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
+    crashwb = Replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
 ' Keep the crash workbook open
 
 Workbooks(guiwb).Activate
@@ -233,9 +233,9 @@ Loop
     Set aadtworkbook = Workbooks.Open(aadtfilepath) 'Opens the file in Read Only mode
     aadtwb = ActiveWorkbook.Name
     AADTSheet = ActiveSheet.Name
-    aadtwb = replace(aadtwb, ".xls", "")  'Removes the ".xls" so later codes will work
-    aadtwb = replace(aadtwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
-    aadtwb = replace(aadtwb, ".csv", "")  'Removes the ".csv" so later codes will work
+    aadtwb = Replace(aadtwb, ".xls", "")  'Removes the ".xls" so later codes will work
+    aadtwb = Replace(aadtwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
+    aadtwb = Replace(aadtwb, ".csv", "")  'Removes the ".csv" so later codes will work
     
     ' Creates a new sheet for the AADT data in the GUI workbook
     Workbooks(aadtwb).Sheets(AADTSheet).Copy After:=Workbooks(guiwb).Sheets("Key")
@@ -316,7 +316,7 @@ ReDim iAADT(1 To 2, 0 To ilib) As String    'first row is the column index, seco
     Do Until Workbooks(guiwb).Sheets(AADTSheet).Cells(1, i) = ""
         If LCase(Left(Workbooks(guiwb).Sheets(AADTSheet).Cells(1, i), 4)) = "aadt" Then
             iAADT(1, n) = i
-            iAADT(2, n) = replace(LCase(Workbooks(guiwb).Sheets(AADTSheet).Cells(1, i)), "aadt", "")
+            iAADT(2, n) = Replace(LCase(Workbooks(guiwb).Sheets(AADTSheet).Cells(1, i)), "aadt", "")
             n = n + 1
         End If
     i = i + 1
@@ -372,8 +372,8 @@ i = Workbooks(crashwb).Sheets(CrashSheet).Range("A1").End(xlToRight).Column
 j = Workbooks(crashwb).Sheets(CrashSheet).Range("A1").End(xlDown).row + 1
 
 ' Identifies the range of years in the crash data, to compare to the AADT data
-crashmax = CStr(Year(CDate(Application.WorksheetFunction.Max(Range(Workbooks(crashwb).Sheets(CrashSheet).Cells(2, icrashdt), Workbooks(crashwb).Sheets(CrashSheet).Cells(j, icrashdt))))))
-crashmin = CStr(Year(CDate(Application.WorksheetFunction.min(Range(Workbooks(crashwb).Sheets(CrashSheet).Cells(2, icrashdt), Workbooks(crashwb).Sheets(CrashSheet).Cells(j, icrashdt))))))
+crashmax = CStr(year(CDate(Application.WorksheetFunction.Max(Range(Workbooks(crashwb).Sheets(CrashSheet).Cells(2, icrashdt), Workbooks(crashwb).Sheets(CrashSheet).Cells(j, icrashdt))))))
+crashmin = CStr(year(CDate(Application.WorksheetFunction.min(Range(Workbooks(crashwb).Sheets(CrashSheet).Cells(2, icrashdt), Workbooks(crashwb).Sheets(CrashSheet).Cells(j, icrashdt))))))
 crashrange = crashmax - crashmin
 
 ' Sort the crash data
@@ -495,7 +495,7 @@ Line88: Do While Workbooks(segwb).Sheets(segsheet).Cells(roadrow, 1) <> ""
             
             ' Add crash segment to BA input sheet
             crashdt = CDate(Workbooks(crashwb).Sheets(CrashSheet).Cells(CrashRow, icrashdt))
-            CrashCol = crashmax - Year(crashdt)
+            CrashCol = crashmax - year(crashdt)
             
             'Check if before (0) or after (1)
             If CDate(roadyear) >= CDate(crashdt) Then
@@ -506,7 +506,7 @@ Line88: Do While Workbooks(segwb).Sheets(segsheet).Cells(roadrow, 1) <> ""
                         
             ' Sum the AADT data to calculate average AADT later
             For n = 0 To ilib
-                If Year(crashdt) = iAADT(2, n) Then
+                If year(crashdt) = iAADT(2, n) Then
                     AADTCol = iAADT(1, n)
                     aadtcalc(1, CrashCol) = aadtcalc(1, CrashCol) + Workbooks(guiwb).Sheets(AADTSheet).Cells(AADTRow, AADTCol)
                     aadtcalc(2, CrashCol) = aadtcalc(2, CrashCol) + 1
@@ -741,10 +741,10 @@ Workbooks(guiwb).Sheets("Progress").Range("B6") = Time
 ' Moves the BeforeAfter sheet to a new workbook, to be saved as a CSV file
 ' Unique date and time given to file
 Workbooks(guiwb).Sheets(bainput).Move
-sname = "BAinput " & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
+sname = "BAinput " & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("F8").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("F8").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 
 Workbooks(guiwb).Activate
 Workbooks(guiwb).Sheets("Home").Activate
@@ -819,7 +819,7 @@ Dim CrashCol As Long
 
 ' Set the name of the GUI workbook
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 'update by Camille on July 30, 2019
 If Sheets("Inputs").Cells(2, 16) = "RSAM" Then
@@ -902,9 +902,9 @@ sevlist2.Add "5", 3
     Set dataworkbook = Workbooks.Open(segmentfilepath) 'Opens the file in Read Only mode
     wname = ActiveWorkbook.Name
     sname = ActiveSheet.Name
-    wname = replace(wname, ".xls", "")  'Removes the ".xls" so later codes will work
-    wname = replace(wname, ".xlsx", "")  'Removes the ".xlsx" so later codes will work   'Camille: You might want to move the .xlsx line to be above the .xls line. What if it's .xlsx and .xls gets deleted leaving a .x?
-    wname = replace(wname, ".csv", "")  'Removes the ".csv" so later codes will work
+    wname = Replace(wname, ".xls", "")  'Removes the ".xls" so later codes will work
+    wname = Replace(wname, ".xlsx", "")  'Removes the ".xlsx" so later codes will work   'Camille: You might want to move the .xlsx line to be above the .xls line. What if it's .xlsx and .xls gets deleted leaving a .x?
+    wname = Replace(wname, ".csv", "")  'Removes the ".csv" so later codes will work
         
     'Creates a new sheet, names it after the name of the workbook
     Sheets(sname).Copy After:=Workbooks(guiwb).Sheets("Key")
@@ -946,9 +946,9 @@ Workbooks(guiwb).Sheets(sname).Cells(1, isevcrash) = "Severe_Crashes"
     Set crashworkbook = Workbooks.Open(crashfilepath) 'Opens the file in Read Only mode
     crashwb = ActiveWorkbook.Name
     CrashSheet = ActiveSheet.Name
-    crashwb = replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
-    crashwb = replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
-    crashwb = replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
+    crashwb = Replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
+    crashwb = Replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
+    crashwb = Replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
 ' Keep the crash workbook open
 
 Workbooks(guiwb).Activate
@@ -1221,13 +1221,13 @@ Workbooks(guiwb).Sheets("Progress").Range("B6") = Time
 ' Unique date and time given to file
 Workbooks(guiwb).Sheets(ucpsmsheet).Move
 If Workbooks(guiwb).Sheets("Inputs").Cells(2, 16) = "RSAM" Then
-    sname = "UCPM-UCSMinput_Sev" & sevstring & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
+    sname = "UCPM-UCSMinput_Sev" & sevstring & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
 ElseIf Workbooks(guiwb).Sheets("Inputs").Cells(2, 16) = "CAMS" Then
-    sname = "CAMSinput_Sev" & sevstring & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
+    sname = "CAMSinput_Sev" & sevstring & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
 End If
-sname = replace(sname, " ", "_")
+sname = Replace(sname, " ", "_")
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("B10").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("B10").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 
 MsgBox "The combined file has been saved in the following location:" & Chr(10) & _
 sname & Chr(10) & Chr(10) & _
@@ -1464,17 +1464,37 @@ Do Until Cells(row1, 1) = ""
     
     For i = 0 To NumYears - 1
         Cells(row1 + i, begAADTcol) = Cells(row1, begAADTcol + i)
+        Cells(row1 + i, begAADTcol + NumYears) = Cells(row1, begAADTcol + NumYears + i)         'Single Percent
+        Cells(row1 + i, begAADTcol + NumYears * 2) = Cells(row1, begAADTcol + NumYears * 2 + i)     'Combo Percent
+        Cells(row1 + i, begAADTcol + NumYears * 3) = Cells(row1, begAADTcol + NumYears * 3 + i)     'Single Count
+        Cells(row1 + i, begAADTcol + NumYears * 4) = Cells(row1, begAADTcol + NumYears * 4 + i)     'Combo Count
+        Cells(row1 + i, begAADTcol + NumYears * 5) = Cells(row1, begAADTcol + NumYears * 5 + i)     'Total Percent
+        Cells(row1 + i, begAADTcol + NumYears * 6) = Cells(row1, begAADTcol + NumYears * 6 + i)     'Total Count
         Cells(row1 + i, YearCol) = Int(Right(Workbooks(guiwb).Sheets(sname).Cells(1, begAADTcol), 4)) - i
     Next i
     
     row1 = row1 + NumYears
 Loop
 Cells(1, begAADTcol) = "AADT"
+Cells(1, begAADTcol + NumYears) = "Single_Percent"
+Cells(1, begAADTcol + NumYears * 2) = "Combo_Percent"
+Cells(1, begAADTcol + NumYears * 3) = "Single_Count"
+Cells(1, begAADTcol + NumYears * 4) = "Combo_Count"
+Cells(1, begAADTcol + NumYears * 5) = "Total_Percent"
+Cells(1, begAADTcol + NumYears * 6) = "Total_Count"
 
-'delete extra AADT columns
+'delete extra AADT and trucks columns
 i = 1
 Do
     If Left(Workbooks(guiwb).Sheets(sname).Cells(1, i), 4) = "AADT" And IsNumeric(Right(Workbooks(guiwb).Sheets(sname).Cells(1, i), 4)) = True Then
+        Workbooks(guiwb).Sheets(sname).Columns(i).Delete
+        i = i - 1
+    End If
+    i = i + 1
+Loop While Workbooks(guiwb).Sheets(sname).Cells(1, i + 1) <> ""
+i = 1
+Do
+    If IsNumeric(Left(Workbooks(guiwb).Sheets(sname).Cells(1, i), 4)) = True Then
         Workbooks(guiwb).Sheets(sname).Columns(i).Delete
         i = i - 1
     End If
@@ -1536,19 +1556,19 @@ Application.DisplayAlerts = True
 ' Moves the UCPMinput sheet to a new workbook, to be saved as a CSV file
 ' Unique date and time given to file
 Workbooks(guiwb).Sheets(ucpsmsheet).Move
-sname = "CAMSinput_Sev" & sevstring & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
+sname = "CAMSinput_Sev" & sevstring & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("M10").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("M10").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 
 ' Moves the parameters sheet and saves is as an .xlsx file
 ' Unique date and time given to file
 Workbooks(guiwb).Activate
 Workbooks(guiwb).Sheets("Parameters").Move
-pname = "CAMSParameters_Sev" & sevstring & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".xlsx"
-pname = replace(pname, " ", "_")
+pname = "CAMSParameters_Sev" & sevstring & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".xlsx"
+pname = Replace(pname, " ", "_")
 ActiveWorkbook.SaveAs FileName:=pname, FileFormat:=51
-Workbooks(guiwb).Sheets("Inputs").Range("M33").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("M33").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 
 ' Message to show that the process is complete
 MsgBox "The combined file and the parameters file have been saved in the following location:" & Chr(10) & Chr(10) & _
@@ -1637,7 +1657,7 @@ Application.ScreenUpdating = False
 
 ' Set the name of the GUI workbook
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 uicpmsheet = "UICPMinput"
 newcrashsheet = "CrashInput"
@@ -1674,9 +1694,9 @@ Application.ScreenUpdating = False
     wname = ActiveWorkbook.Name
     sname = ActiveSheet.Name
     
-    wname = replace(wname, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
-    wname = replace(wname, ".xls", "")  'Removes the ".xls" so later codes will work
-    wname = replace(wname, ".csv", "")  'Removes the ".csv" so later codes will work
+    wname = Replace(wname, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
+    wname = Replace(wname, ".xls", "")  'Removes the ".xls" so later codes will work
+    wname = Replace(wname, ".csv", "")  'Removes the ".csv" so later codes will work
         
     'Creates a new sheet, names it after the name of the workbook
     Sheets(sname).Copy After:=Workbooks(guiwb).Sheets("Key")
@@ -1716,9 +1736,9 @@ Workbooks(guiwb).Sheets(sname).Cells(1, ColSev1) = "Sev_1_Crashes"
     Set crashworkbook = Workbooks.Open(crashfilepath) 'Opens the file in Read Only mode
     crashwb = ActiveWorkbook.Name
     oldcrashsheet = ActiveSheet.Name
-    crashwb = replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
-    crashwb = replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
-    crashwb = replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
+    crashwb = Replace(crashwb, ".xlsx", "")  'Removes the ".xlsx" so later codes will work
+    crashwb = Replace(crashwb, ".xls", "")  'Removes the ".xls" so later codes will work
+    crashwb = Replace(crashwb, ".csv", "")  'Removes the ".csv" so later codes will work
     
     'Creates a new sheet, names it after the name of the workbook
     Sheets(oldcrashsheet).Copy After:=Workbooks(guiwb).Sheets(uicpmsheet)
@@ -1742,16 +1762,16 @@ Do Until Sheets(newcrashsheet).Cells(1, col1) = "CRASH_DATETIME"
     col1 = col1 + 1
 Loop
 
-MinCYear = Year(Sheets(newcrashsheet).Cells(row1, col1))
-MaxCYear = Year(Sheets(newcrashsheet).Cells(row1, col1))
+MinCYear = year(Sheets(newcrashsheet).Cells(row1, col1))
+MaxCYear = year(Sheets(newcrashsheet).Cells(row1, col1))
 row1 = row1 + 1
 Do Until Sheets(newcrashsheet).Cells(row1, col1) = ""
-    If Year(Sheets(newcrashsheet).Cells(row1, col1)) < MinCYear Then
-        MinCYear = Year(Sheets(newcrashsheet).Cells(row1, col1))
+    If year(Sheets(newcrashsheet).Cells(row1, col1)) < MinCYear Then
+        MinCYear = year(Sheets(newcrashsheet).Cells(row1, col1))
     End If
     
-    If Year(Sheets(newcrashsheet).Cells(row1, col1)) > MaxCYear Then
-        MaxCYear = Year(Sheets(newcrashsheet).Cells(row1, col1))
+    If year(Sheets(newcrashsheet).Cells(row1, col1)) > MaxCYear Then
+        MaxCYear = year(Sheets(newcrashsheet).Cells(row1, col1))
     End If
     row1 = row1 + 1
 Loop
@@ -2013,19 +2033,19 @@ sevstring = Sheets("Inputs").Cells(12, UICPMcol + 1)
 
 'Save UICPM dataset as separate workbook
 Sheets(uicpmsheet).Move
-sname = wd & "/UICPMinput_Sev" & sevstring & "_" & FAmethod & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
-sname = replace(sname, "/", "\")
+sname = wd & "/UICPMinput_Sev" & sevstring & "_" & FAmethod & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
+sname = Replace(sname, "/", "\")
 Application.DisplayAlerts = False
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("I10").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("I10").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 ActiveWorkbook.Close
 
 'Save parameters dataset as separate workbook
 Sheets(PSheet).Move
-sname = wd & "/UICPM_Parameters_" & sevstring & "_" & FAmethod & "_" & replace(Date, "/", "-") & " " & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
-sname = replace(sname, "/", "\")
+sname = wd & "/UICPM_Parameters_" & sevstring & "_" & FAmethod & "_" & Replace(Date, "/", "-") & " " & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
+sname = Replace(sname, "/", "\")
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
 ActiveWorkbook.Close
 
@@ -2606,7 +2626,7 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
         End If
         
         CrashSev = Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol)
-        CrashYear = Year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
+        CrashYear = year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
         CrashRoute = Int(Left(Sheets(CrashSheet).Cells(CrashRow, crashroutecol), 4))
         CrashMP = Sheets(CrashSheet).Cells(CrashRow, crashMPcol)
         CrashLat = Sheets(CrashSheet).Cells(CrashRow, CrashLatCol)
@@ -2713,9 +2733,9 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
                          End If
                                               
                         'Work zone related
-                         If Sheets(CrashSheet).Cells(CrashRow, WorkZoneCol2) = "Y" Then
-                             Sheets(datasheet).Cells(IntRow + i, WorkZoneCol1) = Sheets(datasheet).Cells(IntRow + i, WorkZoneCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, WorkZoneCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(IntRow + i, WorkZoneCol1) = Sheets(datasheet).Cells(IntRow + i, WorkZoneCol1) + 1
+                         'End If
                          
                         'Pedestrian Involved
                          If Sheets(CrashSheet).Cells(CrashRow, PedInvCol2) = "Y" Then
@@ -2733,9 +2753,9 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
                          End If
                          
                         'Improper restraint
-                         If Sheets(CrashSheet).Cells(CrashRow, ImpResCol2) = "Y" Then
-                             Sheets(datasheet).Cells(IntRow + i, ImpResCol1) = Sheets(datasheet).Cells(IntRow + i, ImpResCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, ImpResCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(IntRow + i, ImpResCol1) = Sheets(datasheet).Cells(IntRow + i, ImpResCol1) + 1
+                         'End If
                          
                         'Unrestrained
                          If Sheets(CrashSheet).Cells(CrashRow, UnrestCol2) = "Y" Then
@@ -2828,9 +2848,9 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
                          End If
                          
                         'Urban county
-                         If Sheets(CrashSheet).Cells(CrashRow, UrbanCol2) = "Y" Then
-                             Sheets(datasheet).Cells(IntRow + i, UrbanCol1) = Sheets(datasheet).Cells(IntRow + i, UrbanCol1) + 1
-                         End If
+                         'If Sheets(CrashSheet).Cells(CrashRow, UrbanCol2) = "Y" Then
+                         '    Sheets(datasheet).Cells(IntRow + i, UrbanCol1) = Sheets(datasheet).Cells(IntRow + i, UrbanCol1) + 1
+                         'End If
                          
                         'Night dark condition
                          If Sheets(CrashSheet).Cells(CrashRow, NightCol2) = "Y" Then
@@ -3281,7 +3301,7 @@ Do While Sheets(datasheet).Cells(SegRow, 1) <> ""
         
         'set variables
         CrashSev = Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol)
-        CrashYear = Year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
+        CrashYear = year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
         CrashRoute = Int(Left(Sheets(CrashSheet).Cells(CrashRow, crashlabelcol), 4))
         CrashMP = Sheets(CrashSheet).Cells(CrashRow, crashMPcol)
         CrashLat = Sheets(CrashSheet).Cells(CrashRow, CrashLatCol)
@@ -4168,7 +4188,7 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
         LatDiff = Abs(CrashLat - IntLat) * LatFtEquiv
         LongDiff = Abs(CrashLong - IntLong) * LongFtEquiv
         DiffRadius = Sqr(LatDiff ^ 2 + LongDiff ^ 2)
-        CrashYear = Year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
+        CrashYear = year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
         
         If DiffRadius < IntRadius And (Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(1) Or _
         Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(2) Or Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(3) Or _

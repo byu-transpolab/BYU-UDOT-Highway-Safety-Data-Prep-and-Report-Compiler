@@ -39,7 +39,7 @@ End With
 If FilePath = False Then
     txtAADT = ""
 Else
-    txtAADT = replace(FilePath, "\", "/")
+    txtAADT = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -192,12 +192,12 @@ Worksheets("Crash Data").Tab.ColorIndex = 9
 
 'Save crash data file
 Sheets("Crash Data").Move
-sname = wd & "/IntCrash_Input" & "_" & replace(Date, "/", "-") & "_" & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
-sname = replace(sname, "/", "\")
+sname = wd & "/IntCrash_Input" & "_" & Replace(Date, "/", "-") & "_" & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
+sname = Replace(sname, "/", "\")
 Application.DisplayAlerts = False
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("I6").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("I6").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 ActiveWorkbook.Close
 Application.DisplayAlerts = True
 
@@ -499,7 +499,7 @@ End With
 If FilePath = False Then
     txtData = ""
 Else
-    txtData = replace(FilePath, "\", "/")
+    txtData = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -525,7 +525,7 @@ End With
 If FilePath = False Then
     txtFCSR = ""
 Else
-    txtFCSR = replace(FilePath, "\", "/")
+    txtFCSR = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -552,7 +552,7 @@ End With
 If FilePath = False Then
     txtFCFED = ""
 Else
-    txtFCFED = replace(FilePath, "\", "/")
+    txtFCFED = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -577,7 +577,7 @@ End With
 If FilePath = False Then
     txtIntersections = ""
 Else
-    txtIntersections = replace(FilePath, "\", "/")
+    txtIntersections = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -603,7 +603,7 @@ End With
 If FilePath = False Then
     txtLanes = ""
 Else
-    txtLanes = replace(FilePath, "\", "/")
+    txtLanes = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -629,7 +629,7 @@ End With
 If FilePath = False Then
     txtLocation = ""
 Else
-    txtLocation = replace(FilePath, "\", "/")
+    txtLocation = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -655,7 +655,7 @@ End With
 If FilePath = False Then
     txtPavMess = ""
 Else
-    txtPavMess = replace(FilePath, "\", "/")
+    txtPavMess = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -681,7 +681,7 @@ End With
 If FilePath = False Then
     txtRollup = ""
 Else
-    txtRollup = replace(FilePath, "\", "/")
+    txtRollup = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -707,7 +707,7 @@ End With
 If FilePath = False Then
     txtSL = ""
 Else
-    txtSL = replace(FilePath, "\", "/")
+    txtSL = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -733,7 +733,7 @@ End With
 If FilePath = False Then
     txtUC = ""
 Else
-    txtUC = replace(FilePath, "\", "/")
+    txtUC = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -759,7 +759,7 @@ End With
 If FilePath = False Then
     txtVehicle = ""
 Else
-    txtVehicle = replace(FilePath, "\", "/")
+    txtVehicle = Replace(FilePath, "\", "/")
 End If
 
 End Sub

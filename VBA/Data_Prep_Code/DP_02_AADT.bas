@@ -84,7 +84,7 @@ Remove_Routes 'Check to see if this is for the ISAM
 Fix_AADT
 
 'Autofit Columns and select cell A1
-Columns("A:T").EntireColumn.autofit
+Columns("A:BH").EntireColumn.autofit
 
 'Tab color change
 Worksheets("AADT").Tab.ColorIndex = 10
@@ -364,6 +364,8 @@ Sub Fix_AADT()
 
 'Define Variables
 Dim n As Double             'Row counter
+Dim i As Integer
+Dim a As Integer
 Dim ising As Integer        'Column counter, to find the column with the "Single_Percent" data
 Dim icomb As Integer
 Dim iAADT As Integer
@@ -371,15 +373,18 @@ Dim singp As Double         'value for Single_Percent
 Dim combp As Double         'value for Combo_Percent
 Dim singc As Double         'value for Single_Count
 Dim combc As Double         'value for Combo_Count
+Dim ncol As Integer
+Dim nyears As Integer
+Dim year As String
 
-'Find the column with "Single_Percent", which will be used as a reference point
+'Find the first column with "Single_Percent", which will be used as a reference point
 ising = 1
-Do Until Cells(1, ising) = "Single_Percent"
+Do Until Right(Cells(1, ising), 14) = "Single_Percent"
     ising = ising + 1
 Loop
 
 icomb = 1
-Do Until Cells(1, icomb) = "Combo_Percent"
+Do Until Right(Cells(1, icomb), 13) = "Combo_Percent"
     icomb = icomb + 1
 Loop
 
@@ -389,27 +394,44 @@ Do Until InStr(1, Cells(1, iAADT), "AADT") > 0
 Loop
 
 'Creates new column headers
-Cells(1, ising + 2) = "Single_Count"
-Cells(1, ising + 3) = "Combo_Count"
-Cells(1, ising + 4) = "Total_Percent_Trucks"
-Cells(1, ising + 5) = "Total_Count_Trucks"
+ncol = 1
+Do Until Cells(1, ncol) = ""
+    ncol = ncol + 1
+Loop
+
+nyears = 1
+Do Until Sheets("Key").Cells(nyears, 2) = ""
+    nyears = nyears + 1
+Loop
+nyears = nyears - 1
+
+a = 0
+For i = nyears To 1 Step -1
+    year = Sheets("Key").Cells(i, 2)
+    Cells(1, ncol + a) = year + "_Single_Count"
+    Cells(1, ncol + a + nyears) = year + "_Combo_Count"
+    Cells(1, ncol + a + 2 * nyears) = year + "_Total_Percent_Trucks"
+    Cells(1, ncol + a + 3 * nyears) = year + "_Total_Count_Trucks"
+    a = a + 1
+Next i
 
 'For each row, calculates the Total Percent Trucks and Total Count Trucks
-n = 2
-Do Until Cells(n, 1) = ""
-    singp = Cells(n, ising)
-    combp = Cells(n, icomb)
-    singc = Round(Cells(n, iAADT) * Cells(n, ising), 0)
-    combc = Round(Cells(n, iAADT) * Cells(n, icomb), 0)
-    If combc <> 0 And singc <> 0 Then
-        Cells(n, ising + 3) = combc
-        Cells(n, ising + 2) = singc
-        Cells(n, ising + 4) = singp + combp
-        Cells(n, ising + 5) = singc + combc
-    End If
-    n = n + 1
-Loop
-Application.CutCopyMode = False
+For i = 0 To nyears - 1
+    n = 2
+    Do Until Cells(n, 1) = ""
+        singp = Cells(n, ising + i)
+        combp = Cells(n, icomb + i)
+        singc = Round(Cells(n, iAADT + i) * singp, 0)
+        combc = Round(Cells(n, iAADT + i) * combp, 0)
+        If combc <> 0 And singc <> 0 Then
+            Cells(n, ncol + i) = singc
+            Cells(n, ncol + i + nyears) = combc
+            Cells(n, ncol + i + 2 * nyears) = singp + combp
+            Cells(n, ncol + i + 3 * nyears) = singc + combc
+        End If
+        n = n + 1
+    Loop
+Next i
 
 End Sub
 

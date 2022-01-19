@@ -48,14 +48,14 @@ End Sub
 
 Private Sub txt_crashfilepath_Change()
 
-    ActiveWorkbook.Sheets("Inputs").Range("B6").Value = replace(txt_crashfilepath, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("B6").Value = Replace(txt_crashfilepath, "\", "/")
     
     Call checkblanks
 End Sub
 
 Private Sub txt_segmentfilepath_Change()
     
-    ActiveWorkbook.Sheets("Inputs").Range("B5").Value = replace(txt_segmentfilepath, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("B5").Value = Replace(txt_segmentfilepath, "\", "/")
     
     Call checkblanks
 End Sub
@@ -72,7 +72,7 @@ FilePath = Application.GetOpenFilename(, , "Select Crash Data")
 If FilePath = False Then
     txt_crashfilepath = ""
 Else
-    txt_crashfilepath = replace(FilePath, "\", "/")
+    txt_crashfilepath = Replace(FilePath, "\", "/")
     
 End If
 
@@ -125,8 +125,8 @@ If chbx_severity5 = True Then
 End If
 
 'print inputs to workbook for future information
-ActiveWorkbook.Sheets("Inputs").Range("B5").Value = replace(txt_segmentfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("B6").Value = replace(txt_crashfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B5").Value = Replace(txt_segmentfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B6").Value = Replace(txt_crashfilepath, "\", "/")
 ActiveWorkbook.Sheets("Inputs").Range("B9").Value = severitylist
 
 'hide user form
@@ -149,7 +149,7 @@ FilePath = Application.GetOpenFilename(, , "Select Road Segment Data")
 If FilePath = False Then
     txt_segmentfilepath = ""
 Else
-    txt_segmentfilepath = replace(FilePath, "\", "/")
+    txt_segmentfilepath = Replace(FilePath, "\", "/")
 End If
 
 End Sub

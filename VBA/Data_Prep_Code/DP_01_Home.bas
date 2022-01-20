@@ -660,7 +660,7 @@ ElseIf Data = 8 Then                                'Crash Rollup
         Call FastWB
         'Find the INTERSECTION_RELATED or Intersection Involved column
         intCol = 1
-        Do Until replace(LCase(Cells(1, intCol)), " ", "_") = "intersection_related" Or replace(LCase(Cells(1, intCol)), " ", "_") = "intersection_involved"
+        Do Until Replace(LCase(Cells(1, intCol)), " ", "_") = "intersection_related" Or Replace(LCase(Cells(1, intCol)), " ", "_") = "intersection_involved"
             intCol = intCol + 1
         Loop
         'Delete non intersection rows

@@ -41,14 +41,14 @@ selectedmodel = cmbx_modelselect.Value
 
 ' Print the selected inputs to workbook, before moving on
 ' These values will be important for executing the R code
-ActiveWorkbook.Sheets("Inputs").Range("B2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("M2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("B3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("M3").Value = replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("M2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("M3").Value = Replace(txt_rfilepath, "\", "/")
 
 ' Hide the GUI Start user form
 form_guistart.Hide
@@ -80,12 +80,12 @@ selectedmodel = cmbx_modelselect.Value
 
 ' Print the selected inputs to workbook, before moving on
 ' These values will be important for executing the R code
-ActiveWorkbook.Sheets("Inputs").Range("B2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I2").Value = replace(txt_workingDirectory, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("B3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I3").Value = replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I2").Value = Replace(txt_workingDirectory, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I3").Value = Replace(txt_rfilepath, "\", "/")
 
 ' Hide the GUI Start user form
 form_guistart.Hide
@@ -122,15 +122,15 @@ workingdirectory = ActiveWorkbook.path
 
 ' The R script to download the packages will be included with the GUI file
 rcode = workingdirectory & "\downloadPackages.R"
-rcode = replace(rcode, "\", "/")
+rcode = Replace(rcode, "\", "/")
 
 libfp = ActiveWorkbook.Sheets("Inputs").Range("B3").Value
 libfp = Left(libfp, InStr(1, libfp, "R/R-") + 9)
 libfp = libfp & "library/"
-libfp = replace(libfp, "\", "/")
-libfp = replace(libfp, " ", "ZZZ")
+libfp = Replace(libfp, "\", "/")
+libfp = Replace(libfp, " ", "ZZZ")
 
-cmdLine = replace(txt_rfilepath, "\", "/") & " " & rcode & " " & libfp
+cmdLine = Replace(txt_rfilepath, "\", "/") & " " & rcode & " " & libfp
     'MsgBox cmdLine, vbOKOnly   'Debugging purposes
 Shell cmdLine, vbMaximizedFocus
 
@@ -164,7 +164,7 @@ End With
 If FilePath = False Then
     txt_rfilepath = "C:/Program Files/R/R-3.2.5/bin/Rscript"
 Else
-    txt_rfilepath = replace(replace(FilePath, "\", "/"), ".exe", "")
+    txt_rfilepath = Replace(Replace(FilePath, "\", "/"), ".exe", "")
 End If
 
 End Sub
@@ -189,9 +189,9 @@ End With
 
 ' If the user doesn't select a file, then the box will default to blank
 If sItem = "" Then
-    txt_workingDirectory = replace(ActiveWorkbook.path, "\", "/")
+    txt_workingDirectory = Replace(ActiveWorkbook.path, "\", "/")
 Else
-    txt_workingDirectory = replace(sItem, "\", "/")
+    txt_workingDirectory = Replace(sItem, "\", "/")
 End If
 
 End Sub
@@ -227,9 +227,9 @@ Else
     cmd_guiexisting.Visible = False
 End If
 
-ActiveWorkbook.Sheets("Inputs").Range("B3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I3").Value = replace(txt_rfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F3").Value = replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I3").Value = Replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F3").Value = Replace(txt_rfilepath, "\", "/")
 
 ' Show/Hide Certain Options
 ' Checks if the R packages has already been downloaded
@@ -260,13 +260,13 @@ Private Sub txt_workingDirectory_Change()
 Dim pos As Integer
 Dim fpath As String
 
-fpath = replace(txt_workingDirectory, "\", "/")
+fpath = Replace(txt_workingDirectory, "\", "/")
 pos = InStr(fpath, " ")
 
 If pos = 0 Then
-    ActiveWorkbook.Sheets("Inputs").Range("B2").Value = replace(txt_workingDirectory, "\", "/")
-    ActiveWorkbook.Sheets("Inputs").Range("F2").Value = replace(txt_workingDirectory, "\", "/")
-    ActiveWorkbook.Sheets("Inputs").Range("I2").Value = replace(txt_workingDirectory, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("B2").Value = Replace(txt_workingDirectory, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("F2").Value = Replace(txt_workingDirectory, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("I2").Value = Replace(txt_workingDirectory, "\", "/")
 Else
     MsgBox "Select a file path with no spaces in the entire file path." & Chr(10) & "It is recommended to simplify the file path.", vbOKOnly, "Select a Different Working Directory"
     
@@ -337,7 +337,7 @@ RFolderPath = "C:/Program Files/R"
 Set folder1 = objFSO.GetFolder(RFolderPath)
 
 For Each SubFolder In folder1.subfolders
-    RVersion = replace(replace(Right(SubFolder.Name, 5), ".", ""), ".", "")
+    RVersion = Replace(Replace(Right(SubFolder.Name, 5), ".", ""), ".", "")
     If RVersion > MaxRVersion Then
         MaxRVersion = RVersion
     End If
@@ -351,7 +351,7 @@ Else
 End If
 
 txt_rfilepath = "C:/Program Files/R/R-" & MaxRStr & "/bin/Rscript"
-ActiveWorkbook.Sheets("Inputs").Range("B3").Value = replace(txt_rfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("B3").Value = Replace(txt_rfilepath, "\", "/")
 
 If FileExists(txt_rfilepath & ".exe") Then
 Else
@@ -361,7 +361,7 @@ Else
 End If
 
 workingdirectory = ActiveWorkbook.path
-txt_workingDirectory.Value = replace(workingdirectory, "\", "/")
+txt_workingDirectory.Value = Replace(workingdirectory, "\", "/")
 cmbx_modelselect.Value = "Select Statistical Model"
 
 ' Show/Hide Certain Options

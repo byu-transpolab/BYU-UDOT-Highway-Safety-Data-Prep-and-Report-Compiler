@@ -84,7 +84,7 @@ ElseIf Hour(Now) = 24 Then              'Hour of time is 12 AM
 End If
 
 'Assign filename and path, copy, paste, and save the segmented data as a separate CSV file.
-MyFileName = "IntRdwayData_" & SegType & "_(" & Month(Now) & "-" & Day(Now) & "-" & Year(Now) & "_" & SaveTime & ").csv"
+MyFileName = "IntRdwayData_" & SegType & "_(" & Month(Now) & "-" & Day(Now) & "-" & year(Now) & "_" & SaveTime & ").csv"
 Sheets("Roadway Data").Copy
 MyPath = sItem
 ActiveWorkbook.SaveAs FileName:=MyPath & MyFileName, FileFormat:=xlCSV, CreateBackup:=False
@@ -202,7 +202,7 @@ If Sheets("OtherData").Range("AU5").Value = "" And Sheets("OtherData").Range("AU
     
     'Go through each row, identify year, and update max and min years.
     Do Until Cells(numrow, 1) = ""
-        rowYear = Year(Cells(numrow, idatetime).Value)
+        rowYear = year(Cells(numrow, idatetime).Value)
         If minyear = 0 And maxyear = 0 Then
             minyear = rowYear
             maxyear = rowYear
@@ -220,7 +220,7 @@ End If
 
 'Assign value to MyFileName variable to save the crash data.
 MyFileName = "Crash_Data_" & CStr(minyear) & "-" & CStr(maxyear) & "(" & Month(Now) & _
-"-" & Day(Now) & "-" & Year(Now) & ").csv"
+"-" & Day(Now) & "-" & year(Now) & ").csv"
 Sheets("Crash Data").Copy
 MyPath = sItem
 ActiveWorkbook.SaveAs FileName:=MyPath & MyFileName, FileFormat:=xlCSV, CreateBackup:=False
@@ -1111,7 +1111,7 @@ If Sheets("OtherData").Range("AU5").Value = "" And Sheets("OtherData").Range("AU
     
     'Go through each crash and find the max and min years of all the data
     Do Until Cells(numrow, 1) = ""
-        rowYear = Year(Cells(numrow, idatetime).Value)
+        rowYear = year(Cells(numrow, idatetime).Value)
         If minyear = 0 And maxyear = 0 Then
             minyear = rowYear
             maxyear = rowYear

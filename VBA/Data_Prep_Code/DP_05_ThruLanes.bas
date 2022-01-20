@@ -182,7 +182,7 @@ Do While Cells(nrow1, irou) <> ""
         Route = Left(Route, 4)
     End If
     
-    If Route = "089A" Then      'Corrects strange route ID. 089A previously called SR-11.
+    If Route = "089A" Then      'Corrects strange route ID. 089A previously called SR-11.     FLAGGED: Still having issues with this route. not sure what role this plays here
         Route = "0011"          'Change route to 0011 for the purpose of this process.
     End If
         
@@ -228,7 +228,7 @@ Do Until Cells(nrow1, irou) = ""
 Loop
 
 
-'Add a line of data for Interstates and Mountain View Corridor, since they can be identified in the positive or negative direction
+'Add a line of data for Interstates and Mountain View Corridor, since they can be identified in the positive or negative direction  'FLAGGED: problem routes again
 nrow1 = 2
 Do While Cells(nrow1, irou) <> ""
     Route = Cells(nrow1, irou)

@@ -4,8 +4,8 @@ Sub CombineFCFiles()
 Dim SR, FedAid, LastRow, wd
 
 wd = ActiveWorkbook.Sheets("Inputs").Range("I2")
-wd = replace(wd, " ", "_")
-wd = replace(wd, "/", "\")
+wd = Replace(wd, " ", "_")
+wd = Replace(wd, "/", "\")
 wd = wd & "\FunctionalClassCombined"
 
 'Create FunctionalClassCombined Workbook

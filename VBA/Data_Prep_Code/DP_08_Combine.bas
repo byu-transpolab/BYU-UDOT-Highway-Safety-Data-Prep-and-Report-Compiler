@@ -124,11 +124,11 @@ If Sheets("Inputs").Cells(2, 16) = "CAMS" Then
     myrow = 2
     Do Until Sheets("Roadway Data").Cells(myrow, 1) = ""
         If Sheets("Roadway Data").Cells(myrow, 6) = "0085" And Sheets("Roadway Data").Cells(myrow, 3) < 2.977 Then
-            Sheets("Roadway Data").Cells(myrow, 2) = replace(Sheets("Roadway Data").Cells(myrow, 2), "085", "194")
-            Sheets("Roadway Data").Cells(myrow, 6) = replace(Sheets("Roadway Data").Cells(myrow, 6), "085", "194")
+            Sheets("Roadway Data").Cells(myrow, 2) = Replace(Sheets("Roadway Data").Cells(myrow, 2), "085", "194")
+            Sheets("Roadway Data").Cells(myrow, 6) = Replace(Sheets("Roadway Data").Cells(myrow, 6), "085", "194")
             Sheets("Roadway Data").Cells(myrow, 6).NumberFormat = "0000"
             Sheets("Roadway Data").Cells(myrow, 6).HorizontalAlignment = xlHAlignLeft
-            Sheets("Roadway Data").Cells(myrow, 7) = replace(Sheets("Roadway Data").Cells(myrow, 7), "085", "194")
+            Sheets("Roadway Data").Cells(myrow, 7) = Replace(Sheets("Roadway Data").Cells(myrow, 7), "085", "194")
             Sheets("Roadway Data").Cells(myrow, 7).NumberFormat = "0000"
             Sheets("Roadway Data").Cells(myrow, 7).HorizontalAlignment = xlHAlignLeft
         End If
@@ -168,12 +168,12 @@ End If
 
 'Save dataset as separate workbook
 Sheets("Roadway Data").Move
-sname = wd & "/CAMSRoadSegments_" & replace(Date, "/", "-") & "_" & replace(Time, ":", "-") & ".csv"
-sname = replace(sname, " ", "_")
-sname = replace(sname, "/", "\")
+sname = wd & "/CAMSRoadSegments_" & Replace(Date, "/", "-") & "_" & Replace(Time, ":", "-") & ".csv"
+sname = Replace(sname, " ", "_")
+sname = Replace(sname, "/", "\")
 Application.DisplayAlerts = False
 ActiveWorkbook.SaveAs FileName:=sname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Cells(5, 13).Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Cells(5, 13).Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 ActiveWorkbook.Close
 Application.DisplayAlerts = True
 
@@ -1162,19 +1162,37 @@ And ws(4).Cells(dRow(4), 1) = "" And ws(5).Cells(dRow(5), 1) = ""
                 ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
                 j = j + 1
             Loop
-            ws(6).Cells(dRow(6), 10 + j + 1) = ws(1).Cells(dRow(1), 7 + j + 1)          'Single_Per
-            ws(6).Cells(dRow(6), 10 + j + 2) = ws(1).Cells(dRow(1), 7 + j + 2)          'Combo_Perc
-            ws(6).Cells(dRow(6), 10 + j + 3) = ws(1).Cells(dRow(1), 7 + j + 3)          'Single_Count
-            ws(6).Cells(dRow(6), 10 + j + 4) = ws(1).Cells(dRow(1), 7 + j + 4)          'Combo_Count
-            ws(6).Cells(dRow(6), 10 + j + 5) = ws(1).Cells(dRow(1), 7 + j + 5)          'Total_perc
-            ws(6).Cells(dRow(6), 10 + j + 6) = ws(1).Cells(dRow(1), 7 + j + 6)          'Total_Count
+            Do While Right(ws(1).Cells(1, 8 + j), 14) = "Single_Percent"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
+            Do While Right(ws(1).Cells(1, 8 + j), 13) = "Combo_Percent"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
+            Do While Right(ws(1).Cells(1, 8 + j), 12) = "Single_Count"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
+            Do While Right(ws(1).Cells(1, 8 + j), 11) = "Combo_Count"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
+            Do While Right(ws(1).Cells(1, 8 + j), 20) = "Total_Percent_Trucks"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
+            Do While Right(ws(1).Cells(1, 8 + j), 18) = "Total_Count_Trucks"
+                ws(6).Cells(dRow(6), 11 + j) = ws(1).Cells(dRow(1), 8 + j)
+                j = j + 1
+            Loop
             If dRow(6) = 5156 Then
                 dRow(6) = dRow(6) 'test
             End If
-            ws(6).Cells(dRow(6), 10 + j + 7) = ws(3).Cells(dRow(3), 6)                  'Speed_limit
-            ws(6).Cells(dRow(6), 10 + j + 8) = ws(4).Cells(dRow(4), 6)                  'Num_Lanes
-            ws(6).Cells(dRow(6), 10 + j + 9) = ws(5).Cells(dRow(5), 6)                  'Urban_Rural
-            ws(6).Cells(dRow(6), 10 + j + 10) = ws(5).Cells(dRow(5), 7)                 'Urban_Ru_1
+            ws(6).Cells(dRow(6), 10 + j + 1) = ws(3).Cells(dRow(3), 6)                  'Speed_limit
+            ws(6).Cells(dRow(6), 10 + j + 2) = ws(4).Cells(dRow(4), 6)                  'Num_Lanes
+            ws(6).Cells(dRow(6), 10 + j + 3) = ws(5).Cells(dRow(5), 6)                  'Urban_Rural
+            ws(6).Cells(dRow(6), 10 + j + 4) = ws(5).Cells(dRow(5), 7)                 'Urban_Ru_1
         End If
         
         'Cycle through 5 datasets to find end milepoint for each data row.
@@ -1362,22 +1380,26 @@ If Sheets("Inputs").Cells(2, 16) = "RSAM" Then
 ElseIf Sheets("Inputs").Cells(2, 16) = "CAMS" Then
     Dim j As Integer, i As Integer
     j = 0 'counter
-    Do While Left(Sheets("AADT").Cells(1, 8 + j), 4) = "AADT"
+    'Do While Left(Sheets("AADT").Cells(1, 8 + j), 4) = "AADT"
+    '    j = j + 1
+    'Loop
+    Do Until Sheets("AADT").Cells(1, 8 + j) = ""         'the old way of doing this was just too redundant. If we need to change this, we can.
         j = j + 1
     Loop
+    
     For i = 0 To j
-        Cells(1, 11 + i) = "AADT_" & 2010 + j - 1 - i
+        Cells(1, 11 + i) = Sheets("AADT").Cells(1, 8 + i)
     Next i
-    Cells(1, 10 + j + 1) = "Single_Percent"
-    Cells(1, 10 + j + 2) = "Combo_Percent"
-    Cells(1, 10 + j + 3) = "Single_Count"
-    Cells(1, 10 + j + 4) = "Combo_Count"
-    Cells(1, 10 + j + 5) = "Total_Percent"
-    Cells(1, 10 + j + 6) = "Total_Count"
-    Cells(1, 10 + j + 7) = "SPEED_LIMIT"
-    Cells(1, 10 + j + 8) = "Num_Lanes"
-    Cells(1, 10 + j + 9) = "Urban_Rural"
-    Cells(1, 10 + j + 10) = "Urban_Ru_1"
+    'Cells(1, 10 + j + 1) = "Single_Percent"
+    'Cells(1, 10 + j + 2) = "Combo_Percent"
+    'Cells(1, 10 + j + 3) = "Single_Count"
+    'Cells(1, 10 + j + 4) = "Combo_Count"
+    'Cells(1, 10 + j + 5) = "Total_Percent"
+    'Cells(1, 10 + j + 6) = "Total_Count"
+    Cells(1, 10 + j + 1) = "SPEED_LIMIT"
+    Cells(1, 10 + j + 2) = "Num_Lanes"
+    Cells(1, 10 + j + 3) = "Urban_Rural"
+    Cells(1, 10 + j + 4) = "Urban_Ru_1"
 End If
 
 End Sub
@@ -1541,6 +1563,9 @@ SegRow = 2
 Do
     Length = Cells(SegRow, 3) - Cells(SegRow, 2)
     Cells(SegRow, 4) = Length
+    If Length = 0 Then
+        Cells(SegRow, 4).EntireRow.Delete
+    End If
     SegRow = SegRow + 1
 Loop While Cells(SegRow, 3) <> ""
 

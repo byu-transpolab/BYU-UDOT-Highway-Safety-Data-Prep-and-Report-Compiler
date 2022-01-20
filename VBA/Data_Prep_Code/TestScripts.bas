@@ -10,12 +10,12 @@ Dim rscript As String, rcode As String, bawd As String, niter As Long, nburn As 
 Dim cmdLine As String
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 rscript = Workbooks(guiwb).Sheets("Inputs").Range("F3")
 bawd = Workbooks(guiwb).Sheets("Inputs").Range("F2")
 rcode = Workbooks(guiwb).Sheets("Inputs").Range("F11")
-bawd = bawd & "/" & "BAanalysis_" & replace(Date, "/", "-") & "_" & replace(replace(Time, ":", "-"), " ", "_") ' & "/"
+bawd = bawd & "/" & "BAanalysis_" & Replace(Date, "/", "-") & "_" & Replace(Replace(Time, ":", "-"), " ", "_") ' & "/"
 MkDir bawd
 niter = Workbooks(guiwb).Sheets("Inputs").Range("F9")
 nburn = Workbooks(guiwb).Sheets("Inputs").Range("F10")
@@ -620,7 +620,7 @@ Do While Sheets(datasheet).Cells(IntRow, 1) <> ""
         LatDiff = Abs(CrashLat - IntLat) * LatFtEquiv
         LongDiff = Abs(CrashLong - IntLong) * LongFtEquiv
         DiffRadius = Sqr(LatDiff ^ 2 + LongDiff ^ 2)
-        CrashYear = Year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
+        CrashYear = year(Sheets(CrashSheet).Cells(CrashRow, CrashDateCol))
         
         If DiffRadius < IntRadius And (Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(1) Or _
         Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(2) Or Sheets(CrashSheet).Cells(CrashRow, CrashSeverityCol) = Sevs(3) Or _
@@ -969,12 +969,12 @@ Dim rscript As String, rcode As String, ucpmwb As String, niter As Long, nburn A
 Dim cmdLine As String
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 rscript = Workbooks(guiwb).Sheets("Inputs").Range("B3")
 modelwd = Workbooks(guiwb).Sheets("Inputs").Range("B2")
 rcode = Workbooks(guiwb).Sheets("Inputs").Range("B9")
-modelwd = modelwd & "/" & "CrashAnalysis_" & replace(Date, "/", "-") & "_" & replace(replace(Time, ":", "-"), " ", "_")
+modelwd = modelwd & "/" & "CrashAnalysis_" & Replace(Date, "/", "-") & "_" & Replace(Replace(Time, ":", "-"), " ", "_")
 MkDir modelwd
 niter = Workbooks(guiwb).Sheets("Inputs").Range("B7")
 nburn = Workbooks(guiwb).Sheets("Inputs").Range("B8")

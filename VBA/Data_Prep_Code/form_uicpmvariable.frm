@@ -118,7 +118,7 @@ Dim xsnum As String
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 usercheck = MsgBox("Are you sure you are ready to begin the Statistical Analysis?", vbYesNo, "Ready?")
 
@@ -137,8 +137,8 @@ Else
         For itemIndex = .ListCount - 1 To 0 Step -1
             xsnum = Left(.List(itemIndex), InStr(1, .List(itemIndex), "-") - 1)
             xs = xs & "," & xsnum
-            xs = replace(xs, " ", "")
-            xs = replace(xs, "(,", "(")
+            xs = Replace(xs, " ", "")
+            xs = Replace(xs, "(,", "(")
         Next itemIndex
     End With
     xs = xs & ")"
@@ -149,7 +149,7 @@ Workbooks(guiwb).Sheets("Inputs").Range("I11") = xs
 rscript = Workbooks(guiwb).Sheets("Inputs").Range("I3")
 modelwd = Workbooks(guiwb).Sheets("Inputs").Range("I2")
 rcode = Workbooks(guiwb).Sheets("Inputs").Range("I9")
-modelwd = modelwd & "/" & "CrashAnalysis_" & replace(Date, "/", "-") & "_" & replace(replace(Time, ":", "-"), " ", "_")
+modelwd = modelwd & "/" & "CrashAnalysis_" & Replace(Date, "/", "-") & "_" & Replace(Replace(Time, ":", "-"), " ", "_")
 MkDir modelwd
 niter = Workbooks(guiwb).Sheets("Inputs").Range("I7")
 nburn = Workbooks(guiwb).Sheets("Inputs").Range("I8")
@@ -186,7 +186,7 @@ Dim FilePath As Variant
 Dim inputfile As String
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 Dim i As Integer
 
 Dim wdFP As String
@@ -204,7 +204,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -220,13 +220,13 @@ If FilePath = False Then
     txt_inputfilepath = ""
     
 Else
-    txt_inputfilepath = replace(FilePath, "\", "/")
+    txt_inputfilepath = Replace(FilePath, "\", "/")
     
     Workbooks(guiwb).Sheets("Inputs").Range("I10") = CStr(txt_inputfilepath)
 
-    inputfile = replace(txt_inputfilepath, "\", "/")
+    inputfile = Replace(txt_inputfilepath, "\", "/")
     inputfile = Mid(inputfile, InStr(1, inputfile, "/UICPM"))
-    inputfile = replace(inputfile, "/", "")
+    inputfile = Replace(inputfile, "/", "")
     
     ' Checks if file is open
     If AlreadyOpen(inputfile) Then
@@ -235,9 +235,9 @@ Else
         Workbooks.Open txt_inputfilepath 'Replace(txt_inputfilepath, "\\", "\") 'sPath & sFilename
     End If
     
-    inputfile = replace(inputfile, ".csv", "")
-    inputfile = replace(inputfile, ".xls", "")
-    inputfile = replace(inputfile, ".xlsx", "")
+    inputfile = Replace(inputfile, ".csv", "")
+    inputfile = Replace(inputfile, ".xls", "")
+    inputfile = Replace(inputfile, ".xlsx", "")
     
     ' Copy the headings from the UCPM Input file to the Key sheet
     Workbooks(inputfile).Activate
@@ -267,7 +267,7 @@ Dim n As Integer
 Dim guiwb As String
 
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 lst_modelvariables.Clear
 cmd_startanalysis.Visible = False
@@ -383,7 +383,7 @@ Private Sub cmd_ucpsmrscript_Click()
 Dim FilePath As Variant
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Dim wdFP As String
 Dim row1, col1 As Integer
@@ -400,7 +400,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -416,7 +416,7 @@ If FilePath = False Then
     txt_uicpmrscript = ""
     
 Else
-    txt_uicpmrscript = replace(FilePath, "\", "/")
+    txt_uicpmrscript = Replace(FilePath, "\", "/")
     
 End If
 
@@ -480,7 +480,7 @@ Private Sub txt_burniterations_Change()
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 If txt_burniterations.Value = "" Then
 Else
@@ -501,7 +501,7 @@ Private Sub txt_iterations_Change()
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 If txt_iterations.Value = "" Then
 Else
@@ -519,7 +519,7 @@ Private Sub txt_inputfilepath_Change()
 'Dim i As Integer
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Call checkblank
 
@@ -531,7 +531,7 @@ Private Sub txt_uicpmrscript_Change()
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Call checkblank
 
@@ -587,7 +587,7 @@ Dim inputfile As String
 Dim guiwb As String
 
     guiwb = ActiveWorkbook.Name
-    guiwb = replace(guiwb, ".xlsm", "")
+    guiwb = Replace(guiwb, ".xlsm", "")
     
     txt_inputfilepath = ""
     txt_uicpmrscript = ""
@@ -601,11 +601,11 @@ Dim guiwb As String
     'Checks if file has been created
     If Workbooks(guiwb).Sheets("Inputs").Range("I10") <> "" Then
         txt_inputfilepath = Workbooks(guiwb).Sheets("Inputs").Range("I10")
-        txt_inputfilepath = replace(txt_inputfilepath.Value, "\", "/")
+        txt_inputfilepath = Replace(txt_inputfilepath.Value, "\", "/")
        
-        inputfile = replace(txt_inputfilepath, "\", "/")
+        inputfile = Replace(txt_inputfilepath, "\", "/")
         inputfile = Mid(inputfile, InStr(1, inputfile, "/UICPM"))
-        inputfile = replace(inputfile, "/", "")
+        inputfile = Replace(inputfile, "/", "")
  
         ' Checks if file is open
         If AlreadyOpen(inputfile) Then
@@ -614,9 +614,9 @@ Dim guiwb As String
             Workbooks.Open txt_inputfilepath 'Replace(txt_inputfilepath, "\\", "\") 'sPath & sFilename
         End If
     
-        inputfile = replace(inputfile, ".csv", "")
-        inputfile = replace(inputfile, ".xls", "")
-        inputfile = replace(inputfile, ".xlsx", "")
+        inputfile = Replace(inputfile, ".csv", "")
+        inputfile = Replace(inputfile, ".xls", "")
+        inputfile = Replace(inputfile, ".xlsx", "")
     
         ' Copy the headings from the UCPM Input file to the Key sheet
         Workbooks(inputfile).Activate
@@ -632,7 +632,7 @@ Dim guiwb As String
        Workbooks(guiwb).Sheets("Home").Activate
     
        If Workbooks(guiwb).Sheets("Inputs").Range("I10") = "" Then
-           Workbooks(guiwb).Sheets("Inputs").Range("I10") = replace(txt_inputfilepath, "\", "/")
+           Workbooks(guiwb).Sheets("Inputs").Range("I10") = Replace(txt_inputfilepath, "\", "/")
        End If
  
     End If

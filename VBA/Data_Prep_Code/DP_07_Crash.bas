@@ -119,7 +119,7 @@ Loop
 'Find max and min years
 numrow = 2
 Do Until Cells(numrow, 1) = ""
-    rowYear = Year(Cells(numrow, idatetime).Value)
+    rowYear = year(Cells(numrow, idatetime).Value)
     If minyear = 0 And maxyear = 0 Then
         minyear = rowYear
         maxyear = rowYear
@@ -661,7 +661,7 @@ Do
     ramp = Sheets("Rollup").Cells(nrow, iramp)                        'Assign ramp number, if any, to ramp
     Direction = Sheets("Rollup").Cells(nrow, idir)
     
-    If Route = "089A" Then      'Corrects strange route ID. 089A previously called SR-11.
+    If Route = "089A" Or Route = "89A" Then      'Corrects strange route ID. 089A previously called SR-11.
         Route = "0011"          'Change route to 0011 for the purpose of this process.
     End If
     

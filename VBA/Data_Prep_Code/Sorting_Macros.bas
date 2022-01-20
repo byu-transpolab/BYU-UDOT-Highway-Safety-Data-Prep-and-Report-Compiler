@@ -789,7 +789,7 @@ Public Sub Find_Replace(find As Variant, repl As Variant, col As Integer, sname 
     '    row = row + 1
     'Loop
     
-    Sheets(sname).Columns(col).replace What:=find, Replacement:=repl, LookAt:=xlPart, _
+    Sheets(sname).Columns(col).Replace What:=find, Replacement:=repl, LookAt:=xlPart, _
         SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
         ReplaceFormat:=False
         
@@ -801,7 +801,7 @@ Public Sub Sort_Crashes(SheetName As String)
     'Sorts the data by the first column, Crash_ID
     Dim row1, col1, col2 As Long
     col2 = 1
-    Do Until replace(LCase(Sheets(SheetName).Cells(1, col2)), " ", "_") = "crash_id"
+    Do Until Replace(LCase(Sheets(SheetName).Cells(1, col2)), " ", "_") = "crash_id"
         col2 = col2 + 1
     Loop
     row1 = Sheets(SheetName).Cells(1, col2).End(xlDown).row
@@ -828,10 +828,10 @@ Public Sub Sort_Vehicles(SheetName As String)
     Dim row1, col1, col2, col3 As Long
     col2 = 1
     col3 = 1
-    Do Until replace(LCase(Sheets(SheetName).Cells(1, col2)), " ", "_") = "crash_id"
+    Do Until Replace(LCase(Sheets(SheetName).Cells(1, col2)), " ", "_") = "crash_id"
         col2 = col2 + 1
     Loop
-    Do Until replace(LCase(Sheets(SheetName).Cells(1, col3)), " ", "_") = "vehicle_detail_id" Or replace(LCase(Sheets(SheetName).Cells(1, col3)), " ", "_") = "vehicle_type"
+    Do Until Replace(LCase(Sheets(SheetName).Cells(1, col3)), " ", "_") = "vehicle_detail_id" Or Replace(LCase(Sheets(SheetName).Cells(1, col3)), " ", "_") = "vehicle_type"
         col3 = col3 + 1
     Loop
     row1 = Sheets(SheetName).Cells(1, col2).End(xlDown).row
@@ -1015,6 +1015,6 @@ Dim xMin As Double
 xMin = Application.WorksheetFunction.Small(WorkRng, 1) - 1
 WorkRng.SpecialCells(xlCellTypeBlanks) = xMin
 WorkRng.Sort , Key1:=Cells(1, rampcol), Order1:=xlAscending, header:=xlNo, OrderCustom:=1, MatchCase:=False, Orientation:=xlTopToBottom, DataOption1:=xlSortNormal
-WorkRng.replace What:=xMin, Replacement:="", LookAt:=xlWhole
+WorkRng.Replace What:=xMin, Replacement:="", LookAt:=xlWhole
 End Sub
 

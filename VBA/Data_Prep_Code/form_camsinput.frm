@@ -53,7 +53,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -68,7 +68,7 @@ End With
 If FilePath = False Then
     txt_camscrashfilepath = ""
 Else
-    txt_camscrashfilepath = replace(FilePath, "\", "/")
+    txt_camscrashfilepath = Replace(FilePath, "\", "/")
     
 End If
 
@@ -94,7 +94,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -109,7 +109,7 @@ End With
 If FilePath = False Then
     txt_camsrdwyfilepath = ""
 Else
-    txt_camsrdwyfilepath = replace(FilePath, "\", "/")
+    txt_camsrdwyfilepath = Replace(FilePath, "\", "/")
 End If
 
 Call camscheckblanks
@@ -178,8 +178,8 @@ If chbx_camsseverity5 = True Then
 End If
 
 'print inputs to workbook for future information
-ActiveWorkbook.Sheets("Inputs").Range("M5").Value = replace(txt_camsrdwyfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("M6").Value = replace(txt_camscrashfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("M5").Value = Replace(txt_camsrdwyfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("M6").Value = Replace(txt_camscrashfilepath, "\", "/")
 ActiveWorkbook.Sheets("Inputs").Range("M31").Value = txtCAMSminyr & "-" & txtCAMSmaxyr
 ActiveWorkbook.Sheets("Inputs").Range("M32").Value = severitylist
 

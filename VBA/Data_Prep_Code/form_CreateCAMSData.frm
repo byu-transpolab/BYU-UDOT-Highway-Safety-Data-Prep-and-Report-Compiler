@@ -35,7 +35,7 @@ End With
 If FilePath = False Then
     txt_crashdata = ""
 Else
-    txt_crashdata = replace(FilePath, "\", "/")
+    txt_crashdata = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -60,7 +60,7 @@ End With
 If FilePath = False Then
     txt_crashlocation = ""
 Else
-    txt_crashlocation = replace(FilePath, "\", "/")
+    txt_crashlocation = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -86,7 +86,7 @@ End With
 If FilePath = False Then
     txt_crashrollup = ""
 Else
-    txt_crashrollup = replace(FilePath, "\", "/")
+    txt_crashrollup = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -112,7 +112,7 @@ End With
 If FilePath = False Then
     txt_crashvehicle = ""
 Else
-    txt_crashvehicle = replace(FilePath, "\", "/")
+    txt_crashvehicle = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -138,7 +138,7 @@ End With
 If FilePath = False Then
     txt_intersection = ""
 Else
-    txt_intersection = replace(FilePath, "\", "/")
+    txt_intersection = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -164,7 +164,7 @@ End With
 If FilePath = False Then
     txt_crashspeedlimit = ""
 Else
-    txt_crashspeedlimit = replace(FilePath, "\", "/")
+    txt_crashspeedlimit = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -190,7 +190,7 @@ End With
 If FilePath = False Then
     txt_pavement = ""
 Else
-    txt_pavement = replace(FilePath, "\", "/")
+    txt_pavement = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -216,7 +216,7 @@ End With
 If FilePath = False Then
     txtAADT = ""
 Else
-    txtAADT = replace(FilePath, "\", "/")
+    txtAADT = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -490,12 +490,12 @@ Application.ScreenUpdating = False
 
 'Save combined crash data file
 Sheets("Combined_Crash").Move
-ccname = wd & "/CAMSCrash" & "_by" & Left(Workbooks(guiwb).Sheets("Inputs").Cells(14, 13).Value, 5) & "from" & Workbooks(guiwb).Sheets("Inputs").Cells(15, 13).Value & "_" & Left(replace(Date, "/", "-"), Len(replace(Date, "/", "-")) - 5) & "_" & Left(replace(Time, ":", "-"), Len(replace(Time, ":", "-")) - 6) & Right(replace(Time, ":", "-"), 2) & ".csv"
-ccname = replace(ccname, " ", "_")
-ccname = replace(ccname, "/", "\")
+ccname = wd & "/CAMSCrash" & "_by" & Left(Workbooks(guiwb).Sheets("Inputs").Cells(14, 13).Value, 5) & "from" & Workbooks(guiwb).Sheets("Inputs").Cells(15, 13).Value & "_" & Left(Replace(Date, "/", "-"), Len(Replace(Date, "/", "-")) - 5) & "_" & Left(Replace(Time, ":", "-"), Len(Replace(Time, ":", "-")) - 6) & Right(Replace(Time, ":", "-"), 2) & ".csv"
+ccname = Replace(ccname, " ", "_")
+ccname = Replace(ccname, "/", "\")
 Application.DisplayAlerts = False
 ActiveWorkbook.SaveAs FileName:=ccname, FileFormat:=xlCSV
-Workbooks(guiwb).Sheets("Inputs").Range("M6").Value = replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
+Workbooks(guiwb).Sheets("Inputs").Range("M6").Value = Replace(ActiveWorkbook.path & "\" & ActiveWorkbook.Name, "\", "/")
 ActiveWorkbook.Close
 Application.DisplayAlerts = True
 
@@ -760,7 +760,7 @@ End With
 If FilePath = False Then
     txtData = ""
 Else
-    txtData = replace(FilePath, "\", "/")
+    txtData = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -786,7 +786,7 @@ End With
 If FilePath = False Then
     txtIntersections = ""
 Else
-    txtIntersections = replace(FilePath, "\", "/")
+    txtIntersections = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -810,7 +810,7 @@ End With
 If FilePath = False Then
     txtFC = ""
 Else
-    txtFC = replace(FilePath, "\", "/")
+    txtFC = Replace(FilePath, "\", "/")
 End If
 
 End Sub
@@ -841,7 +841,7 @@ End With
 If FilePath = False Then
     txtLanes = ""
 Else
-    txtLanes = replace(FilePath, "\", "/")
+    txtLanes = Replace(FilePath, "\", "/")
 End If
 End Sub
 
@@ -865,7 +865,7 @@ End With
 If FilePath = False Then
     txtSL = ""
 Else
-    txtSL = replace(FilePath, "\", "/")
+    txtSL = Replace(FilePath, "\", "/")
 End If
 End Sub
 
@@ -889,7 +889,7 @@ End With
 If FilePath = False Then
     txtUC = ""
 Else
-    txtUC = replace(FilePath, "\", "/")
+    txtUC = Replace(FilePath, "\", "/")
 End If
 End Sub
 

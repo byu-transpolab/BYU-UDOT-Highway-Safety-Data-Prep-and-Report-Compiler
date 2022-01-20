@@ -60,14 +60,14 @@ End Sub
 
 Private Sub txt_crashfilepath_Change()
 
-    ActiveWorkbook.Sheets("Inputs").Range("B6").Value = replace(txt_crashfilepath, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("B6").Value = Replace(txt_crashfilepath, "\", "/")
     
     Call checkblanks
 End Sub
 
 Private Sub txt_segmentfilepath_Change()
     
-    ActiveWorkbook.Sheets("Inputs").Range("B5").Value = replace(txt_segmentfilepath, "\", "/")
+    ActiveWorkbook.Sheets("Inputs").Range("B5").Value = Replace(txt_segmentfilepath, "\", "/")
     
     Call checkblanks
 End Sub
@@ -98,7 +98,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -113,7 +113,7 @@ End With
 If FilePath = False Then
     txt_intcrashfilepath = ""
 Else
-    txt_intcrashfilepath = replace(FilePath, "\", "/")
+    txt_intcrashfilepath = Replace(FilePath, "\", "/")
     
 End If
 
@@ -167,8 +167,8 @@ If chbx_intseverity5 = True Then
 End If
 
 'print inputs to workbook for future information
-ActiveWorkbook.Sheets("Inputs").Range("I5").Value = replace(intfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("I6").Value = replace(intcrashfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I5").Value = Replace(intfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("I6").Value = Replace(intcrashfilepath, "\", "/")
 ActiveWorkbook.Sheets("Inputs").Range("I12").Value = severitylist
 ActiveWorkbook.Sheets("Inputs").Range("I16").Value = cbx_Variable.Value
 
@@ -208,7 +208,7 @@ Loop
 col1 = col1 + 1
 
 'Assign working directory file path
-wdFP = replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
+wdFP = Replace(Sheets("Inputs").Cells(row1, col1), "/", "\")
 
 ' Obtain the file path from the pop-up window
 With Application.FileDialog(msoFileDialogFilePicker)
@@ -223,7 +223,7 @@ End With
 If FilePath = False Then
     txt_intfilepath = ""
 Else
-    txt_intfilepath = replace(FilePath, "\", "/")
+    txt_intfilepath = Replace(FilePath, "\", "/")
 End If
 
 End Sub

@@ -27,7 +27,7 @@ Dim inputfile As String
 Dim guiwb As String
 
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 ' Obtain the file path from the pop-up window
     'MsgBox "Select the Before After Statistical R Code", vbOKOnly, "Select Before After Statistical R Code"
@@ -39,8 +39,8 @@ guiwb = replace(guiwb, ".xlsm", "")
         MsgBox "Cannot proceed without Before After Statical R Code."
         Exit Sub
     Else
-        txt_bacodefilepath = replace(FilePath, "\", "/")
-        Workbooks(guiwb).Sheets("Inputs").Range("F11").Value = replace(txt_bacodefilepath, "\", "/")
+        txt_bacodefilepath = Replace(FilePath, "\", "/")
+        Workbooks(guiwb).Sheets("Inputs").Range("F11").Value = Replace(txt_bacodefilepath, "\", "/")
     End If
 
 End Sub
@@ -58,7 +58,7 @@ Dim inputfile As String
 Dim guiwb As String
 
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 ' Obtain the file path from the pop-up window
     'MsgBox "Select the BAinput .csv file", vbOKOnly, "Select BAinput file"
@@ -70,8 +70,8 @@ guiwb = replace(guiwb, ".xlsm", "")
         'MsgBox "Cannot proceed without BA Input file."
         Exit Sub
     Else
-        txt_bainput = replace(FilePath, "\", "/")
-        Workbooks(guiwb).Sheets("Inputs").Range("F8").Value = replace(txt_bainput, "\", "/")
+        txt_bainput = Replace(FilePath, "\", "/")
+        Workbooks(guiwb).Sheets("Inputs").Range("F8").Value = Replace(txt_bainput, "\", "/")
     End If
 
 End Sub
@@ -92,7 +92,7 @@ Dim xsnum As String
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 usercheck = MsgBox("Are you sure you are ready to begin the Before After Analysis?", vbYesNo, "Ready?")
 
@@ -105,7 +105,7 @@ End If
 rscript = Workbooks(guiwb).Sheets("Inputs").Range("F3")
 bawd = Workbooks(guiwb).Sheets("Inputs").Range("F2")
 rcode = Workbooks(guiwb).Sheets("Inputs").Range("F11")
-bawd = bawd & "/" & "BAanalysis_" & replace(Date, "/", "-") & "_" & replace(replace(Time, ":", "-"), " ", "_") ' & "/"
+bawd = bawd & "/" & "BAanalysis_" & Replace(Date, "/", "-") & "_" & Replace(Replace(Time, ":", "-"), " ", "_") ' & "/"
 MkDir bawd
 niter = Workbooks(guiwb).Sheets("Inputs").Range("F9")
 nburn = Workbooks(guiwb).Sheets("Inputs").Range("F10")
@@ -125,7 +125,7 @@ Private Sub txt_baburniterations_Change()
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 If txt_baburniterations = "" Then
 Else
@@ -144,7 +144,7 @@ End Sub
 Private Sub txt_bacodefilepath_Change()
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Workbooks(guiwb).Sheets("Inputs").Range("F11") = txt_bacodefilepath
 Call checkBAblanks
@@ -154,7 +154,7 @@ End Sub
 Private Sub txt_bainput_Change()
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 If txt_bainput.Value <> Workbooks(guiwb).Sheets("Inputs").Range("F8") Then
     Workbooks(guiwb).Sheets("Inputs").Range("F8") = txt_bainput
@@ -180,7 +180,7 @@ Private Sub txt_baiterations_Change()
 
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 If txt_baiterations.Value = "" Then
 Else
@@ -207,7 +207,7 @@ Dim inputfile As String
 Dim guiwb As String
 
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 txt_bainput.Value = ""
 txt_bacodefilepath.Value = Workbooks(guiwb).Sheets("Inputs").Range("F8")
@@ -215,7 +215,7 @@ txt_bacodefilepath.Value = Workbooks(guiwb).Sheets("Inputs").Range("F8")
 cmd_startBA.Visible = False
 
 If Workbooks(guiwb).Sheets("Inputs").Range("F8").Value <> "" Then
-    txt_bainput = replace(Workbooks(guiwb).Sheets("Inputs").Range("F8").Value, "\", "/")
+    txt_bainput = Replace(Workbooks(guiwb).Sheets("Inputs").Range("F8").Value, "\", "/")
 Else
     ' Obtain the file path from the pop-up window
     ''MsgBox "Select the BAinput .csv file", vbOKOnly, "Select BAinput file"

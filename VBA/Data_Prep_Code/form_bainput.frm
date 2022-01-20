@@ -86,9 +86,9 @@ aadtfilepath = txt_aadtfilepath
 crashfilepath = txt_crashfilepath
 
 'print inputs to workbook for future information
-ActiveWorkbook.Sheets("Inputs").Range("F5").Value = replace(txt_analysisfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F6").Value = replace(txt_aadtfilepath, "\", "/")
-ActiveWorkbook.Sheets("Inputs").Range("F7").Value = replace(txt_crashfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F5").Value = Replace(txt_analysisfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F6").Value = Replace(txt_aadtfilepath, "\", "/")
+ActiveWorkbook.Sheets("Inputs").Range("F7").Value = Replace(txt_crashfilepath, "\", "/")
 
 'hide user form
 form_bainput.Hide
@@ -101,7 +101,7 @@ End Sub
 Private Sub txt_aadtfilepath_Change()
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Workbooks(guiwb).Sheets("Inputs").Range("F6") = txt_aadtfilepath.Value
 Call checkBAblanks
@@ -111,7 +111,7 @@ End Sub
 Private Sub txt_analysisfilepath_Change()
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Workbooks(guiwb).Sheets("Inputs").Range("F5") = txt_analysisfilepath.Value
 Call checkBAblanks
@@ -121,7 +121,7 @@ End Sub
 Private Sub txt_crashfilepath_Change()
 Dim guiwb As String
 guiwb = ActiveWorkbook.Name
-guiwb = replace(guiwb, ".xlsm", "")
+guiwb = Replace(guiwb, ".xlsm", "")
 
 Workbooks(guiwb).Sheets("Inputs").Range("F7") = txt_crashfilepath.Value
 Call checkBAblanks

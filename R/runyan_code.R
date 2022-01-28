@@ -8,7 +8,7 @@ if (!require("pacman")) install.packages("pacman")
 
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse, readxl, sf)
+pacman::p_load(magrittr, pacman, tidyverse, readxl, sf, zoo)
 
 
 
@@ -267,5 +267,11 @@ df$Total_Count[df$Total_Count == 0] <- NA
 
 # Group by segment id and search for NAs in AADT or Total_Percent Columns
 df %>%
-  group_by(SEG_ID)
-
+  group_by(SEG_ID)%>%
+  fill(AADT:Total_Percent, -Single_Count, -Combo_Count, .direction = "up") %>%
+  mutate(
+    Single_Count = AADT * Single_Percent,
+    Combo_Count = AADT * Combo_Percent,
+    Total_Count = AADT * Total_Percent
+  ) #%>%
+  #filter(is.na(AADT))

@@ -351,35 +351,58 @@ Sub Fix_Int_AADT()
 'Define Variables
 Dim n As Double             'Row counter
 Dim ising As Integer        'Column counter, to find the column with the "Single_Percent" data
+Dim icomb As Integer
+Dim nyears As Integer
 Dim singp As Double         'value for Single_Percent
 Dim combp As Double         'value for Combo_Percent
 Dim singc As Double         'value for Single_Count
 Dim combc As Double         'value for Combo_Count
 Dim g As Integer            'Column Counter, to find the last filled column
+Dim a As Integer            'Year counter
+Dim i As Integer
+Dim year As String
 
 
 'Find the last filled column
 g = Range("A1").End(xlToRight).Column + 1
 
-'Find the column with "Single_Percent", which will be used as a reference point
+'Find the first column with "Single_Percent", which will be used as a reference point
 ising = 1
-Do Until Cells(1, ising) = "Single_Percent"
+Do Until Right(Cells(1, ising), 14) = "Single_Percent"
     ising = ising + 1
-    Cells(1, ising).Activate
 Loop
+
+'Find the first column with "Combo_Percent", which will be used as a reference point
+icomb = 1
+Do Until Right(Cells(1, icomb), 13) = "Combo_Percent"
+    icomb = icomb + 1
+Loop
+
+'Count number of years
+nyears = 1
+Do Until Sheets("Key").Cells(nyears, 2) = ""
+    nyears = nyears + 1
+Loop
+nyears = nyears - 1
 
 'Creates new column headers
-Cells(1, g) = "Total_Percent_Trucks"
+a = 0
+For i = nyears To 1 Step -1
+    year = Sheets("Key").Cells(i, 2)
+    Cells(1, g + a) = year + "_Total_Percent_Trucks"
+    a = a + 1
+Next i
 
-'For each row, calculates the Total Percent Trucks and Total Count Trucks
-n = 2
-Do Until Cells(n, ising) = ""
-    singp = Cells(n, ising)
-    combp = Cells(n, ising + 1)
-    Cells(n, g) = singp + combp
-    n = n + 1
-Loop
-Application.CutCopyMode = False
+'For each row, calculates the Total Percent Trucks
+For i = 0 To nyears - 1
+    n = 2
+    Do Until Cells(n, 1) = ""
+        singp = Cells(n, ising + i)
+        combp = Cells(n, icomb + i)
+        Cells(n, g + i) = singp + combp
+        n = n + 1
+    Loop
+Next i
 
 End Sub
 

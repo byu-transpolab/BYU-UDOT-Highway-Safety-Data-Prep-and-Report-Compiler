@@ -699,9 +699,10 @@ Dim AADTCountyCol, AADTRegionCol As Integer         'AADT County and Region colu
 
 Dim EntVehCol1 As Integer
 Dim AADTRouteCol, AADTMPCol1, AADTMPCol2 As Integer       'AADT route column, beginning milepoint column, and ending milepoint column
-Dim AADTCol, STrkPercCol, CTrkPercCol, PercTrkCol As Long
+Dim AADTCol, STrkPercCol, CTrkPercCol, TTrkPercCol, PercTrkCol As Long
 Dim CountyCol, RegionCol As Integer
-Dim TotTrkPerc As Double
+Dim year As String
+Dim nyears As Integer
 
 Dim MP As Double
 Dim datasheet, AADTSheet As String
@@ -738,6 +739,8 @@ AADTCol = 1
 PercTrkCol = 1
 STrkPercCol = 1
 CTrkPercCol = 1
+TTrkPercCol = 1
+CountyCol = 1
 
 TControlCol = 1
 
@@ -804,12 +807,16 @@ Do Until InStr(1, Sheets(AADTSheet).Cells(1, AADTCol), "AADT") > 0
     AADTCol = AADTCol + 1
 Loop
 
-Do Until Sheets(AADTSheet).Cells(1, STrkPercCol) = "Single_Percent"
+Do Until Right(Sheets(AADTSheet).Cells(1, STrkPercCol), 14) = "Single_Percent"
     STrkPercCol = STrkPercCol + 1
 Loop
 
-Do Until Sheets(AADTSheet).Cells(1, CTrkPercCol) = "Combo_Percent"
+Do Until Right(Sheets(AADTSheet).Cells(1, CTrkPercCol), 13) = "Combo_Percent"
     CTrkPercCol = CTrkPercCol + 1
+Loop
+
+Do Until Right(Sheets(AADTSheet).Cells(1, CTrkPercCol), 20) = "Total_Percent_Trucks"
+    TTrkPercCol = TTrkPercCol + 1
 Loop
 
 Do Until Sheets(AADTSheet).Cells(1, AADTCountyCol) = "COUNTY"
@@ -825,18 +832,34 @@ Do Until Sheets("Dataset").Cells(1, TControlCol) = "TRAFFIC_CO"
 Loop
 
 'Add percent trucks heading
+nyears = 1
+Do Until Sheets("Key").Cells(nyears, 2) = ""
+    nyears = nyears + 1
+Loop
+nyears = nyears - 1
+
 Do Until Sheets(datasheet).Cells(1, PercTrkCol) = ""
     PercTrkCol = PercTrkCol + 1
 Loop
-CountyCol = PercTrkCol + 1
-RegionCol = PercTrkCol + 2
 
-Sheets(datasheet).Cells(1, PercTrkCol) = "PERCENT_TRUCKS"
+col1 = 0
+For i = nyears To 1 Step -1
+    year = Sheets("Key").Cells(i, 2)
+    Sheets(datasheet).Cells(1, PercTrkCol + col1) = year + "_Percent_Trucks"
+    col1 = col1 + 1
+Next i
+
+
+Do Until Sheets(datasheet).Cells(1, CountyCol) = ""
+    CountyCol = CountyCol + 1
+Loop
+RegionCol = CountyCol + 1
+
 Sheets(datasheet).Cells(1, CountyCol) = "COUNTY"
 Sheets(datasheet).Cells(1, RegionCol) = "REGION"
 
 'Add in entering vehicle column headings
-EntVehCol1 = PercTrkCol + 3
+EntVehCol1 = CountyCol + 2
 col1 = EntVehCol1
 col2 = AADTCol
 Do Until InStr(1, Sheets(AADTSheet).Cells(1, col2), "AADT") < 1       'finds the last column of AADT data
@@ -854,6 +877,7 @@ Sheets(datasheet).Cells(1, NumLegsCol) = "NUM_LEGS"
 
 NumAADTYears = col2 - AADTCol
 ReDim AADT(1 To NumAADTYears)
+ReDim TotTrkPerc(1 To nyears) As Double
 
 
 For j = 0 To 4
@@ -949,7 +973,9 @@ For j = 0 To 4
                 For i = 0 To NumAADTYears - 1
                     AADT(i + 1) = Sheets(AADTSheet).Cells(row2, AADTCol + i)
                 Next i
-                TotTrkPerc = Sheets(AADTSheet).Cells(row2, STrkPercCol) + Sheets(AADTSheet).Cells(row2, CTrkPercCol)
+                For i = 1 To nyears
+                    TotTrkPerc(i) = Sheets(AADTSheet).Cells(row2, TTrkPercCol + i - 1)
+                Next i
                 EnterData = True
                 NumLegs = 1   'changed from 2 to 1 beccause I was getting NumLegs total = 6, 7, and 8
                 Exit Do
@@ -958,7 +984,9 @@ For j = 0 To 4
                 For i = 0 To NumAADTYears - 1
                     AADT(i + 1) = 0.5 * Sheets(AADTSheet).Cells(row2, AADTCol + i)
                 Next i
-                TotTrkPerc = Sheets(AADTSheet).Cells(row2, STrkPercCol) + Sheets(AADTSheet).Cells(row2, CTrkPercCol)
+                For i = 1 To nyears
+                    TotTrkPerc(i) = Sheets(AADTSheet).Cells(row2, TTrkPercCol + i - 1)
+                Next i
                 EnterData = True
                 NumLegs = 1
                 Exit Do
@@ -968,8 +996,9 @@ For j = 0 To 4
                 For i = 0 To NumAADTYears - 1
                     AADT(i + 1) = 0.5 * (Sheets(AADTSheet).Cells(row2, AADTCol + i) + Sheets(AADTSheet).Cells(row2 + 1, AADTCol + i))
                 Next i
-                TotTrkPerc = 0.5 * (Sheets(AADTSheet).Cells(row2, STrkPercCol) + Sheets(AADTSheet).Cells(row2, CTrkPercCol) + _
-                    Sheets(AADTSheet).Cells(row2 + 1, STrkPercCol) + Sheets(AADTSheet).Cells(row2 + 1, CTrkPercCol))
+                For i = 1 To nyears
+                    TotTrkPerc(i) = 0.5 * (Sheets(AADTSheet).Cells(row2, TTrkPercCol + i - 1) + Sheets(AADTSheet).Cells(row2 + 1, TTrkPercCol + i - 1))
+                Next i
                 EnterData = True
                 NumLegs = 1  'changed from 2 to 1 beccause I was getting NumLegs total = 6, 7, and 8
                 Exit Do
@@ -978,7 +1007,9 @@ For j = 0 To 4
                 For i = 0 To NumAADTYears - 1
                     AADT(i + 1) = 0.5 * Sheets(AADTSheet).Cells(row2, AADTCol + i)
                 Next i
-                TotTrkPerc = Sheets(AADTSheet).Cells(row2, STrkPercCol) + Sheets(AADTSheet).Cells(row2, CTrkPercCol)
+                For i = 1 To nyears
+                    TotTrkPerc(i) = Sheets(AADTSheet).Cells(row2, TTrkPercCol + i - 1)
+                Next i
                 EnterData = True
                 NumLegs = 1
                 Exit Do
@@ -995,10 +1026,14 @@ For j = 0 To 4
             Next i
             
             If Sheets(datasheet).Cells(row1, PercTrkCol) = "" Or Sheets(datasheet).Cells(row1, PercTrkCol) = " " Then
-                Sheets(datasheet).Cells(row1, PercTrkCol) = TotTrkPerc
+                For i = 1 To nyears
+                    Sheets(datasheet).Cells(row1, PercTrkCol + i - 1) = TotTrkPerc(i)
+                Next i
             Else
-                Sheets(datasheet).Cells(row1, PercTrkCol) = ((Sheets(datasheet).Cells(row1, EntVehCol1) * Sheets(datasheet).Cells(row1, PercTrkCol)) + _
-                (TotTrkPerc * AADT(1))) / (AADT(1) + Sheets(datasheet).Cells(row1, EntVehCol1))
+                For i = 1 To nyears
+                    Sheets(datasheet).Cells(row1, PercTrkCol + i - 1) = ((Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1) * Sheets(datasheet).Cells(row1, PercTrkCol + i - 1)) + _
+                    (TotTrkPerc(i) * AADT(i))) / (AADT(i) + Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1))
+                Next i
             End If
             
             If Sheets(datasheet).Cells(row1, CountyCol) = "" Or Sheets(datasheet).Cells(row1, CountyCol) = " " Then

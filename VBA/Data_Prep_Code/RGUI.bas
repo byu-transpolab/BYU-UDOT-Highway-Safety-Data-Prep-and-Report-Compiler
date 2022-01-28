@@ -1541,7 +1541,20 @@ Workbooks(guiwb).Activate
 Call Seg_Check_Headers(2, CrashSheet, guiwb)
 
 'converts the UTM X and Y coordinates in the Crash data to be Lats and Longs
-UTMtoLatLong
+'UTMtoLatLong       FLAGGED: This was messing up the data because it was already lat long.
+Dim utmYCol, utmXCol As Integer
+Dim datasheet As String
+datasheet = "CrashInput"
+utmYCol = 1
+utmXCol = 1
+Do Until Sheets(datasheet).Cells(1, utmYCol) = "UTM_Y"
+    utmYCol = utmYCol + 1
+Loop
+Do Until Sheets(datasheet).Cells(1, utmXCol) = "UTM_X"
+    utmXCol = utmXCol + 1
+Loop
+Sheets(datasheet).Cells(1, utmYCol) = "LATITUDE"
+Sheets(datasheet).Cells(1, utmXCol) = "LONGITUDE"
 
 'assign crashes to segments and years
 SumCAMSbyYear   'this sub based loosely off of SumCrashDatabyYear (both are in module RGUI (this module))
@@ -1879,6 +1892,7 @@ Dim col1 As Long
 Dim MinCYear, MaxCYear, MinIYear, MaxIYear As Integer
 Dim minyear, maxyear As Integer
 Dim StartTime, EndTime As String
+Dim PercTrkCol As Integer
 
 Dim wd As String
 
@@ -1933,9 +1947,15 @@ Do Until Cells(1, MaxEntVehCol) = ""
     End If
 Loop
 
+'Find first percent trucks column
+PercTrkCol = 1
+Do Until Right(Cells(1, PercTrkCol), 14) = "Percent_Trucks"
+    PercTrkCol = PercTrkCol + 1
+Loop
+
 Sheets(uicpmsheet).UsedRange
 
-'Add entering vehicle data for each year
+'Add entering vehicle data and truck data for each year
 row1 = 2
 Do Until Cells(row1, 1) = ""
     Rows(row1 + 1 & ":" & row1 + NumYears - 1).Insert shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
@@ -1943,11 +1963,13 @@ Do Until Cells(row1, 1) = ""
     
     For i = 0 To NumYears - 1
         Cells(row1 + i, MaxEntVehCol) = Cells(row1, MaxEntVehCol + i)
+        Cells(row1 + i, PercTrkCol) = Cells(row1, PercTrkCol + i)
     Next i
     
     row1 = row1 + NumYears
 Loop
 Cells(1, MaxEntVehCol) = "ENT_VEH"
+Cells(1, PercTrkCol) = "Percent_Trucks"
 
 'Enter data years
 row1 = 2
@@ -1958,10 +1980,10 @@ Do Until Cells(row1, 1) = ""
     row1 = row1 + NumYears
 Loop
 
-'Delete ent veh columns
+'Delete uneeded ent veh and Percent_Trucks columns
 col1 = 1
 Do Until Cells(1, col1) = ""
-    If Left(Cells(1, col1), 7) = "ENT_VEH" And Cells(1, col1) <> "ENT_VEH" Then
+    If Left(Cells(1, col1), 7) = "ENT_VEH" And Cells(1, col1) <> "ENT_VEH" Or Right(Cells(1, col1), 14) = "Percent_Trucks" And Cells(1, col1) <> "Percent_Trucks" Then
         Columns(col1).EntireColumn.Delete
     Else
         col1 = col1 + 1
@@ -1969,7 +1991,20 @@ Do Until Cells(1, col1) = ""
 Loop
 
 'Change UTM coordinates to latitude and longitude
-UTMtoLatLong
+'UTMtoLatLong     FLAGGED: We should just do this in R if we need it. This was messing up the data because it was already lat long.
+Dim utmYCol, utmXCol As Integer
+Dim datasheet As String
+datasheet = "CrashInput"
+utmYCol = 1
+utmXCol = 1
+Do Until Sheets(datasheet).Cells(1, utmYCol) = "UTM_Y"
+    utmYCol = utmYCol + 1
+Loop
+Do Until Sheets(datasheet).Cells(1, utmXCol) = "UTM_X"
+    utmXCol = utmXCol + 1
+Loop
+Sheets(datasheet).Cells(1, utmYCol) = "LATITUDE"
+Sheets(datasheet).Cells(1, utmXCol) = "LONGITUDE"
 
 'Sort by latitude and longitude
 LatLongElevSortCrashUICPM

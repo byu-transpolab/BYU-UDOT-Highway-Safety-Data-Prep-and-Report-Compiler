@@ -731,11 +731,11 @@ ElevCol = 1
 datasheet = "CrashInput"
 
 'Find row and column values
-Do Until Sheets(datasheet).Cells(1, latcol) = "LATITUDE"
+Do Until Sheets(datasheet).Cells(1, latcol) = "LATITUDE" Or Sheets(datasheet).Cells(1, latcol) = "UTM_Y"
     latcol = latcol + 1
 Loop
 
-Do Until Sheets(datasheet).Cells(1, longcol) = "LONGITUDE"
+Do Until Sheets(datasheet).Cells(1, longcol) = "LONGITUDE" Or Sheets(datasheet).Cells(1, longcol) = "UTM_X"
     longcol = longcol + 1
 Loop
 

@@ -815,7 +815,7 @@ Do Until Right(Sheets(AADTSheet).Cells(1, CTrkPercCol), 13) = "Combo_Percent"
     CTrkPercCol = CTrkPercCol + 1
 Loop
 
-Do Until Right(Sheets(AADTSheet).Cells(1, CTrkPercCol), 20) = "Total_Percent_Trucks"
+Do Until Right(Sheets(AADTSheet).Cells(1, TTrkPercCol), 20) = "Total_Percent_Trucks"
     TTrkPercCol = TTrkPercCol + 1
 Loop
 
@@ -1029,10 +1029,12 @@ For j = 0 To 4
                 For i = 1 To nyears
                     Sheets(datasheet).Cells(row1, PercTrkCol + i - 1) = TotTrkPerc(i)
                 Next i
-            Else
+            Else                                                                                            'FLAGGED: I have no idea why this is here because it essentially does the same thing as before. I'm worried that this is not relevent anymore since we are using every year of truck data now.
                 For i = 1 To nyears
-                    Sheets(datasheet).Cells(row1, PercTrkCol + i - 1) = ((Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1) * Sheets(datasheet).Cells(row1, PercTrkCol + i - 1)) + _
-                    (TotTrkPerc(i) * AADT(i))) / (AADT(i) + Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1))
+                    If AADT(i) <> 0 And Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1) <> 0 Then
+                        Sheets(datasheet).Cells(row1, PercTrkCol + i - 1) = ((Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1) * Sheets(datasheet).Cells(row1, PercTrkCol + i - 1)) + _
+                        (TotTrkPerc(i) * AADT(i))) / (AADT(i) + Sheets(datasheet).Cells(row1, EntVehCol1 + i - 1))
+                    End If
                 Next i
             End If
             

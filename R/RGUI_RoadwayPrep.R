@@ -16,12 +16,18 @@ check_aadt <- function(df){
 }
 
 # Keeps the following columns from the functional class file
+<<<<<<< Updated upstream
 check_functionalclass <- function(df){
   df %>%
     select(from_measure, 
            to_measure, 
            functional_class, 
            )
+=======
+check_functionalclass <- function(table){
+  table %>%
+    select(from_measure, to_measure, functional_class)
+>>>>>>> Stashed changes
 }
 
 # Keeps the following columns from the intersections file

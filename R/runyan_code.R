@@ -11,7 +11,13 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load(magrittr, pacman, tidyverse, readxl, sf)
 
 
+
+
+
+
+############################################################
 # FILTER CAMS CRASH DATA ###################################
+############################################################
 
 # change route 089A to 0011... There seems to be more to this though
 crash$ROUTE_ID[crash$ROUTE_ID == '089A'] <- 0011
@@ -26,8 +32,9 @@ crash %>%
   
 
 
-
+############################################################
 # Combine Additional Variables to Final Output #############
+############################################################
 # SPATIAL ANALYSIS
 
 #LOAD DATA
@@ -237,4 +244,28 @@ df <- left_join(df, cw, by = c("UDOT_BMP" = "MILEPOINT"))
 #  select(-crosswalk, -MILEPOINT, -geometry) %>%
 #  unique()
 #st_drop_geometry(df)
+
+
+
+
+
+###############################################
+# FIX MISSING AADT AND TRUCK DATA #############
+###############################################
+
+# Read in file
+df <- read_csv("data/CAMSinput.csv",show_col_types = F)
+
+# Convert zeros to NA
+df$AADT[df$AADT == 0] <- NA
+df$Single_Percent[df$Single_Percent == 0] <- NA
+df$Combo_Percent[df$Combo_Percent == 0] <- NA
+df$Single_Count[df$Single_Count == 0] <- NA
+df$Combo_Count[df$Combo_Count == 0] <- NA
+df$Total_Percent[df$Total_Percent == 0] <- NA
+df$Total_Count[df$Total_Count == 0] <- NA
+
+# Group by segment id and search for NAs in AADT or Total_Percent Columns
+df %>%
+  group_by(SEG_ID)
 

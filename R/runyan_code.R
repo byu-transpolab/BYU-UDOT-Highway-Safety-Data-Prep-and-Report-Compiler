@@ -8,7 +8,7 @@ if (!require("pacman")) install.packages("pacman")
 
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse, readxl, sf, zoo)
+pacman::p_load(magrittr, pacman, tidyverse, readxl, sf, zoo, essentials)
 
 
 
@@ -265,11 +265,23 @@ df$Combo_Count[df$Combo_Count == 0] <- NA
 df$Total_Percent[df$Total_Percent == 0] <- NA
 df$Total_Count[df$Total_Count == 0] <- NA
 
+# Fix that dumb "rurall" problem
+df$Urban_Ru_1[df$Urban_Ru_1 == "Rurall"] <- "Rural"
+
 # Group by segment id and search for NAs in AADT or Total_Percent Columns
-df %>%
+test <- df
+test %>%
   group_by(SEG_ID)%>%
-  fill(AADT:Total_Percent, -Single_Count, -Combo_Count, .direction = "up") %>%
+  #fill(AADT:Total_Percent, -Single_Count, -Combo_Count, .direction = "up") %>%
   mutate(
+    New_AADT = case_when(
+      row_number() == 1L ~ AADT,
+      is.na(AADT) & sum(AADT) != rollsum(AADT, k=as.scalar(row_number()), align='left') ~ lead(AADT, n=1L)
+      ),
+    New_Single_Percent = case_when(
+      row_number() == 1L ~ Single_Percent,
+      is.na(Single_Percent) & !is.na(slice_tail()) ~ lag(Single_Percent, n=1L)
+      ),
     Single_Count = AADT * Single_Percent,
     Combo_Count = AADT * Combo_Percent,
     Total_Count = AADT * Total_Percent

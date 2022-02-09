@@ -102,3 +102,17 @@ road <- left_join(,,by='')
 road <- left_join(road,,by='')
 rm("aadt","functional_class","intersections","lanes","pavement_messages","speed_limit")
 ```
+
+```{r Temporary Load Excel GUI Data}
+# The code before this should hopefully get us to this point. In the meanwhile,
+# we can just use the file created by the Excel GUI and modify it as needed.
+CAMS <- read_csv("data/CAMSinput.csv")
+ISAM <- read_csv("data/UICPMinput.csv")
+
+# CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
+sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp")
+sf %>%
+    select(ROUTE_NAME, geometry)
+CAMS <- left_join(CAMS, sf, by = c("Route_Name", "ROUTE_NAME"))
+CAMS <- add_spatial(CAMS, sf)
+```

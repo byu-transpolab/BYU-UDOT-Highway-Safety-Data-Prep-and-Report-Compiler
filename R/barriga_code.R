@@ -31,33 +31,61 @@ aadt_col <- c("START_ACCU",
               "geometry")
 
 fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
-plot(fc)
+# plot(fc)
+fc_col <- c("ROUTE_ID",                          
+            "FROM_MEASU",                             
+            "TO_MEASURE",
+            "FUNCTIONAL_CLASS",                             
+            "RouteDir",                             
+            "RouteType",
+            "geometry")
 
-speed <- read_sf("data/shapefile/UDOT_Speed_Limits_2019.shp")
-plot(speed)
+speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
+# plot(speed)
+speed_col <- c("ROUTE_ID",                         
+               "FROM_MEASU",                         
+               "TO_MEASURE",                         
+               "SPEED_LIMI",
+               "geometry")
 
 lane <- read_sf("data/shapefile/Lanes.shp")
-plot(lane)
+# plot(lane)
 
 urban_small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
-plot(urban_small)
+# plot(urban_small)
+small_col <- c("ROUTE_ID",                         
+               "FROM_MEASURE",                         
+               "TO_MEASURE",                         
+               "SPEED_LIMIT",
+               "geometry")
 
 urban_large <- read_sf("data/shapefile/Urban_Boundaries_Large.shp")
-plot(urban_large)
+# plot(urban_large)
+large_col <- c("OBJECTID",                         
+               "TYPE_",
+               "geometry")
 
 intersection <- read_sf("data/shapefile/Intersections.shp")
-plot(intersection)
+# plot(intersection)
 
 pm <- read_sf("data/shapefile/Pavement_Messages.shp")
-plot(pm)
+# plot(pm)
 
 driveway <- read_sf("data/shapefile/Driveway.shp")
-plot(driveway)
+# plot(driveway)
 
 median <- read_sf("data/shapefile/Medians.shp")
-plot(median)
+# plot(median)
 
 shoulder <- read_sf("data/shapefile/Shoulders.shp")
-plot(shoulder)
+# plot(shoulder)
 
-st_join(aadt, fc,st_overlaps)
+st_join(aadt, fc)
+
+segment_breaks <- function(sdtm) {
+  breaks_df <- sdtm %>% 
+    group_by(ROUTE) %>% 
+    summarize(startpoints = unique(c(START_ACCUM, END_ACCUM))) %>% 
+    arrange(startpoints)
+  return(breaks_df)
+}

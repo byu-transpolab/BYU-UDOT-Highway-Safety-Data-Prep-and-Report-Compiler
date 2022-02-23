@@ -287,3 +287,24 @@ test %>%
     Total_Count = AADT * Total_Percent
   ) #%>%
   #filter(is.na(AADT))
+
+
+
+
+
+###############################################
+# MEDIANS AND SHOULDER WIDTH ##################
+###############################################
+
+# Read in files
+df <- read_csv("data/CAMSinput.csv",show_col_types = F)
+
+medians <- read_sf("data/shapefile/medians.shp") %>%
+  st_transform(crs = 26912) %>%
+  select() %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+
+shoulders <- read_sf("data/shapefile/Shoulders.shp") %>%
+  st_transform(crs = 26912) %>%
+  select() %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)

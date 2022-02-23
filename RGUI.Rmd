@@ -112,5 +112,5 @@ ISAM <- read_csv("data/UICPMinput.csv")
 # CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
 sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp")
 CAMS <- add_spatial(CAMS_no_spatial, sf)
-rm(CAMS_no_spatial)
+rm(CAMS_no_spatial,sf)
 ```

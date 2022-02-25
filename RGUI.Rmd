@@ -110,7 +110,15 @@ CAMS_no_spatial <- read_csv("data/CAMSinput.csv")
 ISAM <- read_csv("data/UICPMinput.csv")
 
 # CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
-sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp")
-CAMS <- add_spatial(CAMS_no_spatial, sf)
+# load sf data
+sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp")  
+  select(ROUTE_NAME)
+# append spatial data
+CAMS <- right_join(sf, CAMS_no_spatial, by = c("ROUTE_NAME"="Route_Name")) %>%
+  st_transform(crs = 4326)
+# remove intermediate data
 rm(CAMS_no_spatial,sf)
+# segmentize the routes based on segment milepoints
+st_write(CAMS,"data/shapefile/CAMS.shp")
+
 ```

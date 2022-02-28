@@ -1,6 +1,5 @@
 library(tidyverse)
 library(sf)
-library(grep)
 
 # READ IN DATA AND SE
 aadt <- read_sf("data/shapefile/AADT_Unrounded.shp")
@@ -393,9 +392,9 @@ shell_creator <- function(sdtms) {
   
   all_segments <- bind_cols(all_breaks, endpoints = endpoints) %>% 
     group_by(ROUTE) %>% 
-    mutate(lastrecord = (startpoints == max(startpoints))) %>% 
-    filter(!lastrecord) %>% 
-    select(-lastrecord)
+    mutate(lastrecord = (startpoints == max(startpoints))) # %>% 
+  #  filter(!lastrecord) %>% 
+  #  select(-lastrecord)
   # NOTE: Function produces, then discards one record per ROUTE whose starting and
   # ending point are both the biggest ending END_ACCUM value observed for that ROUTE.
   # This record could be useful depending on how certain characteristics are cataloged,
@@ -429,10 +428,10 @@ shell_join <- function(sdtm) {
            START_ACCUM, END_ACCUM, everything()) %>% 
     arrange(ROUTE, startpoints)
   
-  # pdv contains everyting besides ROUTE, startpoints, endpoints, starttimes, and endtimes
+  # pdv contains everyting besides ROUTE, startpoints, endpoints
   # The idea is to reset the pdv everytime we get a new sdtm record, and then copy the 
   # pdv into every row where the window referred to is completely contained in the
-  # START_ACCUM to END_ACCUM window and the FROM_DATE to TO_DATE window.
+  # START_ACCUM to END_ACCUM window 
   pdv <- with_shell[1, 6:ncol(with_shell)]
   for (i in 1:nrow(with_shell)) {
     if (!is.na(with_shell$START_ACCUM[i]) &
@@ -465,19 +464,19 @@ joined_populated <- lapply(sdtms, shell_join)
 
 ################# Merging joined and populated sdtms together; formatting ##################
 RC <- c(list(shell), joined_populated) %>% 
-  reduce(left_join, by = c("ROUTE", "startpoints", "starttimes")) %>% 
+  reduce(left_join, by = c("ROUTE", "startpoints")) %>% 
   mutate(START_ACCUM = startpoints,
          END_ACCUM = endpoints) %>% 
   select(-startpoints, -endpoints) %>% 
-  select(ROUTE, START_ACCUM, END_ACCUM, starttimes, endtimes, everything()) %>% 
-  arrange(ROUTE, START_ACCUM, starttimes)
+  select(ROUTE, START_ACCUM, END_ACCUM, everything()) %>% 
+  arrange(ROUTE, START_ACCUM)
 
 ######### Compressing by combining rows identical except for identifying information ########
 # First across time
 RC <- RC %>% 
   mutate(dropflag = FALSE) %>% 
-  select(ROUTE, START_ACCUM, END_ACCUM, starttimes, endtimes, everything()) %>% 
-  arrange(ROUTE, START_ACCUM, starttimes)
+  select(ROUTE, START_ACCUM, END_ACCUM, everything()) %>% 
+  arrange(ROUTE, START_ACCUM)
 
 
 # Adjust time boundaries and flag duplicate rows for deletion.
@@ -491,8 +490,8 @@ for (i in 1:(nrow(RC) - 1)) {
 # Now compressing across road segment
 RC <- RC %>% 
   filter(dropflag == FALSE) %>% 
-  select(ROUTE, starttimes, endtimes, START_ACCUM, END_ACCUM, everything()) %>% 
-  arrange(ROUTE, starttimes, START_ACCUM)
+  select(ROUTE, START_ACCUM, END_ACCUM, everything()) %>% 
+  arrange(ROUTE, START_ACCUM)
 
 # Adjust road segment boundaries and flag duplicate rows for deletion.
 for (i in 1:(nrow(RC) - 1)) {
@@ -504,9 +503,10 @@ for (i in 1:(nrow(RC) - 1)) {
 
 RC <- RC %>% 
   filter(dropflag == FALSE) %>% 
-  select(ROUTE, starttimes, endtimes, START_ACCUM, END_ACCUM, everything()) %>% 
+  select(ROUTE, START_ACCUM, END_ACCUM, everything()) %>% 
   select(-dropflag) %>% 
-  arrange(ROUTE, starttimes, START_ACCUM)
+  arrange(ROUTE, START_ACCUM)
 
 # Write to output
 write.csv(RC, file = "data/testoutput.csv")
+

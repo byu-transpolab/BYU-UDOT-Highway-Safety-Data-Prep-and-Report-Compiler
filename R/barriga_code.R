@@ -401,7 +401,7 @@ shell_creator <- function(sdtms) {
   # but it is removed here. If you want to un-remove it, just take out the last two
   # filter and select statements (and the pipe above them).
   
-  shell <- full_join(all_segments, by = c("ROUTE")) %>% 
+  shell <- all_segments %>% 
     group_by(ROUTE) %>% 
     select(ROUTE, startpoints, endpoints) %>% 
     arrange(ROUTE, startpoints)
@@ -410,7 +410,6 @@ shell_creator <- function(sdtms) {
 }
 
 shell <- shell_creator(sdtms)
-
 
 # This segment of the program is essentially reconstructing a SAS DATA step with a RETAIN
 # statement to populate through rows.
@@ -432,17 +431,17 @@ shell_join <- function(sdtm) {
   # The idea is to reset the pdv everytime we get a new sdtm record, and then copy the 
   # pdv into every row where the window referred to is completely contained in the
   # START_ACCUM to END_ACCUM window 
-  pdv <- with_shell[1, 6:ncol(with_shell)]
+  pdv <- with_shell[1, 4:ncol(with_shell)]
   for (i in 1:nrow(with_shell)) {
     if (!is.na(with_shell$START_ACCUM[i]) &
         with_shell$START_ACCUM[i] == with_shell$startpoints[i]){
-      pdv <- with_shell[i, 6:ncol(with_shell)]
+      pdv <- with_shell[i, 4:ncol(with_shell)]
     }
     
     if (!is.na(pdv$START_ACCUM) & !is.na(pdv$END_ACCUM) &
         pdv$START_ACCUM <= with_shell$startpoints[i] &
         with_shell$endpoints[i] <= pdv$END_ACCUM) {
-      with_shell[i, 6:ncol(with_shell)] <- pdv
+      with_shell[i, 4:ncol(with_shell)] <- pdv
     }
   }
   
@@ -454,6 +453,40 @@ shell_join <- function(sdtm) {
   
   return(with_shell)
 }
+
+joined_populated <- lapply(sdtms, shell_join)
+
+#TEST CODE Breaking up Shell Join Function and running each function separately.
+
+joinable_sdtm <- sdtm %>% 
+  mutate(startpoints = START_ACCUM)
+
+with_shell <- left_join(shell, joinable_sdtm, by = c("ROUTE", "startpoints")) %>% 
+  select(ROUTE, startpoints, endpoints,
+         START_ACCUM, END_ACCUM, everything()) %>% 
+  arrange(ROUTE, startpoints)
+
+pdv <- with_shell[1, 6:ncol(with_shell)]
+for (i in 1:nrow(with_shell)) {
+  if (!is.na(with_shell$START_ACCUM[i]) &
+      with_shell$START_ACCUM[i] == with_shell$startpoints[i]){
+    pdv <- with_shell[i, 6:ncol(with_shell)]
+  }
+  
+  if (!is.na(pdv$START_ACCUM) & !is.na(pdv$END_ACCUM) &
+      pdv$START_ACCUM <= with_shell$startpoints[i] &
+      with_shell$endpoints[i] <= pdv$END_ACCUM) {
+    with_shell[i, 6:ncol(with_shell)] <- pdv
+  }
+}
+
+with_shell <- with_shell %>% 
+  select(-START_ACCUM, -END_ACCUM,
+         # This part is done to avoid merge issues when everything gets
+         # joined later
+         -endpoints)
+
+return(with_shell)
 
 joined_populated <- lapply(sdtms, shell_join)
 

@@ -12,7 +12,7 @@ output: html_document
 if (!require("pacman")) install.packages("pacman")
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse, readxl, sf)
+pacman::p_load(magrittr, pacman, tidyverse, readxl, sf, rLFT)
 
 source("R/RGUI_CrashPrep.R")
 source("R/RGUI_RoadwayPrep.R")
@@ -111,14 +111,20 @@ ISAM <- read_csv("data/UICPMinput.csv")
 
 # CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
 # load sf data
-sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp")  
-  select(ROUTE_NAME)
+sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp") %>%
+  select(ROUTE_ALIA)
 # append spatial data
-CAMS <- right_join(sf, CAMS_no_spatial, by = c("ROUTE_NAME"="Route_Name")) %>%
-  st_transform(crs = 4326)
+CAMS <- right_join(sf, CAMS_no_spatial, by = c("ROUTE_ALIA"="LABEL"), keep = TRUE) %>%
+  select(-ROUTE_ALIA) %>%
+  st_transform(crs = 26912) #convert to UTM Zone 12 Projection
 # remove intermediate data
 rm(CAMS_no_spatial,sf)
 # segmentize the routes based on segment milepoints
-st_write(CAMS,"data/shapefile/CAMS.shp")
+CAMS_sf_details <- bct(CAMS, step = CAMS$BEG_MILEPOINT, window = CAMS$Seg_Length, ridName = "SEG_ID")
+CAMS_write <- CAMS %>%
+  select(SEG_ID, BEG_MILEPOINT, END_MILEPOINT, Seg_Length) %>%
+  unique()
+st_write(CAMS_write,"data/shapefile/CAMS.shp")
+rm(CAMS_write)
 
 ```

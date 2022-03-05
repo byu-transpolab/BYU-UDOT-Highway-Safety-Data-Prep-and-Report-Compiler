@@ -29,8 +29,7 @@ aadt.columns <- c("ROUTE_NAME",
               "AADT2014",
               "SUTRK2014", 
               "CUTRK2014",
-              "Shape_Leng",
-              "geometry")
+              "Shape_Leng")
 
 fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
 # plot(fc)
@@ -49,8 +48,7 @@ speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
 speed.columns <- c("ROUTE_ID",                         
                "FROM_MEASU",                         
                "TO_MEASURE",                         
-               "SPEED_LIMI",
-               "geometry")
+               "SPEED_LIMI")
 
 lane <- read_sf("data/shapefile/Lanes.shp")
 # plot(lane)
@@ -60,8 +58,7 @@ urban_small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
 small_col <- c("ROUTE_ID",                         
                "FROM_MEASURE",                         
                "TO_MEASURE",                         
-               "SPEED_LIMIT",
-               "geometry")
+               "SPEED_LIMIT")
 
 urban_large <- read_sf("data/shapefile/Urban_Boundaries_Large.shp")
 # plot(urban_large)
@@ -456,40 +453,6 @@ shell_join <- function(sdtm) {
 
 joined_populated <- lapply(sdtms, shell_join)
 
-#TEST CODE Breaking up Shell Join Function and running each function separately.
-
-joinable_sdtm <- sdtm %>% 
-  mutate(startpoints = START_ACCUM)
-
-with_shell <- left_join(shell, joinable_sdtm, by = c("ROUTE", "startpoints")) %>% 
-  select(ROUTE, startpoints, endpoints,
-         START_ACCUM, END_ACCUM, everything()) %>% 
-  arrange(ROUTE, startpoints)
-
-pdv <- with_shell[1, 6:ncol(with_shell)]
-for (i in 1:nrow(with_shell)) {
-  if (!is.na(with_shell$START_ACCUM[i]) &
-      with_shell$START_ACCUM[i] == with_shell$startpoints[i]){
-    pdv <- with_shell[i, 6:ncol(with_shell)]
-  }
-  
-  if (!is.na(pdv$START_ACCUM) & !is.na(pdv$END_ACCUM) &
-      pdv$START_ACCUM <= with_shell$startpoints[i] &
-      with_shell$endpoints[i] <= pdv$END_ACCUM) {
-    with_shell[i, 6:ncol(with_shell)] <- pdv
-  }
-}
-
-with_shell <- with_shell %>% 
-  select(-START_ACCUM, -END_ACCUM,
-         # This part is done to avoid merge issues when everything gets
-         # joined later
-         -endpoints)
-
-return(with_shell)
-
-joined_populated <- lapply(sdtms, shell_join)
-
 # To be removed tomorrow, probably (just for accounting for duplicates, which is now
 # done in preprocessing)
 #joined_populated[[2]] <- joined_populated[[2]] %>% 
@@ -510,15 +473,6 @@ RC <- RC %>%
   mutate(dropflag = FALSE) %>% 
   select(ROUTE, START_ACCUM, END_ACCUM, everything()) %>% 
   arrange(ROUTE, START_ACCUM)
-
-
-# Adjust time boundaries and flag duplicate rows for deletion.
-for (i in 1:(nrow(RC) - 1)) {
-  if (identical(RC[i, -c(4, 5)], RC[i + 1, -c(4, 5)])) {
-    RC$dropflag[i] <- TRUE
-    RC[i + 1, 4] <- RC[i, 4]
-  }
-}
 
 # Now compressing across road segment
 RC <- RC %>% 
@@ -541,5 +495,5 @@ RC <- RC %>%
   arrange(ROUTE, START_ACCUM)
 
 # Write to output
-write.csv(RC, file = "data/testoutput.csv")
+write.csv(RC, "data/testoutput3.csv")
 

@@ -142,11 +142,12 @@ names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 fc <- fc %>% filter(grepl("M", ROUTE))
 
 # Finding Number of Main Routes in the fc File
-num.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
+num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Take First Four Numbers of Route Column
 fc$ROUTE <- substr(fc$ROUTE, 1, 4)
+
 
 ####
 ## AADT Data Prep
@@ -160,13 +161,15 @@ names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
 # Making duplicate dataset for positive and negative sides of road
 # aadt_pos <- aadt_neg <- aadt
-# aadt_pos$ROUTE <- as.character(paste(aadt_pos$ROUTE_NAME, "+", sep = ""))
-# aadt_neg$ROUTE <- as.character(paste(aadt_neg$ROUTE_NAME, "-", sep = ""))
+# aadt_pos$ROUTE <- as.character(paste(aadt_pos$ROUTE, "P", sep = ""))
+# aadt_neg$ROUTE <- as.character(paste(aadt_neg$ROUTE, "N", sep = ""))
 # aadt <- rbind(aadt_pos, aadt_neg)
 
 # Getting Only Main Routes
 aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
+
+num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
 # Take First Four Numbers of Route Column
 aadt$ROUTE <- substr(aadt$ROUTE, 1, 4)
@@ -187,9 +190,13 @@ names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # sl_neg$ROUTE <- paste(sl_neg$ROUTE, "-", sep = "")
 # speed <- rbind(sl_pos, sl_neg)
 
+num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
+
 # Getting Only Main Routes
 speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
+
+
 
 #WTHeck is this doing???? Commented out until further analysi
 #speed %>%
@@ -209,15 +216,22 @@ lane <- read_filez(lane.filepath, lane.columns)
 # Standardizing Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-#Taking off ramps
-lane <- lane %>% filter(nchar(ROUTE) == 5)
+lane <- lane %>% filter(grepl("R", ROUTE))
+
+lanetest <- lane %>% filter(!ROUTE %in% "R")
 
 #Adding direction onto route variable, taking route direction out of its own column
-lans$ROUTE <- ifelse(lanes$TRAVEL_DIR == "+",
-                      paste(substr(lanes$ROUTE, 1, 4), "+", sep = ""),
-                      paste(substr(lanes$ROUTE, 1, 4), "-", sep = ""))
-lane <- lane %>% select(-TRAVEL_DIR)
+lane$ROUTE <- paste(substr(lane$ROUTE, 1, 6), "M", sep = "")
 
+num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
+
+lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
+                      paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
+                      paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
+
+#Taking off ramps
+lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+  filter(BEG_MP < END_MP)
 #Getting only state routes
 lane <- lane %>% filter(ROUTE %in% main.routes)
 

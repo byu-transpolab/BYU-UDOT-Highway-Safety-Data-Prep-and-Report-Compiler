@@ -47,7 +47,7 @@ speed.columns <- c("ROUTE_ID",
                    "TO_MEASURE",                         
                    "SPEED_LIMI")
 
-lane <- read_sf("data/shapefile/Lanes.shp")
+lanes <- read_sf("data/shapefile/Lanes.shp")
 lane.filepath <- "data/shapefile/Lanes.shp"
 lane.columns <- c("ROUTE",
                   "START_ACCU",
@@ -146,8 +146,9 @@ num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Take First Four Numbers of Route Column
-fc$ROUTE <- substr(fc$ROUTE, 1, 4)
+# fc$ROUTE <- substr(fc$ROUTE, 1, 4)
 
+"ROUTE_ID","FROM_MEASU","TO_MEASURE","FUNCTIONAL","RouteDir","RouteType","geometry")
 
 ####
 ## AADT Data Prep
@@ -216,7 +217,8 @@ lane <- read_filez(lane.filepath, lane.columns)
 # Standardizing Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-lane <- lane %>% filter(grepl("R", ROUTE))
+lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+  filter(BEG_MP < END_MP)
 
 lanetest <- lane %>% filter(!ROUTE %in% "R")
 
@@ -232,6 +234,7 @@ lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
 #Taking off ramps
 lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
+
 #Getting only state routes
 lane <- lane %>% filter(ROUTE %in% main.routes)
 

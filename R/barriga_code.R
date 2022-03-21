@@ -1,8 +1,9 @@
 library(tidyverse)
 library(sf)
 
-# READ IN DATA AND SE
-aadt <- read_sf("data/shapefile/AADT_Unrounded.shp")
+# Set filepath and Column Names
+
+# aadt <- read_sf("data/shapefile/AADT_Unrounded.shp")
 aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
 aadt.columns <- c("ROUTE_NAME",
                   "START_ACCU", 
@@ -40,14 +41,14 @@ fc.columns <- c("ROUTE_ID",
                 "RouteType",
                 "geometry")
 
-speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
+# speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
 speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
 speed.columns <- c("ROUTE_ID",                         
                    "FROM_MEASU",                         
                    "TO_MEASURE",                         
                    "SPEED_LIMI")
 
-lanes <- read_sf("data/shapefile/Lanes.shp")
+# lanes <- read_sf("data/shapefile/Lanes.shp")
 lane.filepath <- "data/shapefile/Lanes.shp"
 lane.columns <- c("ROUTE",
                   "START_ACCU",
@@ -62,61 +63,61 @@ lane.columns <- c("ROUTE",
                   "END_LAT",
                   "TRAVEL_DIR")
 
-small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
-small.filepath <- "data/shapefile/Urban_Boundaries_Small.shp"
-small.columns <- c("NAME",                         
-                   "TYPE_",
-                   "geometry")
+# small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
+# small.filepath <- "data/shapefile/Urban_Boundaries_Small.shp"
+# small.columns <- c("NAME",                         
+#                    "TYPE_",
+#                    "geometry")
 
-large <- read_sf("data/shapefile/Urban_Boundaries_Large.shp")
-large.filepath <- "data/shapefile/Urban_Boundaries_Large.shp"
-large.columns <- c("NAME",                         
-                   "TYPE_",
-                   "geometry")
+# large <- read_sf("data/shapefile/Urban_Boundaries_Large.shp")
+# large.filepath <- "data/shapefile/Urban_Boundaries_Large.shp"
+# large.columns <- c("NAME",                         
+#                    "TYPE_",
+#                    "geometry")
 
-intersection <- read_sf("data/shapefile/Intersections.shp")
+# intersection <- read_sf("data/shapefile/Intersections.shp")
 
-driveway <- read_sf("data/shapefile/Driveway.shp")
-driveway.filepath <- "data/shapefile/Driveway.shp"
-driveway.columns <- c("ROUTE",
-                      "START_ACCU",
-                      "END_ACCUM",
-                      "DIRECTION",
-                      "TYPE",
-                      "geometry",
-                      "BEG_LONG",
-                      "BEG_LAT",
-                      "END_LONG",
-                      "END_LAT")
+# driveway <- read_sf("data/shapefile/Driveway.shp")
+# driveway.filepath <- "data/shapefile/Driveway.shp"
+# driveway.columns <- c("ROUTE",
+#                       "START_ACCU",
+#                       "END_ACCUM",
+#                       "DIRECTION",
+#                       "TYPE",
+#                       "geometry",
+#                       "BEG_LONG",
+#                       "BEG_LAT",
+#                       "END_LONG",
+#                       "END_LAT")
 
-median <- read_sf("data/shapefile/Medians.shp")
-median.filepath <- "data/shapefile/Medians.shp"
-median.columns <- c("ROUTE_NAME",
-                    "TRAVEL_DIR",
-                    "START_ACCUM",
-                    "END_ACCUM",
-                    "MEDIAN_TYP",
-                    "TRFISL_TYP",
-                    "MDN_PRTCTN",
-                    "BEG_LONG",
-                    "BEG_LAT",
-                    "END_LONG",
-                    "END_LAT")
+# median <- read_sf("data/shapefile/Medians.shp")
+# median.filepath <- "data/shapefile/Medians.shp"
+# median.columns <- c("ROUTE_NAME",
+#                     "TRAVEL_DIR",
+#                     "START_ACCUM",
+#                     "END_ACCUM",
+#                     "MEDIAN_TYP",
+#                     "TRFISL_TYP",
+#                     "MDN_PRTCTN",
+#                     "BEG_LONG",
+#                     "BEG_LAT",
+#                     "END_LONG",
+#                     "END_LAT")
 
-shoulder <- read_sf("data/shapefile/Shoulders.shp")
-shoulder.filepath <-"data/shapefile/Shoulders.shp"
-shoulder.columns <- c("ROUTE",
-                      "TRAVEL_DIR",
-                      "START_ACCU",
-                      "END_ACCUM",
-                      "UTPOSITION",
-                      "SHLDR_WDTH",
-                      "BEG_LONG",
-                      "BEG_LAT",
-                      "END_LONG",
-                      "END_LAT")
+# shoulder <- read_sf("data/shapefile/Shoulders.shp")
+# shoulder.filepath <-"data/shapefile/Shoulders.shp"
+# shoulder.columns <- c("ROUTE",
+#                       "TRAVEL_DIR",
+#                       "START_ACCU",
+#                       "END_ACCUM",
+#                       "UTPOSITION",
+#                       "SHLDR_WDTH",
+#                       "BEG_LONG",
+#                       "BEG_LAT",
+#                       "END_LONG",
+#                       "END_LAT")
 
-## Read in files
+## Read in file function
 read_filez <- function(filepath, columns) {
   if (str_detect(filepath, ".shp")) {
     print("reading shapefile")
@@ -135,20 +136,48 @@ read_filez <- function(filepath, columns) {
 # Read in fc File
 fc <- read_filez(fc.filepath, fc.columns)
 
-# Standardizing Column Names
+# Standardize Column Names
 names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-# Only Selecting Main Routes
+# Select only Main Routes
 fc <- fc %>% filter(grepl("M", ROUTE))
 
-# Finding Number of Main Routes in the fc File
+# Select only State Routes
+fc <- fc %>% filter(grepl("State", RouteType))
+
+# Find Number of Unique Routes in the fc File
 num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
+
+# Compress Segments
+
+
+
+fctest <- fc
+fctest %>%
+  group_by(ROUTE) %>%
+  mutate(
+    New_fc = case_when(
+      row_number() == 1L ~ fc,
+      is.na(fc) & sum(fc) != rollsum(fc, k=as.scalar(row_number()), align='left') ~ lead(fc, n=1L)
+    )
+  )
+
+if row(i) ROUTE, Functional, RouteDir, RouteType = row(i+1)
+  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
+else
+End if 
+
+# Unused Code for Filtering fc Data 
 
 # Take First Four Numbers of Route Column
 # fc$ROUTE <- substr(fc$ROUTE, 1, 4)
 
-"ROUTE_ID","FROM_MEASU","TO_MEASURE","FUNCTIONAL","RouteDir","RouteType","geometry")
+# Making duplicate dataset for positive and negative sides of road
+# fc_pos <- fc_neg <- aadt
+# fc_pos$ROUTE <- as.character(paste(fc_pos$ROUTE, "P", sep = ""))
+# fc_neg$ROUTE <- as.character(paste(fc_neg$ROUTE, "N", sep = ""))
+# fc <- rbind(fc_pos, fc_neg)
 
 ####
 ## AADT Data Prep
@@ -157,23 +186,26 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 # Read in aadt File
 aadt <- read_filez(aadt.filepath, aadt.columns)
 
-# Standardizing Column Names
+# Standardize Column Names
 names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+# Get Only Main Routes
+aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+  filter(BEG_MP < END_MP)
+
+# Find Number of Unique Routes in aadt file
+num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
+
+# Unused Code for Filtering aadt Data
+
+# Take First Four Numbers of Route Column
+# aadt$ROUTE <- substr(aadt$ROUTE, 1, 4)
 
 # Making duplicate dataset for positive and negative sides of road
 # aadt_pos <- aadt_neg <- aadt
 # aadt_pos$ROUTE <- as.character(paste(aadt_pos$ROUTE, "P", sep = ""))
 # aadt_neg$ROUTE <- as.character(paste(aadt_neg$ROUTE, "N", sep = ""))
 # aadt <- rbind(aadt_pos, aadt_neg)
-
-# Getting Only Main Routes
-aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
-  filter(BEG_MP < END_MP)
-
-num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
-
-# Take First Four Numbers of Route Column
-aadt$ROUTE <- substr(aadt$ROUTE, 1, 4)
 
 ###
 ## Speed Limits Data Prep
@@ -185,159 +217,151 @@ speed <- read_filez(speed.filepath, speed.columns)
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Getting Only Main Routes
+speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+  filter(BEG_MP < END_MP)
+
+# Find Number of Unique Routes in speed file
+num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
+
+# Unused Code for Filtering speed Data
+
+# Take First Four Numbers of Route Column
+# speed$ROUTE <- substr(speed$ROUTE, 1, 4)
+
 # Making duplicate dataset for positive and negative sides of road
 # sl_pos <- sl_neg <- speed
 # sl_pos$ROUTE <- paste(sl_pos$ROUTE, "+", sep = "")
 # sl_neg$ROUTE <- paste(sl_neg$ROUTE, "-", sep = "")
 # speed <- rbind(sl_pos, sl_neg)
 
-num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
-
-# Getting Only Main Routes
-speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
-  filter(BEG_MP < END_MP)
-
-
-
-#WTHeck is this doing???? Commented out until further analysi
-#speed %>%
-#  group_by(ROUTE, START_ACCUM) %>%
-#  mutate(should_be_one = n()) %>%
-#  filter(should_be_one > 1)
-#speed[which(speed$ROUTE == "0006" & speed$START_ACCUM == 0), ]
-
-# Take First Four Numbers of Route Column
-speed$ROUTE <- substr(speed$ROUTE, 1, 4)
-
 ###
 ## Lanes Data Prep
 ###
+
+# Read in lane file
 lane <- read_filez(lane.filepath, lane.columns)
 
-# Standardizing Column Names
+# Standardize Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
-  filter(BEG_MP < END_MP)
-
-lanetest <- lane %>% filter(!ROUTE %in% "R")
-
-#Adding direction onto route variable, taking route direction out of its own column
+# Add M to Route Column to Standardize Route Format
 lane$ROUTE <- paste(substr(lane$ROUTE, 1, 6), "M", sep = "")
 
-num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
-
-lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
-                      paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
-                      paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
-
-#Taking off ramps
+# Get Only Main Routes
 lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
-#Getting only state routes
-lane <- lane %>% filter(ROUTE %in% main.routes)
+# Find Number of Unique Routes in lane file
+num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
-#Trying to define each row as separate segments, no overlap, the directions have different information
-#lane %>%
+# Unused Code for Filtering lane Data
+
+#Adding direction onto route variable, taking route direction out of its own column
+# lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
+#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
+#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
+
+# Trying to define each row as separate segments, no overlap, the directions have different information
+# lane %>%
 #  group_by(ROUTE, BEG_MP) %>%
 #  summarize(should_be_one = n()) %>%
 #  filter(should_be_one > 1)
-#No duplicates, not all data complete on negative side of the road though
+# No duplicates, not all data complete on negative side of the road though
 
-###
-## Intersection Data Prep
-###
-intersection <- read_filez(intersection.filepath, intersection.columns)
-
-#Finding all intersections with at least one state route
-intersection <- intersection %>%
-  filter(INT_RT_1 %in% substr(main.routes,1,4) |
-           INT_RT_2 %in% substr(main.routes,1,4) | INT_RT_3 %in% substr(main.routes,1,4) |
-           INT_RT_4 %in% substr(main.routes,1,4))
-#Intersections are labeled at a point, not a segment
-
-#Adding direction onto route variable, taking route direction out of its own column
-intersection$ROUTE <- paste(substr(intersection$ROUTE,1,4), intersection$TRAVEL_DIR, sep = "")
-intersection <- intersection %>% select(-TRAVEL_DIR)
-
-#WTHeck
-#intersection %>%
-#  group_by(ROUTE, BEG_MP) %>%
-#  summarize(should_be_one = n()) %>%
-#  filter(should_be_one > 1)
-
-###
-## Shoulder Data Prep
-###
-shoulder <- read_filez(shoulder.filepath, shoulder.columns)
-
-#Getting rid of ramps
-shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
-
-#Adding direction onto route variable, taking route direction out of its own column
-shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
-shoulder <- shoulder %>% select(-TRAVEL_DIR)
-
-#Getting only state routes
-shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
-
-shd_disc <- shoulder %>%
-  group_by(ROUTE, BEG_MP, UTPOSITION) %>%
-  mutate(should_be_one = n()) %>%
-  filter(should_be_one > 1) %>%
-  arrange(ROUTE, BEG_MP)
-
-###
-## Median Data Prep
-###
-median <- read_filez(median.filepath, median.columns)
-names(median)[1] <- "ROUTE"
-
-#Getting rid of ramps
-median <- median %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
-
-#Adding direction onto route variable, taking route direction out of its own column
-median$ROUTE <- paste(substr(median$ROUTE,1,4), median$TRAVEL_DIR, sep = "")
-median <- median %>% select(-TRAVEL_DIR)
-
-#Getting only state routes
-median <- median %>% filter(ROUTE %in% main.routes)
-
-median %>%
-  group_by(ROUTE, BEG_MP) %>%
-  summarize(should_be_one = n()) %>%
-  filter(should_be_one > 1)
-
-###
-## Driveway Data Prep
-###
-
-driveway <- read_filez(driveway.filepath, driveway.columns)
-
-#Getting rid of ramps
-driveway <- driveway %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
-
-#Adding direction onto route variable, taking route direction out of its own column
-driveway$ROUTE <- paste(substr(driveway$ROUTE,1,4), driveway$DIRECTION, sep = "")
-driveway <- driveway %>% select(-DIRECTION)
-
-#Getting only state routes
-driveway <- driveway %>% filter(ROUTE %in% main.routes)
-
-driveway <- driveway %>%
-  group_by(ROUTE, BEG_MP) %>%
-  mutate(should_be_one = n()) %>%
-  arrange(ROUTE, BEG_MP) %>%
-  select(-contains("LONG")) %>%
-  select(-contains("LAT")) %>%
-  mutate(WIDTH = mean(WIDTH), END_MP = max(END_MP), TYPE = "Minor Residential Driveway") %>%
-  distinct()
-
-driveway %>% 
-  group_by(ROUTE, BEG_MP) %>%
-  mutate(should_be_one = n()) %>%
-  filter(should_be_one > 1)
+# ###
+# ## Intersection Data Prep
+# ###
+# intersection <- read_filez(intersection.filepath, intersection.columns)
+# 
+# #Finding all intersections with at least one state route
+# intersection <- intersection %>%
+#   filter(INT_RT_1 %in% substr(main.routes,1,4) |
+#            INT_RT_2 %in% substr(main.routes,1,4) | INT_RT_3 %in% substr(main.routes,1,4) |
+#            INT_RT_4 %in% substr(main.routes,1,4))
+# #Intersections are labeled at a point, not a segment
+# 
+# #Adding direction onto route variable, taking route direction out of its own column
+# intersection$ROUTE <- paste(substr(intersection$ROUTE,1,4), intersection$TRAVEL_DIR, sep = "")
+# intersection <- intersection %>% select(-TRAVEL_DIR)
+# 
+# #WTHeck
+# #intersection %>%
+# #  group_by(ROUTE, BEG_MP) %>%
+# #  summarize(should_be_one = n()) %>%
+# #  filter(should_be_one > 1)
+# 
+# ###
+# ## Shoulder Data Prep
+# ###
+# shoulder <- read_filez(shoulder.filepath, shoulder.columns)
+# 
+# #Getting rid of ramps
+# shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
+# 
+# #Adding direction onto route variable, taking route direction out of its own column
+# shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
+# shoulder <- shoulder %>% select(-TRAVEL_DIR)
+# 
+# #Getting only state routes
+# shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
+# 
+# shd_disc <- shoulder %>%
+#   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
+#   mutate(should_be_one = n()) %>%
+#   filter(should_be_one > 1) %>%
+#   arrange(ROUTE, BEG_MP)
+# 
+# ###
+# ## Median Data Prep
+# ###
+# median <- read_filez(median.filepath, median.columns)
+# names(median)[1] <- "ROUTE"
+# 
+# #Getting rid of ramps
+# median <- median %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
+# 
+# #Adding direction onto route variable, taking route direction out of its own column
+# median$ROUTE <- paste(substr(median$ROUTE,1,4), median$TRAVEL_DIR, sep = "")
+# median <- median %>% select(-TRAVEL_DIR)
+# 
+# #Getting only state routes
+# median <- median %>% filter(ROUTE %in% main.routes)
+# 
+# median %>%
+#   group_by(ROUTE, BEG_MP) %>%
+#   summarize(should_be_one = n()) %>%
+#   filter(should_be_one > 1)
+# 
+# ###
+# ## Driveway Data Prep
+# ###
+# 
+# driveway <- read_filez(driveway.filepath, driveway.columns)
+# 
+# #Getting rid of ramps
+# driveway <- driveway %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
+# 
+# #Adding direction onto route variable, taking route direction out of its own column
+# driveway$ROUTE <- paste(substr(driveway$ROUTE,1,4), driveway$DIRECTION, sep = "")
+# driveway <- driveway %>% select(-DIRECTION)
+# 
+# #Getting only state routes
+# driveway <- driveway %>% filter(ROUTE %in% main.routes)
+# 
+# driveway <- driveway %>%
+#   group_by(ROUTE, BEG_MP) %>%
+#   mutate(should_be_one = n()) %>%
+#   arrange(ROUTE, BEG_MP) %>%
+#   select(-contains("LONG")) %>%
+#   select(-contains("LAT")) %>%
+#   mutate(WIDTH = mean(WIDTH), END_MP = max(END_MP), TYPE = "Minor Residential Driveway") %>%
+#   distinct()
+# 
+# driveway %>%
+#   group_by(ROUTE, BEG_MP) %>%
+#   mutate(should_be_one = n()) %>%
+#   filter(should_be_one > 1)
 
 ########################################################################################
 ###################################### Aggregation #####################################
@@ -355,8 +379,6 @@ driveway %>%
 #  sdtm8: Medians
 #  sdtm9: Driveway
 
-# Maybe put everything in a list? Then we can just lapply everything.
-# Yes, we'll do that.
 #sdtms <- list()
 
 # For illustrative purposes; to be removed before code is finished.

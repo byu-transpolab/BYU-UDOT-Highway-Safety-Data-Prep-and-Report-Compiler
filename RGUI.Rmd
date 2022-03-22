@@ -130,20 +130,25 @@ rm(CAMS_no_spatial,sf)
 CAMS_write <- CAMS %>%
   select(LABEL, SEG_ID, BEG_MILEPOINT, END_MILEPOINT, BEG_MILEAG, END_MILEAG, Seg_Length, SHAPE_Leng) %>%
   group_by(LABEL) %>%
-  mutate(BEG_ROUTE = min(BEG_MILEPOINT),
-         END_ROUTE = max(END_MILEPOINT),
-         BEG_MILEPOINT = case_when(
+  mutate(BEG_MILEPOINT = case_when(
            BEG_MILEPOINT == 0 ~ BEG_MILEAG,
            BEG_MILEPOINT != 0 ~ BEG_MILEPOINT
            ),
-         BEG_Meters = BEG_MILEPOINT * SHAPE_Leng / (END_MILEAG - BEG_MILEAG),
-         END_Meters = END_MILEPOINT * SHAPE_Leng / (END_MILEAG - BEG_MILEAG)) %>%
+         Seg_Length = END_MILEPOINT - BEG_MILEPOINT
+         ) %>%
+  #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
+   #      BEG_MILEPOINT = BEG_MILEPOINT - BEG_MILEAG,
+    #     END_MILEPOINT = END_MILEPOINT - BEG_MILEAG,
+     #    BEG_MILEAG = 0
+      #   ) %>%
   unique()
 st_write(CAMS_write,"data/shapefile/CAMS.shp")
 
 CAMS_write <- CAMS %>%
   select(LABEL, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
-  mutate(ROUTE_LENGTH = END_MILEAG * SHAPE_Leng / (END_MILEAG - BEG_MILEAG)) %>%
+  #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
+   #      BEG_MILEAG = 0
+    #     ) %>%
   unique()
 st_write(CAMS_write,"data/shapefile/CAMS_routes.shp")
 

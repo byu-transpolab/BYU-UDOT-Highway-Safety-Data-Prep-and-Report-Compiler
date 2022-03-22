@@ -152,11 +152,40 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress Segments
 
-fc <- fc %>%
-  group_by(ROUTE)
+fc_test <- fc %>%
+  arrange(ROUTE, BEG_MP) %>%
+  group_by(ROUTE) %>%
   mutate(
-    prow = which()
+    prevID = lag(OBJECTID, n = 1L)
+  ) 
+
+fc_test <- fc_test %>%
+  group_by(ROUTE, FUNCTIONAL) %>%
+  mutate(
+    groupID = cur_group_id()
+  ) %>%
+  mutate(
+    newID = case_when(
+      FUNCTIONAL == fc[,row_number]$FUNCTIONAL ~ TRUE,
+      FUNCTIONAL != fc[,fc$OBJECTID == prevID]$FUNCTIONAL ~ FALSE
+    )
   )
+
+fc_slice_min <- fc_test %>%
+  group_by(ROUTE) %>%
+  slice_min(BEG_MP)
+
+fc_slice_max <- fc_test %>%
+  group_by(ROUTE) %>%
+  slice_max(END_MP)
+
+fc_slice <- rbind(fc_slice_min, fc_slice_max) %>%
+  group_by(ROUTE) %>%
+  summarise(BEG_MP = min(BEG_MP),
+            END_MP = max(END_MP))
+  
+  
+  
 
 # fctest <- fc
 # fctest %>%

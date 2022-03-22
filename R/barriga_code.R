@@ -39,6 +39,7 @@ fc.columns <- c("ROUTE_ID",
                 "FUNCTIONAL",                             
                 "RouteDir",                             
                 "RouteType",
+                "OBJECTID",
                 "geometry")
 
 # speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
@@ -151,22 +152,26 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress Segments
 
-
-
-fctest <- fc
-fctest %>%
-  group_by(ROUTE) %>%
+fc <- fc %>%
+  group_by(ROUTE)
   mutate(
-    New_fc = case_when(
-      row_number() == 1L ~ fc,
-      is.na(fc) & sum(fc) != rollsum(fc, k=as.scalar(row_number()), align='left') ~ lead(fc, n=1L)
-    )
+    prow = which()
   )
 
-if row(i) ROUTE, Functional, RouteDir, RouteType = row(i+1)
-  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
-else
-End if 
+# fctest <- fc
+# fctest %>%
+#   group_by(ROUTE) %>%
+#   mutate(
+#     New_fc = case_when(
+#       row_number() == 1L ~ fc,
+#       is.na(fc) & sum(fc) != rollsum(fc, k=as.scalar(row_number()), align='left') ~ lead(fc, n=1L)
+#     )
+#   )
+
+#if row(i) ROUTE, Functional, RouteDir, RouteType = row(i+1)
+#  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
+#else
+#End if 
 
 # Unused Code for Filtering fc Data 
 

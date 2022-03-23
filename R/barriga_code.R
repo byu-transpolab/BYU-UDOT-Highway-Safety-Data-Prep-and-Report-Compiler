@@ -171,18 +171,37 @@ fc_test <- fc_test %>%
     )
   )
 
+iter <- 0
+route <- -1
+func_class <- -1
+fc_test$groupID <- 0
+for(i in 1:nrow(fc_test)){
+  new_route <- fc_test$ROUTE[i]
+  new_func_class <- fc_test$FUNCTIONAL[i]
+  if((new_route != route) | (new_func_class != func_class)){
+    iter <- iter + 1
+    route <- new_route
+    func_class <- new_func_class
+    
+  }
+  fc_test$groupID[i] <- iter
+  
+}
+
 fc_slice_min <- fc_test %>%
-  group_by(ROUTE) %>%
+  group_by(groupID) %>%
   slice_min(BEG_MP)
 
 fc_slice_max <- fc_test %>%
-  group_by(ROUTE) %>%
+  group_by(groupID) %>%
   slice_max(END_MP)
 
 fc_slice <- rbind(fc_slice_min, fc_slice_max) %>%
-  group_by(ROUTE) %>%
+  group_by(groupID) %>%
   summarise(BEG_MP = min(BEG_MP),
-            END_MP = max(END_MP))
+            END_MP = max(END_MP), 
+            FUNCTIONAL = unique(FUNCTIONAL), 
+            ROUTE = unique(ROUTE))
   
   
   

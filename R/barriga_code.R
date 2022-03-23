@@ -38,8 +38,7 @@ fc.columns <- c("ROUTE_ID",
                 "TO_MEASURE",
                 "FUNCTIONAL",                             
                 "RouteDir",                             
-                "RouteType",
-                "geometry")
+                "RouteType")
 
 # speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
 speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
@@ -57,10 +56,10 @@ lane.columns <- c("ROUTE",
                   "R_TURN_CNT",
                   "THRU_CNT",
                   "THRU_WDTH",
-                  "BEG_LONG",
-                  "BEG_LAT",
-                  "END_LONG",
-                  "END_LAT",
+                  # "BEG_LONG",
+                  # "BEG_LAT",
+                  # "END_LONG",
+                  # "END_LAT",
                   "TRAVEL_DIR")
 
 # small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
@@ -129,6 +128,53 @@ read_filez <- function(filepath, columns) {
   }
 }
 
+# Compress Segments Function
+compress_seg <- function(df, col, variables) {
+  # drop geometry
+  df <- df %>% st_drop_geometry()
+  # get columns to preserve
+  col <- tail(col, -3)
+  # sort by route and milepoints
+  df <- df %>%
+    arrange(ROUTE, BEG_MP)
+  # loop through variables to merge by
+  iter <- 0
+  route <- -1
+  value <- variables
+  df$ID <- 0
+  for(i in 1:nrow(df)){
+    new_route <- df$ROUTE[i]
+    test = 0
+    for (j in 1:length(variables)){
+      varName <- variables[j]
+      new_value <- df[[varName]][i]
+      if((new_value != value[j])){
+        value[j] <- new_value
+        test = 1
+      }
+    }
+    if((new_route != route) | (test == 1)){
+      iter <- iter + 1
+      route <- new_route
+    }
+    df$ID[i] <- iter
+  }
+  # use summarize to compress segments
+  df <- df %>% 
+    group_by(ID) %>%
+    summarise(
+      ROUTE = unique(ROUTE),
+      BEG_MP = min(BEG_MP),
+      END_MP = max(END_MP), 
+      across(.cols = col)
+    ) %>%
+    unique()
+  # return df
+  df
+} 
+
+
+
 ###
 ## Functional Class Data Prep
 ###
@@ -149,46 +195,9 @@ fc <- fc %>% filter(grepl("State", RouteType))
 num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
-# Compress Segments
+# Compress fc
+fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL"))
 
-# sort by route and milepoints
-fc <- fc %>%
-  arrange(ROUTE, BEG_MP) #%>%
-  # group_by(ROUTE) %>%
-  # mutate(
-  #   prevID = lag(OBJECTID, n = 1L)
-  # ) 
-
-# create ID column to be compressed
-iter <- 0
-route <- -1
-func_class <- -1
-fc$ID <- 0
-for(i in 1:nrow(fc)){
-  new_route <- fc$ROUTE[i]
-  new_func_class <- fc$FUNCTIONAL[i]
-  if((new_route != route) | (new_func_class != func_class)){
-    iter <- iter + 1
-    route <- new_route
-    func_class <- new_func_class
-    
-  }
-  fc$ID[i] <- iter
-}
-
-# use summarize to compress segments
-fc <- fc %>% 
-  group_by(ID) %>%
-  summarise(BEG_MP = min(BEG_MP),
-            END_MP = max(END_MP), 
-            FUNCTIONAL = unique(FUNCTIONAL), 
-            ROUTE = unique(ROUTE),
-            RouteDir = unique(RouteDir),
-            RouteType = unique(RouteType)) %>%
-  st_drop_geometry() # might as well drop this because the spatial data probably has gaps in it
-  
-  
-  
 
 # fctest <- fc
 # fctest %>%
@@ -233,6 +242,9 @@ aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 # Find Number of Unique Routes in aadt file
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
+# Compress lanes
+aadt <- compress_seg(aadt, aadt.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
+
 # Unused Code for Filtering aadt Data
 
 # Take First Four Numbers of Route Column
@@ -260,6 +272,9 @@ speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 
 # Find Number of Unique Routes in speed file
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress lanes
+speed <- compress_seg(speed, speed.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
 
 # Unused Code for Filtering speed Data
 
@@ -291,6 +306,9 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 
 # Find Number of Unique Routes in lane file
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress lanes
+lane <- compress_seg(lane, lane.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
 
 # Unused Code for Filtering lane Data
 

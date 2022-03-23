@@ -39,7 +39,6 @@ fc.columns <- c("ROUTE_ID",
                 "FUNCTIONAL",                             
                 "RouteDir",                             
                 "RouteType",
-                "OBJECTID",
                 "geometry")
 
 # speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
@@ -152,56 +151,41 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress Segments
 
-fc_test <- fc %>%
-  arrange(ROUTE, BEG_MP) %>%
-  group_by(ROUTE) %>%
-  mutate(
-    prevID = lag(OBJECTID, n = 1L)
-  ) 
+# sort by route and milepoints
+fc <- fc %>%
+  arrange(ROUTE, BEG_MP) #%>%
+  # group_by(ROUTE) %>%
+  # mutate(
+  #   prevID = lag(OBJECTID, n = 1L)
+  # ) 
 
-fc_test <- fc_test %>%
-  group_by(ROUTE, FUNCTIONAL) %>%
-  mutate(
-    groupID = cur_group_id()
-  ) %>%
-  mutate(
-    newID = case_when(
-      FUNCTIONAL == fc[,row_number]$FUNCTIONAL ~ TRUE,
-      FUNCTIONAL != fc[,fc$OBJECTID == prevID]$FUNCTIONAL ~ FALSE
-    )
-  )
-
+# create ID column to be compressed
 iter <- 0
 route <- -1
 func_class <- -1
-fc_test$groupID <- 0
-for(i in 1:nrow(fc_test)){
-  new_route <- fc_test$ROUTE[i]
-  new_func_class <- fc_test$FUNCTIONAL[i]
+fc$ID <- 0
+for(i in 1:nrow(fc)){
+  new_route <- fc$ROUTE[i]
+  new_func_class <- fc$FUNCTIONAL[i]
   if((new_route != route) | (new_func_class != func_class)){
     iter <- iter + 1
     route <- new_route
     func_class <- new_func_class
     
   }
-  fc_test$groupID[i] <- iter
-  
+  fc$ID[i] <- iter
 }
 
-fc_slice_min <- fc_test %>%
-  group_by(groupID) %>%
-  slice_min(BEG_MP)
-
-fc_slice_max <- fc_test %>%
-  group_by(groupID) %>%
-  slice_max(END_MP)
-
-fc_slice <- rbind(fc_slice_min, fc_slice_max) %>%
-  group_by(groupID) %>%
+# use summarize to compress segments
+fc <- fc %>% 
+  group_by(ID) %>%
   summarise(BEG_MP = min(BEG_MP),
             END_MP = max(END_MP), 
             FUNCTIONAL = unique(FUNCTIONAL), 
-            ROUTE = unique(ROUTE))
+            ROUTE = unique(ROUTE),
+            RouteDir = unique(RouteDir),
+            RouteType = unique(RouteType)) %>%
+  st_drop_geometry() # might as well drop this because the spatial data probably has gaps in it
   
   
   

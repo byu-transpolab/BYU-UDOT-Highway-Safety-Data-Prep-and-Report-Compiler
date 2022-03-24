@@ -28,8 +28,7 @@ aadt.columns <- c("ROUTE_NAME",
                   "CUTRK2015",
                   "AADT2014",
                   "SUTRK2014", 
-                  "CUTRK2014",
-                  "Shape_Leng")
+                  "CUTRK2014")
 
 fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
 fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
@@ -139,6 +138,7 @@ compress_seg <- function(df, col, variables) {
     arrange(ROUTE, BEG_MP)
   # loop through variables to merge by
   iter <- 0
+  count <- 0
   route <- -1
   value <- variables
   df$ID <- 0
@@ -148,7 +148,10 @@ compress_seg <- function(df, col, variables) {
     for (j in 1:length(variables)){
       varName <- variables[j]
       new_value <- df[[varName]][i]
-      if((new_value != value[j])){
+      if(is.na(new_value)){
+        new_value = 0
+      }
+      if(new_value != value[j]){
         value[j] <- new_value
         test = 1
       }
@@ -156,6 +159,8 @@ compress_seg <- function(df, col, variables) {
     if((new_route != route) | (test == 1)){
       iter <- iter + 1
       route <- new_route
+    } else {
+      count = count + 1
     }
     df$ID[i] <- iter
   }
@@ -169,6 +174,8 @@ compress_seg <- function(df, col, variables) {
       across(.cols = col)
     ) %>%
     unique()
+  # report the number of combined rows
+  print(paste("combined", count, "rows"))
   # return df
   df
 } 
@@ -243,7 +250,7 @@ aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-aadt <- compress_seg(aadt, aadt.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
+aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 
 # Unused Code for Filtering aadt Data
 
@@ -274,7 +281,7 @@ speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-speed <- compress_seg(speed, speed.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
+speed <- compress_seg(speed, speed.columns, tail(speed.columns, -3))
 
 # Unused Code for Filtering speed Data
 

@@ -143,18 +143,18 @@ compress_seg <- function(df, col, variables) {
   for(i in 1:nrow(df)){
     new_route <- df$ROUTE[i]
     test = 0
-    for (j in 1:length(variables)){
+    for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
       varName <- variables[j]
       new_value <- df[[varName]][i]
-      if(is.na(new_value)){
+      if(is.na(new_value)){              # treat NA as zero to avoid errors
         new_value = 0
       }
-      if(new_value != value[j]){
+      if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
         value[j] <- new_value
         test = 1
       }
     }
-    if((new_route != route) | (test == 1)){
+    if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
       iter <- iter + 1
       route <- new_route
     } else {

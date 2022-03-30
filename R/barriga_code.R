@@ -51,8 +51,6 @@ lane.filepath <- "data/shapefile/Lanes.shp"
 lane.columns <- c("ROUTE",
                   "START_ACCU",
                   "END_ACCUM",
-                  "L_TURN_CNT",
-                  "R_TURN_CNT",
                   "THRU_CNT",
                   "THRU_WDTH",
                   # "BEG_LONG",
@@ -205,6 +203,7 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 # Compress fc
 fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL"))
 
+# Unused Code for Filtering fc Data
 
 # fctest <- fc
 # fctest %>%
@@ -220,8 +219,6 @@ fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL"))
 #  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
 #else
 #End if 
-
-# Unused Code for Filtering fc Data 
 
 # Take First Four Numbers of Route Column
 # fc$ROUTE <- substr(fc$ROUTE, 1, 4)
@@ -315,7 +312,7 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-lane <- compress_seg(lane, lane.columns, c("THRU_CNT", "THRU_WDTH", "L_TURN_CNT", "R_TURN_CNT"))
+lane <- compress_seg(lane, lane.columns, c("THRU_CNT", "THRU_WDTH"))
 
 # Unused Code for Filtering lane Data
 

@@ -30,7 +30,7 @@ aadt.columns <- c("ROUTE_NAME",
                   "SUTRK2014", 
                   "CUTRK2014")
 
-fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
+# fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
 fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
 fc.columns <- c("ROUTE_ID",                          
                 "FROM_MEASU",                             
@@ -39,7 +39,7 @@ fc.columns <- c("ROUTE_ID",
                 "RouteDir",                             
                 "RouteType")
 
-# speed <- st_read("data/shapefile/UDOT_Speed_Limits_2019.shp")
+# speed <- read_sf("data/shapefile/UDOT_Speed_Limits_2019.shp")
 speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
 speed.columns <- c("ROUTE_ID",                         
                    "FROM_MEASU",                         
@@ -127,14 +127,14 @@ read_filez <- function(filepath, columns) {
 
 # Compress Segments Function
 compress_seg <- function(df, col, variables) {
-  # drop geometry
+  # drop geometry (it will become useless after this anyways)
   df <- df %>% st_drop_geometry()
-  # get columns to preserve
+  # get columns to preserve (assumes the first three are "route", "beg_mp", "end_mp")
   col <- tail(col, -3)
-  # sort by route and milepoints
+  # sort by route and milepoints (assumes consistent naming convention for these)
   df <- df %>%
     arrange(ROUTE, BEG_MP)
-  # loop through variables to merge by
+  # loop through rows checking the variables to merge by
   iter <- 0
   count <- 0
   route <- -1
@@ -480,7 +480,7 @@ shell_creator <- function(sdtms) {
   
   all_segments <- bind_cols(all_breaks, endpoints = endpoints) %>% 
     group_by(ROUTE) %>% 
-    mutate(lastrecord = (startpoints == max(startpoints))) # %>% 
+    mutate(lastrecord = (startpoints == max(startpoints))) # %>%    # This isn't actually getting used
   #  filter(!lastrecord) %>% 
   #  select(-lastrecord)
   # NOTE: Function produces, then discards one record per ROUTE whose starting and
@@ -583,3 +583,73 @@ RC <- RC %>%
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Potential code to replace the shell method
+df <- rbind(fc, lane, aadt, speed)
+# sort by route and milepoints (assumes consistent naming convention for these)
+df <- df %>%
+  arrange(ROUTE, BEG_MP, END_MP)
+# loop through rows checking the variables to merge by
+iter <- 0
+count <- 0
+route <- -1
+value <- variables
+df$ID <- 0
+for(i in 1:nrow(df)){
+  new_route <- df$ROUTE[i]
+  test = 0
+  for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
+    varName <- variables[j]
+    new_value <- df[[varName]][i]
+    if(is.na(new_value)){              # treat NA as zero to avoid errors
+      new_value = 0
+    }
+    if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
+      value[j] <- new_value
+      test = 1
+    }
+  }
+  if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
+    iter <- iter + 1
+    route <- new_route
+  } else {
+    count = count + 1
+  }
+  df$ID[i] <- iter
+}
+# use summarize to compress segments
+df <- df %>% 
+  group_by(ID) %>%
+  summarise(
+    ROUTE = unique(ROUTE),
+    BEG_MP = min(BEG_MP),
+    END_MP = max(END_MP), 
+    across(.cols = col)
+  ) %>%
+  unique()
+# report the number of combined rows
+print(paste("combined", count, "rows"))

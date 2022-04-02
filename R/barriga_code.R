@@ -45,6 +45,11 @@ speed.columns <- c("ROUTE_ID",
                    "FROM_MEASU",                         
                    "TO_MEASURE",                         
                    "SPEED_LIMI")
+# speed.filepath <- "data/UDOT_Speed_Limits_2019.csv"
+# speed.columns <- c("ROUTE_ID",
+#                    "FROM_MEASURE",
+#                    "TO_MEASURE",
+#                    "SPEED_LIMIT")
 
 # lanes <- read_sf("data/shapefile/Lanes.shp")
 lane.filepath <- "data/shapefile/Lanes.shp"
@@ -52,12 +57,12 @@ lane.columns <- c("ROUTE",
                   "START_ACCU",
                   "END_ACCUM",
                   "THRU_CNT",
-                  "THRU_WDTH",
+                  "THRU_WDTH")
                   # "BEG_LONG",
                   # "BEG_LAT",
                   # "END_LONG",
                   # "END_LAT",
-                  "TRAVEL_DIR")
+                  # "TRAVEL_DIR")
 
 # small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
 # small.filepath <- "data/shapefile/Urban_Boundaries_Small.shp"
@@ -125,6 +130,17 @@ read_filez <- function(filepath, columns) {
   }
 }
 
+read_filez_csv <- function(filepath, columns) {
+  if (str_detect(filepath, ".csv")) {
+    print("reading csv")
+    read_csv(filepath) %>% select(all_of(columns))
+  }
+  else {
+    print("Error reading in:")
+    print(filepath)
+  }
+}
+
 # Compress Segments Function
 compress_seg <- function(df, col, variables) {
   # drop geometry (it will become useless after this anyways)
@@ -171,7 +187,9 @@ compress_seg <- function(df, col, variables) {
       END_MP = max(END_MP), 
       across(.cols = col)
     ) %>%
-    unique()
+    unique() %>%
+    ungroup() %>%
+    select(-ID)
   # report the number of combined rows
   print(paste("combined", count, "rows"))
   # return df
@@ -249,6 +267,30 @@ num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 # Compress lanes
 aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 
+# coerce aadt to numeric
+for(i in 1:length(aadt.columns)){
+  string <- substr(aadt.columns[i],1,4)
+  if(string == "AADT" | string == "SUTR" | string == "CUTR"){
+    aadt[i] <- as.numeric(unlist(aadt[i]))
+  } 
+}
+
+# make aadt longer
+aadt <- aadt %>%
+  pivot_longer(
+    cols = starts_with("AADT") | starts_with("SUTRK") | starts_with("CUTRK"),
+    names_to = "count_type",
+    values_to = "count"
+  ) %>%
+  mutate(
+    YEAR = as.integer(gsub(".*?([0-9]+).*", "\\1", count_type)),
+    count_type = sub("^([[:alpha:]]*).*", "\\1", count_type)
+  ) %>%
+  pivot_wider(
+    names_from = count_type,
+    values_from = count,
+  )
+
 # Unused Code for Filtering aadt Data
 
 # Take First Four Numbers of Route Column
@@ -266,6 +308,7 @@ aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 
 # Read in speed File
 speed <- read_filez(speed.filepath, speed.columns)
+# speed <- read_filez_csv(speed.filepath, speed.columns)
 
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -599,26 +642,29 @@ write.csv(RC, file = output)
 
 
 
-
-
-
-
-
-
-
-
-
 # Potential code to replace the shell method
-df <- rbind(fc, lane, aadt, speed)
+
+# assign variables
+sdtms <- list(aadt, fc, speed, lane)
+sdtms <- lapply(sdtms, as_tibble)
+df <- rbind(fc, lane, aadt, speed, deparse.level = 1, make.row.names = TRUE)
+# extract columns from data
+colns <- colnames(df)
+colns <- tail(colns, -4)    # remove ID and first 
 # sort by route and milepoints (assumes consistent naming convention for these)
 df <- df %>%
-  arrange(ROUTE, BEG_MP, END_MP)
-# loop through rows checking the variables to merge by
+  arrange(ROUTE, BEG_MP, END_MP) %>%
+  select(ROUTE, BEG_MP, END_MP)
+# loop through variables and rows
 iter <- 0
 count <- 0
 route <- -1
 value <- variables
 df$ID <- 0
+# create new variables to replace the old ones
+
+
+
 for(i in 1:nrow(df)){
   new_route <- df$ROUTE[i]
   test = 0

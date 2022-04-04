@@ -201,7 +201,31 @@ compress_seg <- function(df, col, variables) {
   df
 } 
 
-
+# Pivot AADT longer Function
+pivot_aadt <- function(aadt, aadt.columns){
+  # coerce aadt to numeric
+  for(i in 1:length(aadt.columns)){
+    string <- substr(aadt.columns[i],1,4)
+    if(string == "AADT" | string == "SUTR" | string == "CUTR"){
+      aadt[i] <- as.numeric(unlist(aadt[i]))
+    } 
+  }
+  # make aadt longer
+  aadt <- aadt %>%
+    pivot_longer(
+      cols = starts_with("AADT") | starts_with("SUTRK") | starts_with("CUTRK"),
+      names_to = "count_type",
+      values_to = "count"
+    ) %>%
+    mutate(
+      YEAR = as.integer(gsub(".*?([0-9]+).*", "\\1", count_type)),   # extract numeric characters
+      count_type = sub("^([[:alpha:]]*).*", "\\1", count_type)       # extract alpha-beta characters
+    ) %>%
+    pivot_wider(
+      names_from = count_type,
+      values_from = count,
+    )
+}
 
 ###
 ## Functional Class Data Prep
@@ -272,29 +296,8 @@ num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 # Compress lanes
 aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 
-# coerce aadt to numeric
-for(i in 1:length(aadt.columns)){
-  string <- substr(aadt.columns[i],1,4)
-  if(string == "AADT" | string == "SUTR" | string == "CUTR"){
-    aadt[i] <- as.numeric(unlist(aadt[i]))
-  } 
-}
-
-# make aadt longer
-aadt <- aadt %>%
-  pivot_longer(
-    cols = starts_with("AADT") | starts_with("SUTRK") | starts_with("CUTRK"),
-    names_to = "count_type",
-    values_to = "count"
-  ) %>%
-  mutate(
-    YEAR = as.integer(gsub(".*?([0-9]+).*", "\\1", count_type)),
-    count_type = sub("^([[:alpha:]]*).*", "\\1", count_type)
-  ) %>%
-  pivot_wider(
-    names_from = count_type,
-    values_from = count,
-  )
+# Pivot AADT
+test <- pivot_aadt(aadt, aadt.columns)
 
 # Unused Code for Filtering aadt Data
 

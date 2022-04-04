@@ -219,7 +219,7 @@ pivot_aadt <- function(aadt, aadt.columns){
     ) %>%
     mutate(
       YEAR = as.integer(gsub(".*?([0-9]+).*", "\\1", count_type)),   # extract numeric characters
-      count_type = sub("^([[:alpha:]]*).*", "\\1", count_type)       # extract alpha-beta characters
+      count_type = sub("^([[:alpha:]]*).*", "\\1", count_type)     # extract alpha-beta characters
     ) %>%
     pivot_wider(
       names_from = count_type,
@@ -296,8 +296,38 @@ num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 # Compress lanes
 aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 
-# Pivot AADT
-test <- pivot_aadt(aadt, aadt.columns)
+# Fix missing negative direction AADT values
+routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
+routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+routes_n <- routes %>% filter(grepl("N",ROUTE))
+
+aadt_p <- aadt %>% filter(grepl("P",ROUTE))
+
+aadt_n <- aadt %>% filter(grepl("N",ROUTE))
+
+test <- full_join(aadt_n, routes_n, by = "ROUTE") %>%
+  mutate(
+    label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE)),
+    BEG_MP = BEG_MP.x,
+    END_MP = END_MP.x
+  ) %>%
+  select(-contains(".y"), -contains(".x"))
+
+
+
+colns <- tail(aadt.columns, -3)
+
+aadt_check <- RC %>%
+  filter(grepl("N",ROUTE))
+
+for(i in 1:nrow(aadt_check)){
+  fix <- 1
+  for(j in 1:length(colns)){
+    if(!is.na(aadt_check[[colns[j]]][i])){
+      fix <- 0
+    }
+  }
+}
 
 # Unused Code for Filtering aadt Data
 
@@ -542,7 +572,8 @@ shell_creator <- function(sdtms) {
   
   shell <- all_segments %>% 
     group_by(ROUTE) %>% 
-    select(ROUTE, startpoints, endpoints) %>% 
+    select(ROUTE, startpoints, endpoints) %>%
+    filter(endpoints != 0) %>%
     arrange(ROUTE, startpoints)
   
   return(shell)
@@ -631,6 +662,9 @@ RC <- RC %>%
   select(-dropflag) %>% 
   arrange(ROUTE, BEG_MP)
 
+# Pivot AADT
+test <- pivot_aadt(RC, aadt.columns)
+
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
@@ -655,7 +689,7 @@ write.csv(RC, file = output)
 # assign variables
 sdtms <- list(aadt, fc, speed, lane)
 sdtms <- lapply(sdtms, as_tibble)
-df <- rbind(fc, lane, aadt, speed, deparse.level = 1, make.row.names = TRUE)
+df <- rbind(fc, lane, aadt, speed)
 # extract columns from data
 colns <- colnames(df)
 colns <- tail(colns, -4)    # remove ID and first 

@@ -3,66 +3,71 @@ library(sf)
 
 # Set filepath and Column Names
 
-# aadt <- read_sf("data/shapefile/AADT_Unrounded.shp")
-aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
+# aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
+aadt.filepath <- "data/AADT_Unrounded.csv"
 aadt.columns <- c("ROUTE_NAME",
-                  "START_ACCU", 
+                  "START_ACCU",
                   "END_ACCUM",
-                  "AADT2020", 
-                  "SUTRK2020", 
-                  "CUTRK2020", 
-                  "AADT2019", 
-                  "SUTRK2019", 
+                  "AADT2020",
+                  "SUTRK2020",
+                  "CUTRK2020",
+                  "AADT2019",
+                  "SUTRK2019",
                   "CUTRK2019",
-                  "AADT2018", 
-                  "SUTRK2018", 
+                  "AADT2018",
+                  "SUTRK2018",
                   "CUTRK2018",
-                  "AADT2017", 
-                  "SUTRK2017", 
+                  "AADT2017",
+                  "SUTRK2017",
                   "CUTRK2017",
-                  "AADT2016", 
-                  "SUTRK2016", 
-                  "CUTRK2016",  
-                  "AADT2015", 
-                  "SUTRK2015", 
+                  "AADT2016",
+                  "SUTRK2016",
+                  "CUTRK2016",
+                  "AADT2015",
+                  "SUTRK2015",
                   "CUTRK2015",
                   "AADT2014",
-                  "SUTRK2014", 
+                  "SUTRK2014",
                   "CUTRK2014")
 
-# fc <- read_sf("data/shapefile/Functional_Class_ALRS.shp")
-fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
+# fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
+# fc.columns <- c("ROUTE_ID",                          
+#                 "FROM_MEASU",                             
+#                 "TO_MEASURE",
+#                 "FUNCTIONAL",                             
+#                 "RouteDir",                             
+#                 "RouteType")
+fc.filepath <- "data/Functional_Class_ALRS.csv"
 fc.columns <- c("ROUTE_ID",                          
-                "FROM_MEASU",                             
+                "FROM_MEASURE",                             
                 "TO_MEASURE",
-                "FUNCTIONAL",                             
+                "FUNCTIONAL_CLASS",                             
                 "RouteDir",                             
                 "RouteType")
 
-# speed <- read_sf("data/shapefile/UDOT_Speed_Limits_2019.shp")
-speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
-speed.columns <- c("ROUTE_ID",                         
-                   "FROM_MEASU",                         
-                   "TO_MEASURE",                         
-                   "SPEED_LIMI")
-# speed.filepath <- "data/UDOT_Speed_Limits_2019.csv"
-# speed.columns <- c("ROUTE_ID",
-#                    "FROM_MEASURE",
-#                    "TO_MEASURE",
-#                    "SPEED_LIMIT")
+# speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
+# speed.columns <- c("ROUTE_ID",                         
+#                    "FROM_MEASU",                         
+#                    "TO_MEASURE",                         
+#                    "SPEED_LIMI")
+speed.filepath <- "data/UDOT_Speed_Limits_2019.csv"
+speed.columns <- c("ROUTE_ID",
+                   "FROM_MEASURE",
+                   "TO_MEASURE",
+                   "SPEED_LIMIT")
 
-# lanes <- read_sf("data/shapefile/Lanes.shp")
-lane.filepath <- "data/shapefile/Lanes.shp"
+# lane.filepath <- "data/shapefile/Lanes.shp"
+# lane.columns <- c("ROUTE",
+#                   "START_ACCU",
+#                   "END_ACCUM",
+#                   "THRU_CNT",
+#                   "THRU_WDTH")
+lane.filepath <- "data/Lanes.csv"
 lane.columns <- c("ROUTE",
-                  "START_ACCU",
+                  "START_ACCUM",
                   "END_ACCUM",
                   "THRU_CNT",
                   "THRU_WDTH")
-                  # "BEG_LONG",
-                  # "BEG_LAT",
-                  # "END_LONG",
-                  # "END_LAT",
-                  # "TRAVEL_DIR")
 
 # small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
 # small.filepath <- "data/shapefile/Urban_Boundaries_Small.shp"
@@ -144,7 +149,7 @@ read_filez_csv <- function(filepath, columns) {
 # Compress Segments Function
 compress_seg <- function(df, col, variables) {
   # drop geometry (it will become useless after this anyways)
-  df <- df %>% st_drop_geometry()
+  # df <- df %>% st_drop_geometry()
   # get columns to preserve (assumes the first three are "route", "beg_mp", "end_mp")
   col <- tail(col, -3)
   # sort by route and milepoints (assumes consistent naming convention for these)
@@ -203,7 +208,7 @@ compress_seg <- function(df, col, variables) {
 ###
 
 # Read in fc File
-fc <- read_filez(fc.filepath, fc.columns)
+fc <- read_filez_csv(fc.filepath, fc.columns)
 
 # Standardize Column Names
 names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -219,7 +224,7 @@ num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress fc
-fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL"))
+fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL_CLASS"))
 
 # Unused Code for Filtering fc Data
 
@@ -252,7 +257,7 @@ fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL"))
 ####
 
 # Read in aadt File
-aadt <- read_filez(aadt.filepath, aadt.columns)
+aadt <- read_filez_csv(aadt.filepath, aadt.columns)
 
 # Standardize Column Names
 names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -307,7 +312,7 @@ aadt <- aadt %>%
 ###
 
 # Read in speed File
-speed <- read_filez(speed.filepath, speed.columns)
+speed <- read_filez_csv(speed.filepath, speed.columns)
 # speed <- read_filez_csv(speed.filepath, speed.columns)
 
 # Standardizing Column Names
@@ -339,7 +344,7 @@ speed <- compress_seg(speed, speed.columns, tail(speed.columns, -3))
 ###
 
 # Read in lane file
-lane <- read_filez(lane.filepath, lane.columns)
+lane <- read_filez_csv(lane.filepath, lane.columns)
 
 # Standardize Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")

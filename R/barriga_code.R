@@ -3,6 +3,11 @@ library(sf)
 
 # Set filepath and Column Names
 
+routes.filepath <- "data/UDOT_Routes_ALRS.csv"
+routes.columns <- c("ROUTE_ID",                          
+                "BEG_MILEAGE",                             
+                "END_MILEAGE")
+
 # aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
 aadt.filepath <- "data/AADT_Unrounded.csv"
 aadt.columns <- c("ROUTE_NAME",
@@ -198,11 +203,11 @@ compress_seg <- function(df, col, variables) {
   # report the number of combined rows
   print(paste("combined", count, "rows"))
   # return df
-  df
+  return(df)
 } 
 
-# Pivot AADT longer Function
-pivot_aadt <- function(aadt, aadt.columns){
+# Convert AADT to Numeric Function
+aadt_numeric <- function(aadt, aadt.columns){
   # coerce aadt to numeric
   for(i in 1:length(aadt.columns)){
     string <- substr(aadt.columns[i],1,4)
@@ -210,7 +215,11 @@ pivot_aadt <- function(aadt, aadt.columns){
       aadt[i] <- as.numeric(unlist(aadt[i]))
     } 
   }
-  # make aadt longer
+  return(aadt)
+}
+
+# Pivot AADT longer Function
+pivot_aadt <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
       cols = starts_with("AADT") | starts_with("SUTRK") | starts_with("CUTRK"),
@@ -225,7 +234,70 @@ pivot_aadt <- function(aadt, aadt.columns){
       names_from = count_type,
       values_from = count,
     )
+  return(aadt)
 }
+
+# Fix last ending milepoints
+fix_endpoints <- function(df, routes){  
+  error_count <- 0
+  error_count2 <- 0
+  count <- 0
+  for(i in 1:nrow(df)){
+    end <- df[["END_MP"]][i]
+    nxt <- df[["END_MP"]][i+1]
+    # check if the next segment endpoint is less than the current
+    if(end > nxt | is.na(nxt)){
+      rt <- df[["ROUTE"]][i]
+      rt2 <- df[["ROUTE"]][i+1]
+      # check if the segments in question are on the same route. If they are, skip the iteration and count error
+      if(rt == rt2 & !is.na(rt2)){
+        error_count <- error_count + 1
+        next
+      }
+      # assign endpoint value from the endpoint of the routes data
+      rt_row <- which(routes$ROUTE == rt)
+      end_rt <- routes[["END_MP"]][rt_row]
+      # if the endpoints are not the same, correct the endpoint
+      if(end_rt < end){
+        prev <- df[["END_MP"]][i-1]
+        # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
+        if(end_rt < prev & !is.na(prev)){
+          error_count2 <- error_count2 + 1
+          df[["END_MP"]][i-1]
+          next
+        }
+        # assign new endpoint value to the segment
+        df[["END_MP"]][i] <- end_rt
+        count <- count + 1
+      }
+    }
+  }
+  # print number of iterations and any errors
+  print(paste("corrected", count, "endpoints"))
+  if(error_count > 0){
+    print(paste("WARNING, the segments overlap at", error_count, "places"))
+  }
+  if(error_count2 > 0){
+    print(paste("WARNING,", error_count2, "segments exist outside of the LRS. Corrected data should be obtained from UDOT."))
+  }
+}
+
+###
+## Routes Data Prep
+###
+
+# Read in routes File
+routes <- read_filez_csv(routes.filepath, routes.columns)
+
+# Standardize Column Names
+names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+# Select only Main Routes
+routes <- routes %>% filter(grepl("M", ROUTE))
+
+
+
+
 
 ###
 ## Functional Class Data Prep
@@ -249,6 +321,13 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress fc
 fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL_CLASS"))
+
+# # Create routes dataframe
+# routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
+# routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+
+# fix ending endpoints
+fc <- fix_endpoints(fc, routes)
 
 # Unused Code for Filtering fc Data
 
@@ -293,8 +372,14 @@ aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 # Find Number of Unique Routes in aadt file
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
-# Compress lanes
+# Convert aadt to numeric
+aadt <- aadt_numeric(aadt, aadt.columns)
+
+# Compress aadt
 aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
+
+# fix ending endpoints
+aadt <- fix_endpoints(aadt, routes)
 
 # Fix missing negative direction AADT values
 routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
@@ -312,6 +397,7 @@ test <- full_join(aadt_n, routes_n, by = "ROUTE") %>%
     END_MP = END_MP.x
   ) %>%
   select(-contains(".y"), -contains(".x"))
+
 
 
 
@@ -358,8 +444,11 @@ speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 # Find Number of Unique Routes in speed file
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
-# Compress lanes
+# Compress speed
 speed <- compress_seg(speed, speed.columns, tail(speed.columns, -3))
+
+# fix ending endpoints
+speed <- fix_endpoints(speed, routes)
 
 # Unused Code for Filtering speed Data
 
@@ -394,6 +483,9 @@ num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
 lane <- compress_seg(lane, lane.columns, c("THRU_CNT", "THRU_WDTH"))
+
+# fix ending endpoints
+lane <- fix_endpoints(lane, routes)
 
 # Unused Code for Filtering lane Data
 
@@ -663,7 +755,7 @@ RC <- RC %>%
   arrange(ROUTE, BEG_MP)
 
 # Pivot AADT
-test <- pivot_aadt(RC, aadt.columns)
+test <- pivot_aadt(RC)
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")

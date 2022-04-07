@@ -109,11 +109,7 @@ lane.columns <- c("ROUTE",
 #                     "END_ACCUM",
 #                     "MEDIAN_TYP",
 #                     "TRFISL_TYP",
-#                     "MDN_PRTCTN",
-#                     "BEG_LONG",
-#                     "BEG_LAT",
-#                     "END_LONG",
-#                     "END_LAT")
+#                     "MDN_PRTCTN")
 
 # shoulder <- read_sf("data/shapefile/Shoulders.shp")
 # shoulder.filepath <-"data/shapefile/Shoulders.shp"
@@ -398,9 +394,12 @@ test <- full_join(aadt_n, routes_n, by = "ROUTE") %>%
   ) %>%
   select(-contains(".y"), -contains(".x"))
 
+<<<<<<< Updated upstream
 
 
 
+=======
+>>>>>>> Stashed changes
 colns <- tail(aadt.columns, -3)
 
 aadt_check <- RC %>%

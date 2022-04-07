@@ -1,5 +1,5 @@
 library(tidyverse)
-library(sf)
+# library(sf)
 
 # Set filepath and Column Names
 
@@ -263,6 +263,7 @@ fix_endpoints <- function(df, routes){
         # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
         if(end_rt < prev & !is.na(prev)){
           error_count2 <- error_count2 + 1
+          print(paste(rt, prev, end))
           df[["END_MP"]][i-1]
           next
         }
@@ -280,6 +281,7 @@ fix_endpoints <- function(df, routes){
   if(error_count2 > 0){
     print(paste("WARNING,", error_count2, "segments exist outside of the LRS. Corrected data should be obtained from UDOT."))
   }
+  return(df)
 }
 
 ###

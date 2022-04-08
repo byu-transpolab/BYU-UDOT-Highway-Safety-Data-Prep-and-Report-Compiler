@@ -237,6 +237,7 @@ pivot_aadt <- function(aadt){
 fix_endpoints <- function(df, routes){  
   error_count <- 0
   error_count2 <- 0
+  error_count3 <- 0
   count <- 0
   for(i in 1:nrow(df)){
     end <- df[["END_MP"]][i]
@@ -248,19 +249,29 @@ fix_endpoints <- function(df, routes){
       # check if the segments in question are on the same route. If they are, skip the iteration and count error
       if(rt == rt2 & !is.na(rt2)){
         error_count <- error_count + 1
+        print(paste("segments overlaps with next:", rt, "at", round(end,3)))
         next
       }
       # assign endpoint value from the endpoint of the routes data
       rt_row <- which(routes$ROUTE == rt)
       end_rt <- routes[["END_MP"]][rt_row]
       # if the endpoints are not the same, correct the endpoint
-      if(end_rt < end){
+      if(end_rt != end){
         prev <- df[["END_MP"]][i-1]
+        prev_rt <- df[["ROUTE"]][i-1]
         # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
-        if(end_rt < prev & !is.na(prev)){
+        if(i == 1){
+          # nothing
+        } else if(end_rt < prev & rt == prev_rt){
           error_count2 <- error_count2 + 1
-          print(paste(rt, prev, end))
+          print(paste("segment not on LRS:", rt, "previous endpoint:", round(prev,3), "endpoint:", round(end,3), "route endpoint:", round(end_rt,3)))
           df[["END_MP"]][i-1]
+          next
+        }
+        # check if the endpoint varies greatly from the LRS
+        if(abs(end_rt-end) > 0.5){
+          error_count3 <- error_count3 + 1
+          print(paste("route varies greatly from LRS:", rt, "by", round(end-end_rt,2), "miles."))
           next
         }
         # assign new endpoint value to the segment
@@ -270,12 +281,16 @@ fix_endpoints <- function(df, routes){
     }
   }
   # print number of iterations and any errors
+  print("")
   print(paste("corrected", count, "endpoints"))
   if(error_count > 0){
-    print(paste("WARNING, the segments overlap at", error_count, "places"))
+    print(paste("WARNING, the segments overlap at", error_count, "places. Overlaps will be discarded in the segmentation code."))
   }
   if(error_count2 > 0){
-    print(paste("WARNING,", error_count2, "segments exist outside of the LRS. Corrected data should be obtained from UDOT."))
+    print(paste("WARNING, at least", error_count2, "segment(s) appear to exist outside of the LRS. This may also be due to overlapping segments or a great variance from the LRS along with small segments."))
+  }
+  if(error_count3 > 0){
+    print(paste("WARNING,", error_count3, "route(s) vary from the LRS by 0.5 miles or more."))
   }
   return(df)
 }
@@ -734,25 +749,27 @@ RC <- c(list(shell), joined_populated) %>%
   arrange(ROUTE, BEG_MP)
 
 ######### Compressing by combining rows identical except for identifying information ########
+# This basically works the same way as the compress segments code we wrote earlier
 
 # Compressing across road segment
 RC <- RC %>% 
-  filter(dropflag == FALSE) %>% 
+  filter(BEG_MP < END_MP) %>%
   select(ROUTE, BEG_MP, END_MP, everything()) %>% 
   arrange(ROUTE, BEG_MP)
 
 # Adjust road segment boundaries and flag duplicate rows for deletion.
+RC$dropflag <- FALSE
 for (i in 1:(nrow(RC) - 1)) {
-  if (identical(RC[i, -c(4, 5)], RC[i + 1, -c(4, 5)])) {
+  if (identical(RC[i, -c(2, 3)], RC[i + 1, -c(2, 3)])) {
     RC$dropflag[i] <- TRUE
-    RC[i + 1, 4] <- RC[i, 4]
+    RC[i + 1, 2] <- RC[i, 2]
   }
 }
 
-RC <- RC %>% 
-  filter(dropflag == FALSE) %>% 
-  select(ROUTE, BEG_MP, END_MP, everything()) %>% 
-  select(-dropflag) %>% 
+RC <- RC %>%
+  filter(dropflag == FALSE) %>%
+  select(ROUTE, BEG_MP, END_MP, everything()) %>%
+  select(-dropflag) %>%
   arrange(ROUTE, BEG_MP)
 
 # Pivot AADT
@@ -777,60 +794,60 @@ write.csv(RC, file = output)
 
 
 
-# Potential code to replace the shell method
-
-# assign variables
-sdtms <- list(aadt, fc, speed, lane)
-sdtms <- lapply(sdtms, as_tibble)
-df <- rbind(fc, lane, aadt, speed)
-# extract columns from data
-colns <- colnames(df)
-colns <- tail(colns, -4)    # remove ID and first 
-# sort by route and milepoints (assumes consistent naming convention for these)
-df <- df %>%
-  arrange(ROUTE, BEG_MP, END_MP) %>%
-  select(ROUTE, BEG_MP, END_MP)
-# loop through variables and rows
-iter <- 0
-count <- 0
-route <- -1
-value <- variables
-df$ID <- 0
-# create new variables to replace the old ones
-
-
-
-for(i in 1:nrow(df)){
-  new_route <- df$ROUTE[i]
-  test = 0
-  for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
-    varName <- variables[j]
-    new_value <- df[[varName]][i]
-    if(is.na(new_value)){              # treat NA as zero to avoid errors
-      new_value = 0
-    }
-    if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
-      value[j] <- new_value
-      test = 1
-    }
-  }
-  if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
-    iter <- iter + 1
-    route <- new_route
-  } else {
-    count = count + 1
-  }
-  df$ID[i] <- iter
-}
-# use summarize to compress segments
-df <- df %>% 
-  group_by(ID) %>%
-  summarise(
-    ROUTE = unique(ROUTE),
-    BEG_MP = min(BEG_MP),
-    END_MP = max(END_MP), 
-    across(.cols = col)
-  ) %>%
-  unique()
-# report the number of combined rows
-print(paste("combined", count, "rows"))
+# # Potential code to replace the shell method
+# 
+# # assign variables
+# sdtms <- list(aadt, fc, speed, lane)
+# sdtms <- lapply(sdtms, as_tibble)
+# df <- rbind(fc, lane, aadt, speed)
+# # extract columns from data
+# colns <- colnames(df)
+# colns <- tail(colns, -4)    # remove ID and first 
+# # sort by route and milepoints (assumes consistent naming convention for these)
+# df <- df %>%
+#   arrange(ROUTE, BEG_MP, END_MP) %>%
+#   select(ROUTE, BEG_MP, END_MP)
+# # loop through variables and rows
+# iter <- 0
+# count <- 0
+# route <- -1
+# value <- variables
+# df$ID <- 0
+# # create new variables to replace the old ones
+# 
+# 
+# 
+# for(i in 1:nrow(df)){
+#   new_route <- df$ROUTE[i]
+#   test = 0
+#   for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
+#     varName <- variables[j]
+#     new_value <- df[[varName]][i]
+#     if(is.na(new_value)){              # treat NA as zero to avoid errors
+#       new_value = 0
+#     }
+#     if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
+#       value[j] <- new_value
+#       test = 1
+#     }
+#   }
+#   if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
+#     iter <- iter + 1
+#     route <- new_route
+#   } else {
+#     count = count + 1
+#   }
+#   df$ID[i] <- iter
+# }
+# # use summarize to compress segments
+# df <- df %>% 
+#   group_by(ID) %>%
+#   summarise(
+#     ROUTE = unique(ROUTE),
+#     BEG_MP = min(BEG_MP),
+#     END_MP = max(END_MP), 
+#     across(.cols = col)
+#   ) %>%
+#   unique()
+# # report the number of combined rows
+# print(paste("combined", count, "rows"))

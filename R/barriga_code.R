@@ -93,7 +93,7 @@ driveway.filepath <- "data/csv/Driveway.csv"
 driveway.columns <- c("ROUTE",
                       "START_ACCUM",
                       "END_ACCUM",
-                      "DIRECTION",
+                      # "DIRECTION",
                       "TYPE")
 
 # median <- read.csv("data/csv/Medians.csv")
@@ -527,10 +527,10 @@ lane <- fix_endpoints(lane, routes)
 # #  group_by(ROUTE, BEG_MP) %>%
 # #  summarize(should_be_one = n()) %>%
 # #  filter(should_be_one > 1)
-# 
-# ###
-# ## Shoulder Data Prep
-# ###
+
+###
+## Shoulder Data Prep
+###
 shoulder <- read_filez_csv(shoulder.filepath, shoulder.columns)
 
 # Standardize Column Names
@@ -548,50 +548,93 @@ shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
   filter(BEG_MP < END_MP)
 
-#filter out seemingly duplicated shoulders
+# Find Number of Unique Routes in shoulder file
+num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress shoulder
+shoulder <- compress_seg(shoulder, shoulder.columns, tail(shoulder.columns, -3))
+
+# fix ending endpoints
+routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
+shoulder <- fix_endpoints(shoulder, routes2)
+
+#filter out seemingly duplicated shoulders for observation
 shd_disc <- shoulder %>%
   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
   mutate(should_be_one = n()) %>%
   filter(should_be_one > 1) %>%
   arrange(ROUTE, BEG_MP)
-# 
-# ###
-# ## Median Data Prep
-# ###
-# median <- read_filez(median.filepath, median.columns)
-# names(median)[1] <- "ROUTE"
-# 
-# #Getting rid of ramps
-# median <- median %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
-# 
-# #Adding direction onto route variable, taking route direction out of its own column
+
+ 
+###
+## Median Data Prep
+###
+median <- read_filez_csv(median.filepath, median.columns)
+
+# Standardize Column Names
+names(median)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+#Getting rid of ramps
+median <- median %>% filter(nchar(ROUTE) == 5)
+
+#Adding direction onto route variable, taking route direction out of its own column
 # median$ROUTE <- paste(substr(median$ROUTE,1,4), median$TRAVEL_DIR, sep = "")
 # median <- median %>% select(-TRAVEL_DIR)
-# 
-# #Getting only state routes
+
+#Getting only state routes
 # median <- median %>% filter(ROUTE %in% main.routes)
-# 
-# median %>%
+median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
+  filter(BEG_MP < END_MP)
+
+# Find Number of Unique Routes in median file
+num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress median
+median <- compress_seg(median, median.columns, tail(median.columns, -3))
+
+# fix ending endpoints
+routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
+median <- fix_endpoints(median, routes2)
+
+#filter out seemingly duplicated medians for observation
+# md_disc <- median %>%
 #   group_by(ROUTE, BEG_MP) %>%
-#   summarize(should_be_one = n()) %>%
-#   filter(should_be_one > 1)
-# 
-# ###
-# ## Driveway Data Prep
-# ###
-# 
-# driveway <- read_filez(driveway.filepath, driveway.columns)
-# 
-# #Getting rid of ramps
-# driveway <- driveway %>% filter(nchar(ROUTE) == 5, BEG_MP < END_MP)
-# 
-# #Adding direction onto route variable, taking route direction out of its own column
+#   mutate(should_be_one = n()) %>%
+#   filter(should_be_one > 1) %>%
+#   arrange(ROUTE, BEG_MP)
+
+
+###
+## Driveway Data Prep
+###
+driveway <- read_filez_csv(driveway.filepath, driveway.columns)
+
+# Standardize Column Names
+names(driveway)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+#Getting rid of ramps
+driveway <- driveway %>% filter(nchar(ROUTE) == 5)
+
+#Adding direction onto route variable, taking route direction out of its own column
 # driveway$ROUTE <- paste(substr(driveway$ROUTE,1,4), driveway$DIRECTION, sep = "")
 # driveway <- driveway %>% select(-DIRECTION)
-# 
-# #Getting only state routes
+
+#Getting only state routes
 # driveway <- driveway %>% filter(ROUTE %in% main.routes)
-# 
+driveway <- driveway %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
+  filter(BEG_MP < END_MP)
+
+# Find Number of Unique Routes in driveway file
+num.driveway.routes <- driveway %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress driveway
+driveway <- compress_seg(driveway, driveway.columns, tail(driveway.columns, -3))
+
+# fix ending endpoints
+routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
+driveway <- fix_endpoints(driveway, routes2)
+
+# not sure what this is
 # driveway <- driveway %>%
 #   group_by(ROUTE, BEG_MP) %>%
 #   mutate(should_be_one = n()) %>%
@@ -600,11 +643,13 @@ shd_disc <- shoulder %>%
 #   select(-contains("LAT")) %>%
 #   mutate(WIDTH = mean(WIDTH), END_MP = max(END_MP), TYPE = "Minor Residential Driveway") %>%
 #   distinct()
-# 
-# driveway %>%
-#   group_by(ROUTE, BEG_MP) %>%
-#   mutate(should_be_one = n()) %>%
-#   filter(should_be_one > 1)
+
+#filter out seemingly duplicated driveways for observation
+drv_disc <- driveway %>%
+  group_by(ROUTE, BEG_MP) %>%
+  mutate(should_be_one = n()) %>%
+  filter(should_be_one > 1) %>%
+  arrange(ROUTE, BEG_MP)
 
 ########################################################################################
 ###################################### Aggregation #####################################

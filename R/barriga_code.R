@@ -236,7 +236,7 @@ aadt_neg <- function(aadt, fc){
     select(-ROUTE)
   # isolate negative aadt entries
   aadt_n <- aadt %>% filter(grepl("N",ROUTE))
-  # join negative routes with negative aadt (may be a more efficient way to do this)
+  # join negative routes with negative aadt (there may be a more efficient way to do this)
   df <- full_join(aadt_n, rtes_n, by = "ROUTE") %>%
     mutate(
       label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
@@ -249,6 +249,21 @@ aadt_neg <- function(aadt, fc){
   # remove suffixes 
   col_new <- gsub('.y','',colnames(df))
   colnames(df) <- col_new
+  # filter out excess negative segments
+  df$flag <- FALSE
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    beg_aadt <- df[["BEG_MP"]][i]
+    end_aadt <- df[["END_MP"]][i]
+    end_rt <- rtes[["END_MP"]][which(rtes$ROUTE == rt)]
+    if(beg_aadt > end_rt){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(end_aadt > end_rt){        # correct end mp if its greater than route
+      df[["END_MP"]][i] <- end_rt
+    }
+  }
+  df <- df %>% filter(flag == FALSE) %>% select(-flag)
   # rbind df to aadt
   df <- rbind(aadt, df) %>%
     arrange(ROUTE, BEG_MP)

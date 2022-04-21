@@ -88,41 +88,30 @@ lane.columns <- c("ROUTE",
 
 # intersection <- read_sf("data/shapefile/Intersections.shp")
 
-# driveway <- read_sf("data/shapefile/Driveway.shp")
-# driveway.filepath <- "data/shapefile/Driveway.shp"
-# driveway.columns <- c("ROUTE",
-#                       "START_ACCU",
-#                       "END_ACCUM",
-#                       "DIRECTION",
-#                       "TYPE",
-#                       "geometry",
-#                       "BEG_LONG",
-#                       "BEG_LAT",
-#                       "END_LONG",
-#                       "END_LAT")
+# driveway <- read.csv("data/csv/Driveway.csv")
+driveway.filepath <- "data/csv/Driveway.csv"
+driveway.columns <- c("ROUTE",
+                      "START_ACCUM",
+                      "END_ACCUM",
+                      "DIRECTION",
+                      "TYPE")
 
-# median <- read_sf("data/shapefile/Medians.shp")
-# median.filepath <- "data/shapefile/Medians.shp"
-# median.columns <- c("ROUTE_NAME",
-#                     "TRAVEL_DIR",
-#                     "START_ACCUM",
-#                     "END_ACCUM",
-#                     "MEDIAN_TYP",
-#                     "TRFISL_TYP",
-#                     "MDN_PRTCTN")
+# median <- read.csv("data/csv/Medians.csv")
+median.filepath <- "data/csv/Medians.csv"
+median.columns <- c("ROUTE_NAME",
+                    "START_ACCUM",
+                    "END_ACCUM",
+                    "MEDIAN_TYP",
+                    "TRFISL_TYP",
+                    "MDN_PRTCTN")
 
-# shoulder <- read_sf("data/shapefile/Shoulders.shp")
-# shoulder.filepath <-"data/shapefile/Shoulders.shp"
-# shoulder.columns <- c("ROUTE",
-#                       "TRAVEL_DIR",
-#                       "START_ACCU",
-#                       "END_ACCUM",
-#                       "UTPOSITION",
-#                       "SHLDR_WDTH",
-#                       "BEG_LONG",
-#                       "BEG_LAT",
-#                       "END_LONG",
-#                       "END_LAT")
+# shoulder <- read.csv("data/csv/Shoulders.csv")
+shoulder.filepath <-"data/csv/Shoulders.csv"
+shoulder.columns <- c("ROUTE",
+                      "START_ACCU",
+                      "END_ACCUM",
+                      "UTPOSITION",
+                      "SHLDR_WDTH")
 
 ## Read in file function
 read_filez <- function(filepath, columns) {
@@ -542,23 +531,23 @@ lane <- fix_endpoints(lane, routes)
 # ###
 # ## Shoulder Data Prep
 # ###
-# shoulder <- read_filez(shoulder.filepath, shoulder.columns)
-# 
-# #Getting rid of ramps
-# shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
-# 
-# #Adding direction onto route variable, taking route direction out of its own column
-# shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
-# shoulder <- shoulder %>% select(-TRAVEL_DIR)
-# 
-# #Getting only state routes
-# shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
-# 
-# shd_disc <- shoulder %>%
-#   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
-#   mutate(should_be_one = n()) %>%
-#   filter(should_be_one > 1) %>%
-#   arrange(ROUTE, BEG_MP)
+shoulder <- read_filez(shoulder.filepath, shoulder.columns)
+
+#Getting rid of ramps
+shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
+
+#Adding direction onto route variable, taking route direction out of its own column
+shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
+shoulder <- shoulder %>% select(-TRAVEL_DIR)
+
+#Getting only state routes
+shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
+
+shd_disc <- shoulder %>%
+  group_by(ROUTE, BEG_MP, UTPOSITION) %>%
+  mutate(should_be_one = n()) %>%
+  filter(should_be_one > 1) %>%
+  arrange(ROUTE, BEG_MP)
 # 
 # ###
 # ## Median Data Prep
@@ -693,9 +682,9 @@ shell <- shell_creator(sdtms)
 # statement to populate through rows.
 
 # We start by left joining the shell to each sdtm dataset and populating through all the
-# records whose union is the space interval x time interval we have data on. We then get rid
-# of the original START_ACCUM, END_ACCUM, FROM_DATE, and TO_DATE variables, since
-# startpoints, endpoints, starttime, and endtime have all the information we need.
+# records whose union is the space interval we have data on. We then get rid
+# of the original START_ACCUM, END_ACCUM variables, since
+# startpoints, endpoints have all the information we need.
 
 shell_join <- function(sdtm) {
   joinable_sdtm <- sdtm %>% 
@@ -733,11 +722,6 @@ shell_join <- function(sdtm) {
 }
 
 joined_populated <- lapply(sdtms, shell_join)
-
-# To be removed tomorrow, probably (just for accounting for duplicates, which is now
-# done in preprocessing)
-#joined_populated[[2]] <- joined_populated[[2]] %>% 
-#  filter(!(OBJECTID %in% c(15764, 14553, 14990, 19615, 19926)))
 
 ################# Merging joined and populated sdtms together; formatting ##################
 RC <- c(list(shell), joined_populated) %>% 

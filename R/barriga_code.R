@@ -108,13 +108,13 @@ median.columns <- c("ROUTE_NAME",
 # shoulder <- read.csv("data/csv/Shoulders.csv")
 shoulder.filepath <-"data/csv/Shoulders.csv"
 shoulder.columns <- c("ROUTE",
-                      "START_ACCU",
+                      "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
                       "END_ACCUM",
                       "UTPOSITION",
                       "SHLDR_WDTH")
 
 ## Read in file function
-read_filez <- function(filepath, columns) {
+read_filez_shp <- function(filepath, columns) {
   if (str_detect(filepath, ".shp")) {
     print("reading shapefile")
     read_sf(filepath) %>% select(all_of(columns))
@@ -531,18 +531,24 @@ lane <- fix_endpoints(lane, routes)
 # ###
 # ## Shoulder Data Prep
 # ###
-shoulder <- read_filez(shoulder.filepath, shoulder.columns)
+shoulder <- read_filez_csv(shoulder.filepath, shoulder.columns)
+
+# Standardize Column Names
+names(shoulder)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
 #Getting rid of ramps
 shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 
 #Adding direction onto route variable, taking route direction out of its own column
-shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
-shoulder <- shoulder %>% select(-TRAVEL_DIR)
+# shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
+# shoulder <- shoulder %>% select(-TRAVEL_DIR)
 
 #Getting only state routes
-shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
+# shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
+shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
+  filter(BEG_MP < END_MP)
 
+#filter out seemingly duplicated shoulders
 shd_disc <- shoulder %>%
   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
   mutate(should_be_one = n()) %>%

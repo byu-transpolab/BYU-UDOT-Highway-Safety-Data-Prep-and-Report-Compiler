@@ -3,13 +3,13 @@ library(tidyverse)
 
 # Set filepath and Column Names
 
-routes.filepath <- "data/UDOT_Routes_ALRS.csv"
+routes.filepath <- "data/csv/UDOT_Routes_ALRS.csv"
 routes.columns <- c("ROUTE_ID",                          
                 "BEG_MILEAGE",                             
                 "END_MILEAGE")
 
 # aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
-aadt.filepath <- "data/AADT_Unrounded.csv"
+aadt.filepath <- "data/csv/AADT_Unrounded.csv"
 aadt.columns <- c("ROUTE_NAME",
                   "START_ACCU",
                   "END_ACCUM",
@@ -42,7 +42,7 @@ aadt.columns <- c("ROUTE_NAME",
 #                 "FUNCTIONAL",                             
 #                 "RouteDir",                             
 #                 "RouteType")
-fc.filepath <- "data/Functional_Class_ALRS.csv"
+fc.filepath <- "data/csv/Functional_Class_ALRS.csv"
 fc.columns <- c("ROUTE_ID",                          
                 "FROM_MEASURE",                             
                 "TO_MEASURE",
@@ -55,7 +55,7 @@ fc.columns <- c("ROUTE_ID",
 #                    "FROM_MEASU",                         
 #                    "TO_MEASURE",                         
 #                    "SPEED_LIMI")
-speed.filepath <- "data/UDOT_Speed_Limits_2019.csv"
+speed.filepath <- "data/csv/UDOT_Speed_Limits_2019.csv"
 speed.columns <- c("ROUTE_ID",
                    "FROM_MEASURE",
                    "TO_MEASURE",
@@ -67,7 +67,7 @@ speed.columns <- c("ROUTE_ID",
 #                   "END_ACCUM",
 #                   "THRU_CNT",
 #                   "THRU_WDTH")
-lane.filepath <- "data/Lanes.csv"
+lane.filepath <- "data/csv/Lanes.csv"
 lane.columns <- c("ROUTE",
                   "START_ACCUM",
                   "END_ACCUM",
@@ -220,6 +220,40 @@ pivot_aadt <- function(aadt){
       values_from = count,
     )
   return(aadt)
+}
+
+# Function to fix missing negative direction AADT values (can be optimized more)
+aadt_neg <- function(aadt, fc){
+  # use fc for routes because it is already filtered to state routes
+  rtes <- fc %>% select(ROUTE, BEG_MP, END_MP)
+  rtes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+  rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
+  # isolate positive aadt entries
+  aadt_p <- aadt %>% filter(grepl("P",ROUTE)) %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(-ROUTE)
+  # isolate negative aadt entries
+  aadt_n <- aadt %>% filter(grepl("N",ROUTE))
+  # join negative routes with negative aadt (may be a more efficient way to do this)
+  df <- full_join(aadt_n, rtes_n, by = "ROUTE") %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    filter(is.na(BEG_MP))
+  # join missing negative routes with positive segments on the same route
+  df <- left_join(df, aadt_p, by = "label") %>%
+    select(-label, -contains(".x"))
+  # remove suffixes 
+  col_new <- gsub('.y','',colnames(df))
+  colnames(df) <- col_new
+  # rbind df to aadt
+  df <- rbind(aadt, df) %>%
+    arrange(ROUTE, BEG_MP)
+  # return df
+  return(df)
 }
 
 # Fix last ending milepoints
@@ -383,42 +417,8 @@ aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
 
-# Fix missing negative direction AADT values
-routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
-routes_n <- routes %>% filter(grepl("N",ROUTE))
-
-aadt_p <- aadt %>% filter(grepl("P",ROUTE))
-
-aadt_n <- aadt %>% filter(grepl("N",ROUTE))
-
-test <- full_join(aadt_n, routes_n, by = "ROUTE") %>%
-  mutate(
-    label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE)),
-    BEG_MP = BEG_MP.x,
-    END_MP = END_MP.x
-  ) %>%
-  select(-contains(".y"), -contains(".x"))
-
-<<<<<<< Updated upstream
-
-
-
-=======
->>>>>>> Stashed changes
-colns <- tail(aadt.columns, -3)
-
-aadt_check <- RC %>%
-  filter(grepl("N",ROUTE))
-
-for(i in 1:nrow(aadt_check)){
-  fix <- 1
-  for(j in 1:length(colns)){
-    if(!is.na(aadt_check[[colns[j]]][i])){
-      fix <- 0
-    }
-  }
-}
+# fix negative aadt values
+aadt <- aadt_neg(aadt, fc)
 
 # Unused Code for Filtering aadt Data
 

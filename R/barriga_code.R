@@ -93,7 +93,7 @@ driveway.filepath <- "data/csv/Driveway.csv"
 driveway.columns <- c("ROUTE",
                       "START_ACCUM",
                       "END_ACCUM",
-                      # "DIRECTION",
+                      "DIRECTION",
                       "TYPE")
 
 # median <- read.csv("data/csv/Medians.csv")
@@ -140,13 +140,20 @@ read_filez_csv <- function(filepath, columns) {
 compress_seg <- function(df, col, variables) {
   # start timer
   start.time <- Sys.time()
-  # get columns to preserve (assumes the first three are "route", "beg_mp", "end_mp")
-  col <- tail(col, -3)
   # sort by route and milepoints (assumes consistent naming convention for these)
   df <- df %>% 
     filter(BEG_MP < END_MP) %>%
     select(ROUTE, BEG_MP, END_MP, everything()) %>% 
     arrange(ROUTE, BEG_MP)
+  # get columns to preserve
+  if(missing(col)) {
+    col <- colnames(df)
+  }
+  col <- tail(col, -3)
+  # set optional argument
+  if(missing(variables)) {
+    variables <- col
+  }
   # loop through rows checking the variables to merge by
   iter <- 0
   count <- 0
@@ -412,7 +419,7 @@ num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
 main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Compress fc
-fc <- compress_seg(fc, fc.columns, c("FUNCTIONAL_CLASS"))
+fc <- compress_seg(fc)
 
 # # Create routes dataframe
 # routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
@@ -468,7 +475,7 @@ num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 aadt <- aadt_numeric(aadt, aadt.columns)
 
 # Compress aadt
-aadt <- compress_seg(aadt, aadt.columns, tail(aadt.columns, -3))
+aadt <- compress_seg(aadt)
 
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
@@ -506,8 +513,8 @@ speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress speed
-speed <- compress_seg(speed, speed.columns, tail(speed.columns, -3))
-speed <- compress_seg_alt(speed)
+speed <- compress_seg(speed)
+# speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
 speed <- fix_endpoints(speed, routes)
@@ -544,7 +551,7 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-lane <- compress_seg(lane, lane.columns, c("THRU_CNT", "THRU_WDTH"))
+lane <- compress_seg(lane, variables = c("THRU_CNT", "THRU_WDTH"))
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
@@ -609,7 +616,7 @@ shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
 num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress shoulder
-shoulder <- compress_seg(shoulder, shoulder.columns, tail(shoulder.columns, -3))
+# shoulder <- compress_seg(shoulder)
 shoulder <- compress_seg_alt(shoulder)
 
 # fix ending endpoints
@@ -648,7 +655,7 @@ median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
 num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress median
-median <- compress_seg(median, median.columns, tail(median.columns, -3))
+median <- compress_seg(median)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
@@ -686,7 +693,7 @@ driveway <- driveway %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
 num.driveway.routes <- driveway %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress driveway
-driveway <- compress_seg(driveway, driveway.columns, tail(driveway.columns, -3))
+# driveway <- compress_seg(driveway)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))

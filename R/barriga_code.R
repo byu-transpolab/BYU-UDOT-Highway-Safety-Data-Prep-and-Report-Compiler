@@ -138,12 +138,14 @@ read_filez_csv <- function(filepath, columns) {
 
 # Compress Segments Function
 compress_seg <- function(df, col, variables) {
-  # drop geometry (it will become useless after this anyways)
-  # df <- df %>% st_drop_geometry()
+  # start timer
+  start.time <- Sys.time()
   # get columns to preserve (assumes the first three are "route", "beg_mp", "end_mp")
   col <- tail(col, -3)
   # sort by route and milepoints (assumes consistent naming convention for these)
-  df <- df %>%
+  df <- df %>% 
+    filter(BEG_MP < END_MP) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
     arrange(ROUTE, BEG_MP)
   # loop through rows checking the variables to merge by
   iter <- 0
@@ -187,9 +189,48 @@ compress_seg <- function(df, col, variables) {
     select(-ID)
   # report the number of combined rows
   print(paste("combined", count, "rows"))
+  # record time
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(paste("Time taken for code to run:", time.taken))
   # return df
   return(df)
 } 
+
+# alternate function to compress segments (created by the stats team)
+compress_seg_alt <- function(df) {
+  # start timer
+  start.time <- Sys.time()
+  # sort and filter
+  df <- df %>% 
+    filter(BEG_MP < END_MP) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+    arrange(ROUTE, BEG_MP)
+  # Adjust road segment boundaries and flag duplicate rows for deletion.
+  df$dropflag <- FALSE
+  count <- 0
+  for (i in 1:(nrow(df) - 1)) {
+    if (identical(df[i, -c(2, 3)], df[i + 1, -c(2, 3)])) {
+      df$dropflag[i] <- TRUE
+      df[i + 1, 2] <- df[i, 2]    # change beg_mp to match previous
+      count <- count + 1
+    }
+  }
+  # Remove flagged rows
+  df <- df %>%
+    filter(dropflag == FALSE) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    select(-dropflag) %>%
+    arrange(ROUTE, BEG_MP)
+  # report the number of combined rows
+  print(paste("combined", count, "rows"))
+  # record time
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(paste("Time taken for code to run:", time.taken))
+  # return df
+  return(df)
+}
 
 # Convert AADT to Numeric Function
 aadt_numeric <- function(aadt, aadt.columns){
@@ -466,6 +507,7 @@ num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress speed
 speed <- compress_seg(speed, speed.columns, tail(speed.columns, -3))
+speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
 speed <- fix_endpoints(speed, routes)
@@ -568,6 +610,7 @@ num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress shoulder
 shoulder <- compress_seg(shoulder, shoulder.columns, tail(shoulder.columns, -3))
+shoulder <- compress_seg_alt(shoulder)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
@@ -799,28 +842,7 @@ RC <- c(list(shell), joined_populated) %>%
   arrange(ROUTE, BEG_MP)
 
 ######### Compressing by combining rows identical except for identifying information ########
-# This basically works the same way as the compress segments code we wrote earlier
-
-# Compressing across road segment
-RC <- RC %>% 
-  filter(BEG_MP < END_MP) %>%
-  select(ROUTE, BEG_MP, END_MP, everything()) %>% 
-  arrange(ROUTE, BEG_MP)
-
-# Adjust road segment boundaries and flag duplicate rows for deletion.
-RC$dropflag <- FALSE
-for (i in 1:(nrow(RC) - 1)) {
-  if (identical(RC[i, -c(2, 3)], RC[i + 1, -c(2, 3)])) {
-    RC$dropflag[i] <- TRUE
-    RC[i + 1, 2] <- RC[i, 2]
-  }
-}
-
-RC <- RC %>%
-  filter(dropflag == FALSE) %>%
-  select(ROUTE, BEG_MP, END_MP, everything()) %>%
-  select(-dropflag) %>%
-  arrange(ROUTE, BEG_MP)
+RC <- compress_seg_alt(RC)
 
 # Pivot AADT
 test <- pivot_aadt(RC)

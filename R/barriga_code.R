@@ -271,7 +271,7 @@ pivot_aadt <- function(aadt){
 }
 
 # Function to fix missing negative direction AADT values (can be optimized more)
-aadt_neg <- function(aadt, fc){
+aadt_neg <- function(aadt, fc, divd){
   # use fc for routes because it is already filtered to state routes
   rtes <- fc %>% select(ROUTE, BEG_MP, END_MP)
   rtes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
@@ -298,17 +298,33 @@ aadt_neg <- function(aadt, fc){
   col_new <- gsub('.y','',colnames(df))
   colnames(df) <- col_new
   # filter out excess negative segments
+  divd <- div_routes
   df$flag <- FALSE
   for(i in 1:nrow(df)){
     rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
     beg_aadt <- df[["BEG_MP"]][i]
     end_aadt <- df[["END_MP"]][i]
-    end_rt <- rtes[["END_MP"]][which(rtes$ROUTE == rt)]
+    rt_row <- which(substr(divd$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd$END_MP & end_aadt > divd$BEG_MP)
+    print(rt_row)
+    # this if statement helps to deal with routes that have multiple divided segments
+    if(length(rt_row) == 0L){
+      rt_row <- which(substr(divd$ROUTE, start = 1, stop = 4) == rt)
+    } 
+    beg_rt <- divd[["BEG_MP"]][rt_row]
+    end_rt <- divd[["END_MP"]][rt_row]
+    # end_rt <- rtes[["END_MP"]][which(rtes$ROUTE == rt)]
     if(beg_aadt > end_rt){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
     if(end_aadt > end_rt){        # correct end mp if its greater than route
       df[["END_MP"]][i] <- end_rt
+    }
+    if(end_aadt < beg_rt){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(beg_aadt < beg_rt){        # correct beg mp if its less than route
+      df[["BEG_MP"]][i] <- beg_rt
     }
   }
   df <- df %>% filter(flag == FALSE) %>% select(-flag)
@@ -386,13 +402,20 @@ fix_endpoints <- function(df, routes){
 ###
 
 # Read in routes File
-routes <- read_filez_csv(routes.filepath, routes.columns)
+routes2 <- read_filez_csv(routes.filepath, routes.columns)
 
 # Standardize Column Names
-names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+names(routes2)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
 # Select only Main Routes
-routes <- routes %>% filter(grepl("M", ROUTE))
+routes2 <- routes2 %>% filter(grepl("M", ROUTE))
+
+# load divided routes data
+div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
+names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+div_routes <- div_routes %>% 
+  filter(grepl("P", ROUTE)) %>%
+  arrange(ROUTE, BEG_MP)
 
 
 
@@ -421,12 +444,12 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 # Compress fc
 fc <- compress_seg(fc)
 
-# # Create routes dataframe
-# routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-# routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+# Create routes dataframe
+routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
+routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # fix ending endpoints
-fc <- fix_endpoints(fc, routes)
+fc <- fix_endpoints(fc, routes2)
 
 # Unused Code for Filtering fc Data
 
@@ -481,7 +504,8 @@ aadt <- compress_seg(aadt)
 aadt <- fix_endpoints(aadt, routes)
 
 # fix negative aadt values
-aadt <- aadt_neg(aadt, fc)
+aadt <- aadt_neg(aadt, fc, div_routes)
+
 
 # Unused Code for Filtering aadt Data
 
@@ -517,7 +541,7 @@ speed <- compress_seg(speed)
 # speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
-speed <- fix_endpoints(speed, routes)
+speed <- fix_endpoints(speed, routes2)
 
 # Unused Code for Filtering speed Data
 

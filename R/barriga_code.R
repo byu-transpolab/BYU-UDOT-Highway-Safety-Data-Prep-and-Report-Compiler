@@ -701,23 +701,11 @@ driveway <- read_filez_csv(driveway.filepath, driveway.columns)
 # Standardize Column Names
 names(driveway)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-#Getting rid of ramps
-driveway <- driveway %>% filter(nchar(ROUTE) == 5)
+# Adding M to Route
+driveway$ROUTE <- paste(substr(driveway$ROUTE, 1, 6), "M", sep = "")
 
-#Adding direction onto route variable, taking route direction out of its own column
-# driveway$ROUTE <- paste(substr(driveway$ROUTE,1,4), driveway$DIRECTION, sep = "")
-# driveway <- driveway %>% select(-DIRECTION)
-
-#Getting only state routes
-# driveway <- driveway %>% filter(ROUTE %in% main.routes)
-driveway <- driveway %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
-  filter(BEG_MP < END_MP)
-
-# Find Number of Unique Routes in driveway file
-num.driveway.routes <- driveway %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress driveway
-# driveway <- compress_seg(driveway)
+# Create Point to Reference Driveways
+driveway <- driveway %>% mutate(MP = (BEG_MP+END_MP)/2)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))

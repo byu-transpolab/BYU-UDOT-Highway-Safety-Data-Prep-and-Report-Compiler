@@ -1,16 +1,20 @@
-### Load in Libraries
+###
+## Load in Libraries
+###
 
 library(tidyverse)
 # library(sf)
 
-### Set Filepath and Column Names for each Dataset
+###
+## Set Filepath and Column Names for each Dataset
+###
 
 # routes <- read.csv("data/csv/UDOT_Routes_ALRS.csv")
 # routes.filepath <- "data/shapefile/UDOT_Routes_ALRS.shp"
 routes.filepath <- "data/csv/UDOT_Routes_ALRS.csv"
 routes.columns <- c("ROUTE_ID",                          
-                "BEG_MILEAGE",                             
-                "END_MILEAGE")
+                    "BEG_MILEAGE",                             
+                    "END_MILEAGE")
 
 # aadt <- read.csv("data/csv/AADT_Unrounded.csv")
 # aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
@@ -79,7 +83,7 @@ lane.columns <- c("ROUTE",
 #                    "TYPE_",
 #                    "geometry")
 
-# intersection <- read_sf("data/shapefile/Intersections.shp")
+intersection <- read.csv("data/csv/Intersections.csv")
 
 # driveway <- read.csv("data/csv/Driveway.csv")
 driveway.filepath <- "data/csv/Driveway.csv"
@@ -106,7 +110,11 @@ shoulder.columns <- c("ROUTE",
                       "UTPOSITION",
                       "SHLDR_WDTH")
 
-## Read in file function
+###
+## Functions
+###
+
+# Read File functions
 read_filez_shp <- function(filepath, columns) {
   if (str_detect(filepath, ".shp")) {
     print("reading shapefile")
@@ -197,7 +205,7 @@ compress_seg <- function(df, col, variables) {
   return(df)
 } 
 
-# alternate function to compress segments (created by the stats team)
+# Alternate Compress Segments Function (created by the stats team)
 compress_seg_alt <- function(df) {
   # start timer
   start.time <- Sys.time()
@@ -403,16 +411,15 @@ names(routes2)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Select only Main Routes
 routes2 <- routes2 %>% filter(grepl("M", ROUTE))
 
+# Find Number of Unique Routes in the routes File
+num.routes.routes <- routes2 %>% pull(ROUTE) %>% unique() %>% length()
+
 # load divided routes data
 div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
 names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 div_routes <- div_routes %>% 
   filter(grepl("P", ROUTE)) %>%
   arrange(ROUTE, BEG_MP)
-
-
-
-
 
 ###
 ## Functional Class Data Prep
@@ -443,6 +450,9 @@ routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes2)
+
+# fctest1 <- fix_endpoints(fc, routes)
+# fctest2 <- fix_endpoints(fc, routes2)
 
 # Unused Code for Filtering fc Data
 
@@ -499,11 +509,10 @@ aadt <- fix_endpoints(aadt, routes)
 # fix negative aadt values
 aadt <- aadt_neg(aadt, fc, div_routes)
 
-
 # Unused Code for Filtering aadt Data
 
 # Take First Four Numbers of Route Column
-# aadt$ROUTE <- substr(aadt$ROUTE, 1, 4)
+# aadr$ROUTE <- substr(aadt$ROUTE, 1, 4)
 
 # Making duplicate dataset for positive and negative sides of road
 # aadt_pos <- aadt_neg <- aadt
@@ -517,7 +526,6 @@ aadt <- aadt_neg(aadt, fc, div_routes)
 
 # Read in speed File
 speed <- read_filez_csv(speed.filepath, speed.columns)
-# speed <- read_filez_csv(speed.filepath, speed.columns)
 
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -575,21 +583,23 @@ lane <- fix_endpoints(lane, routes)
 
 # Unused Code for Filtering lane Data
 
-#Adding direction onto route variable, taking route direction out of its own column
+# # Adding direction onto route variable, taking route direction out of its own column
 # lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
 #                       paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
 #                       paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
 
-# Trying to define each row as separate segments, no overlap, the directions have different information
+# # Trying to define each row as separate segments, no overlap, the directions have different information
 # lane %>%
 #  group_by(ROUTE, BEG_MP) %>%
 #  summarize(should_be_one = n()) %>%
 #  filter(should_be_one > 1)
-# No duplicates, not all data complete on negative side of the road though
+# # No duplicates, not all data complete on negative side of the road though
 
 # ###
 # ## Intersection Data Prep
 # ###
+#
+# # Read in intersection file
 # intersection <- read_filez(intersection.filepath, intersection.columns)
 # 
 # #Finding all intersections with at least one state route
@@ -612,17 +622,21 @@ lane <- fix_endpoints(lane, routes)
 ###
 ## Shoulder Data Prep
 ###
+
+# Read in shoulder file
 shoulder <- read_filez_csv(shoulder.filepath, shoulder.columns)
 
 # Standardize Column Names
 names(shoulder)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-#Getting rid of ramps
+# Getting rid of ramps
 shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
+                                
+# Add M to Route Column to Standardize Route Format
+shoulder$ROUTE <- paste(substr(shoulder$ROUTE, 1, 6), "M", sep = "")
 
-#Getting only state routes
-# shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
-shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
+# Getting only state routes
+shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in shoulder file
@@ -632,17 +646,18 @@ num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 shoulder <- fix_endpoints(shoulder, routes2)
 
-#filter out seemingly duplicated shoulders for observation
+# filter out seemingly duplicated shoulders for observation
 shd_disc <- shoulder %>%
   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
   mutate(should_be_one = n()) %>%
   filter(should_be_one > 1) %>%
   arrange(ROUTE, BEG_MP)
 
- 
 ###
 ## Median Data Prep
 ###
+
+# Read in median file
 median <- read_filez_csv(median.filepath, median.columns)
 
 # Standardize Column Names
@@ -651,13 +666,11 @@ names(median)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 #Getting rid of ramps
 median <- median %>% filter(nchar(ROUTE) == 5)
 
-#Adding direction onto route variable, taking route direction out of its own column
-# median$ROUTE <- paste(substr(median$ROUTE,1,4), median$TRAVEL_DIR, sep = "")
-# median <- median %>% select(-TRAVEL_DIR)
+# Add M to Route Column to Standardize Route Format
+median$ROUTE <- paste(substr(median$ROUTE, 1, 6), "M", sep = "")
 
 #Getting only state routes
-# median <- median %>% filter(ROUTE %in% main.routes)
-median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
+median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in median file
@@ -667,17 +680,18 @@ num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 median <- fix_endpoints(median, routes2)
 
-#filter out seemingly duplicated medians for observation
+# filter out seemingly duplicated medians for observation
 # md_disc <- median %>%
 #   group_by(ROUTE, BEG_MP) %>%
 #   mutate(should_be_one = n()) %>%
 #   filter(should_be_one > 1) %>%
 #   arrange(ROUTE, BEG_MP)
 
-
 ###
 ## Driveway Data Prep
 ###
+
+# Read in driveway file
 driveway <- read_filez_csv(driveway.filepath, driveway.columns)
 
 # Standardize Column Names

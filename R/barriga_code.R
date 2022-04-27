@@ -1,13 +1,18 @@
+### Load in Libraries
+
 library(tidyverse)
 # library(sf)
 
-# Set filepath and Column Names
+### Set Filepath and Column Names for each Dataset
 
+# routes <- read.csv("data/csv/UDOT_Routes_ALRS.csv")
+# routes.filepath <- "data/shapefile/UDOT_Routes_ALRS.shp"
 routes.filepath <- "data/csv/UDOT_Routes_ALRS.csv"
 routes.columns <- c("ROUTE_ID",                          
                 "BEG_MILEAGE",                             
                 "END_MILEAGE")
 
+# aadt <- read.csv("data/csv/AADT_Unrounded.csv")
 # aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
 aadt.filepath <- "data/csv/AADT_Unrounded.csv"
 aadt.columns <- c("ROUTE_NAME",
@@ -35,13 +40,8 @@ aadt.columns <- c("ROUTE_NAME",
                   "SUTRK2014",
                   "CUTRK2014")
 
+# fc <- read.csv("data/csv/Functional_Class_ALRS.csv")
 # fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
-# fc.columns <- c("ROUTE_ID",                          
-#                 "FROM_MEASU",                             
-#                 "TO_MEASURE",
-#                 "FUNCTIONAL",                             
-#                 "RouteDir",                             
-#                 "RouteType")
 fc.filepath <- "data/csv/Functional_Class_ALRS.csv"
 fc.columns <- c("ROUTE_ID",                          
                 "FROM_MEASURE",                             
@@ -50,23 +50,16 @@ fc.columns <- c("ROUTE_ID",
                 "RouteDir",                             
                 "RouteType")
 
+# speed <- read.csv("data/csv/UDOT_Speed_Limits_2019.csv")
 # speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
-# speed.columns <- c("ROUTE_ID",                         
-#                    "FROM_MEASU",                         
-#                    "TO_MEASURE",                         
-#                    "SPEED_LIMI")
 speed.filepath <- "data/csv/UDOT_Speed_Limits_2019.csv"
 speed.columns <- c("ROUTE_ID",
                    "FROM_MEASURE",
                    "TO_MEASURE",
                    "SPEED_LIMIT")
 
+# lane <- read.csv("data/csv/Lanes.csv")
 # lane.filepath <- "data/shapefile/Lanes.shp"
-# lane.columns <- c("ROUTE",
-#                   "START_ACCU",
-#                   "END_ACCUM",
-#                   "THRU_CNT",
-#                   "THRU_WDTH")
 lane.filepath <- "data/csv/Lanes.csv"
 lane.columns <- c("ROUTE",
                   "START_ACCUM",
@@ -627,10 +620,6 @@ names(shoulder)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 #Getting rid of ramps
 shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 
-#Adding direction onto route variable, taking route direction out of its own column
-# shoulder$ROUTE <- paste(substr(shoulder$ROUTE,1,4), shoulder$TRAVEL_DIR, sep = "")
-# shoulder <- shoulder %>% select(-TRAVEL_DIR)
-
 #Getting only state routes
 # shoulder <- shoulder %>% filter(BEG_MP < END_MP, BEG_LAT < 90, END_LAT < 90)
 shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
@@ -638,10 +627,6 @@ shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
 
 # Find Number of Unique Routes in shoulder file
 num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress shoulder
-# shoulder <- compress_seg(shoulder)
-shoulder <- compress_seg_alt(shoulder)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
@@ -677,9 +662,6 @@ median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 5)) %>%
 
 # Find Number of Unique Routes in median file
 num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress median
-median <- compress_seg(median)
 
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))

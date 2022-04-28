@@ -859,6 +859,21 @@ RC <- c(list(shell), joined_populated) %>%
 ######### Compressing by combining rows identical except for identifying information ########
 RC <- compress_seg_alt(RC)
 
+###
+## Adding Other Data
+###
+
+library(dplyr)
+
+shelltest <- shell
+drivetest <- driveway
+
+for (i in 1:nrow(drivetest)){
+  summarise() (ROUTE = shelltest$ROUTE & 
+      shelltest$BEG_MP < MP & 
+      MP < shelltest$END_MP)
+}
+
 # Pivot AADT
 test <- pivot_aadt(RC)
 

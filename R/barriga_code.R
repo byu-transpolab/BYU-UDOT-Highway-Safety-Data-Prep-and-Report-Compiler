@@ -344,16 +344,19 @@ aadt_neg <- function(aadt, fc, divd){
     # find segments on divd tables
     prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd_p$END_MP & end_aadt > divd_p$BEG_MP)
     nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd_n$END_MP & end_aadt > divd_n$BEG_MP)
+    prt_start_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)[1]
     # find beginning and ending milepoints for each route
     beg_prt <- divd_p[["BEG_MP"]][prt_row]
     end_prt <- divd_p[["END_MP"]][prt_row]
     beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
     end_nrt <- divd_n[["END_MP"]][nrt_row]
+    # get start of first segment
+    beg_prt_start <- divd_p[["BEG_MP"]][prt_start_row]
     # calculate conversion factor
     c <- (end_nrt-beg_nrt) / (end_prt-beg_prt)
     # convert milepoints
-    df[["BEG_MP"]][i] <- (beg_aadt-beg_prt) * c 
-    df[["END_MP"]][i] <- (end_aadt-beg_prt) * c 
+    df[["BEG_MP"]][i] <- (beg_aadt-beg_prt_start) * c 
+    df[["END_MP"]][i] <- (end_aadt-beg_prt_start) * c 
   }
   # rbind df to aadt
   df <- rbind(aadt, df) %>%

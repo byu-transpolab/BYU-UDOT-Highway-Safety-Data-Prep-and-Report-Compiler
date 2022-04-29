@@ -893,10 +893,13 @@ library(dplyr)
 shelltest <- shell
 drivetest <- driveway
 
-for (i in 1:nrow(drivetest)){
-  summarise() (ROUTE = shelltest$ROUTE & 
-      shelltest$BEG_MP < MP & 
-      MP < shelltest$END_MP)
+shelltest$drv_f <- 0
+for (i in 1:nrow(shelltest)){
+  shellroute <- shelltest[["ROUTE"]][i]
+  shellbeg <- shelltest[["startpoints"]][i]
+  shellend <- shelltest[["endpoints"]][i]
+  rt_row <- which(drivetest$ROUTE == shellroute & drivetest$MP > shellbeg  & drivetest$MP < shellend)
+  shelltest[["drv_f"]][i] <- length(rt_row)
 }
 
 # Pivot AADT

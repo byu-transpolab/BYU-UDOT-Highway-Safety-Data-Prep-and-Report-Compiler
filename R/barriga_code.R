@@ -299,36 +299,62 @@ aadt_neg <- function(aadt, fc, divd){
   col_new <- gsub('.y','',colnames(df))
   colnames(df) <- col_new
   # filter out excess negative segments
-  divd <- div_routes
+  divd_n <- divd %>% filter(grepl("N", ROUTE))
+  divd_p <- divd %>% filter(grepl("P", ROUTE))
   df$flag <- FALSE
   for(i in 1:nrow(df)){
     rt <- df[["ROUTE"]][i]
     rt <- substr(rt, start = 1, stop = 4)
     beg_aadt <- df[["BEG_MP"]][i]
     end_aadt <- df[["END_MP"]][i]
-    rt_row <- which(substr(divd$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd$END_MP & end_aadt > divd$BEG_MP)
-    print(rt_row)
+    rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd_p$END_MP & end_aadt > divd_p$BEG_MP)
+    # print(rt_row)
     # this if statement helps to deal with routes that have multiple divided segments
     if(length(rt_row) == 0L){
-      rt_row <- which(substr(divd$ROUTE, start = 1, stop = 4) == rt)
+      rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)
     } 
-    beg_rt <- divd[["BEG_MP"]][rt_row]
-    end_rt <- divd[["END_MP"]][rt_row]
-    # end_rt <- rtes[["END_MP"]][which(rtes$ROUTE == rt)]
-    if(beg_aadt > end_rt){        # flag segments that fall outside route
+    beg_rt <- divd_p[["BEG_MP"]][rt_row]
+    end_rt <- divd_p[["END_MP"]][rt_row]
+    # correct routes
+    if(length(beg_rt) == 0L){        # check if the route is on divd_p
+      df[["flag"]][i] <- TRUE
+      next
+    }
+    if(beg_aadt > end_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(end_aadt > end_rt){        # correct end mp if its greater than route
-      df[["END_MP"]][i] <- end_rt
+    if(end_aadt > end_rt[1]){        # correct end mp if its greater than route
+      df[["END_MP"]][i] <- end_rt[1]
     }
-    if(end_aadt < beg_rt){        # flag segments that fall outside route
+    if(end_aadt < beg_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(beg_aadt < beg_rt){        # correct beg mp if its less than route
-      df[["BEG_MP"]][i] <- beg_rt
+    if(beg_aadt < beg_rt[1]){        # correct beg mp if its less than route
+      df[["BEG_MP"]][i] <- beg_rt[1]
     }
   }
+  # filter out flagged rows
   df <- df %>% filter(flag == FALSE) %>% select(-flag)
+  # convert positive milepoints to negative milepoints
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_aadt <- df[["BEG_MP"]][i]
+    end_aadt <- df[["END_MP"]][i]
+    # find segments on divd tables
+    prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd_p$END_MP & end_aadt > divd_p$BEG_MP)
+    nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_aadt < divd_n$END_MP & end_aadt > divd_n$BEG_MP)
+    # find beginning and ending milepoints for each route
+    beg_prt <- divd_p[["BEG_MP"]][prt_row]
+    end_prt <- divd_p[["END_MP"]][prt_row]
+    beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
+    end_nrt <- divd_n[["END_MP"]][nrt_row]
+    # calculate conversion factor
+    c <- (end_nrt-beg_nrt) / (end_prt-beg_prt)
+    # convert milepoints
+    df[["BEG_MP"]][i] <- (beg_aadt-beg_prt) * c 
+    df[["END_MP"]][i] <- (end_aadt-beg_prt) * c 
+  }
   # rbind df to aadt
   df <- rbind(aadt, df) %>%
     arrange(ROUTE, BEG_MP)
@@ -418,7 +444,6 @@ num.routes.routes <- routes2 %>% pull(ROUTE) %>% unique() %>% length()
 div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
 names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 div_routes <- div_routes %>% 
-  filter(grepl("P", ROUTE)) %>%
   arrange(ROUTE, BEG_MP)
 
 ###

@@ -704,6 +704,14 @@ median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 # Find Number of Unique Routes in median file
 num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 
+# Compress Medians
+median <- compress_seg(median, variables = c("MEDIAN_TYP", "TRFISL_TYP", "MDN_PRTCTN"))
+
+# Create Point to Reference Driveways
+median <- median %>% 
+  mutate(MP = (BEG_MP+END_MP)/2) %>% 
+  mutate(Length = (END_MP-BEG_MP))
+
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 median <- fix_endpoints(median, routes2)
@@ -895,14 +903,47 @@ library(dplyr)
 
 shelltest <- shell
 drivetest <- driveway
+shouldtest <- shoulder
+medtest <- median
 
-shelltest$drv_f <- 0
+
+# Add Driveways
+ shelltest$drv_f <- 0
 for (i in 1:nrow(shelltest)){
   shellroute <- shelltest[["ROUTE"]][i]
   shellbeg <- shelltest[["startpoints"]][i]
   shellend <- shelltest[["endpoints"]][i]
-  rt_row <- which(drivetest$ROUTE == shellroute & drivetest$MP > shellbeg  & drivetest$MP < shellend)
+  rt_row <- which(drivetest$ROUTE == shellroute & 
+                    drivetest$MP > shellbeg  & 
+                    drivetest$MP < shellend)
   shelltest[["drv_f"]][i] <- length(rt_row)
+}
+
+# Add Medians
+shelltest$med_f <- 0
+shelltest$med_type <- 0
+for (i in 1:nrow(shelltest)){
+  shellroute <- shelltest[["ROUTE"]][i]
+  shellbeg <- shelltest[["startpoints"]][i]
+  shellend <- shelltest[["endpoints"]][i]
+  rt_row <- which(medtest$ROUTE == shellroute & 
+                    medtest$MP > shellbeg  & 
+                    medtest$MP < shellend)
+  shelltest[["med_f"]][i] <- length(rt_row)
+  case_when(shelltest[["med_f"]][i] > 0 ~ medtest[["MEDIAN_TYP"]][i])
+  
+}
+
+# Add Shoulders
+shelltest$sho_f <- 0
+for (i in 1:nrow(shelltest)){
+  shellroute <- shelltest[["ROUTE"]][i]
+  shellbeg <- shelltest[["startpoints"]][i]
+  shellend <- shelltest[["endpoints"]][i]
+  rt_row <- which(shoulddtest$ROUTE == shellroute & 
+                    shouldtest$MP > shellbeg  & 
+                    shouldtest$MP < shellend)
+  shelltest[["sho_f"]][i] <- length(rt_row)
 }
 
 # Pivot AADT

@@ -670,6 +670,11 @@ shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 # Find Number of Unique Routes in shoulder file
 num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 
+# Create Point to Reference Shoulders
+shoulder <- shoulder %>% 
+  mutate(MP = (BEG_MP+END_MP)/2) %>% 
+  mutate(Length = (END_MP-BEG_MP))
+
 # fix ending endpoints
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 shoulder <- fix_endpoints(shoulder, routes2)
@@ -919,6 +924,9 @@ for (i in 1:nrow(shelltest)){
   shelltest[["drv_f"]][i] <- length(rt_row)
 }
 
+# Create Driveway per Mile Column
+shelltest <- shelltest %>% mutate(DrivewayperMile = drv_f/(endpoints-startpoints))
+
 # Add Medians
 shelltest$med_f <- 0
 shelltest$med_type <- 0
@@ -930,20 +938,38 @@ for (i in 1:nrow(shelltest)){
                     medtest$MP > shellbeg  & 
                     medtest$MP < shellend)
   shelltest[["med_f"]][i] <- length(rt_row)
-  case_when(shelltest[["med_f"]][i] > 0 ~ medtest[["MEDIAN_TYP"]][i])
-  
+  case_when(shelltest[["med_f"]][i] > 0 ~ medtest[["MEDIAN_TYP"]][rt_row])
 }
 
 # Add Shoulders
-shelltest$sho_f <- 0
+shelltest$sho_r_f <- 0
+shelltest$sho_l_f <- 0
+shelltest$sho_r_max <- 0
+shelltest$sho_r_min <- 0
+shelltest$sho_l_max <- 0
+shelltest$sho_l_min <- 0
+shelltest$sho_r_wavg <- 0
+shelltest$sho_l_wavg <- 0
 for (i in 1:nrow(shelltest)){
   shellroute <- shelltest[["ROUTE"]][i]
   shellbeg <- shelltest[["startpoints"]][i]
   shellend <- shelltest[["endpoints"]][i]
-  rt_row <- which(shoulddtest$ROUTE == shellroute & 
+  rt_row_r <- which(shouldtest$ROUTE == shellroute & 
                     shouldtest$MP > shellbeg  & 
-                    shouldtest$MP < shellend)
-  shelltest[["sho_f"]][i] <- length(rt_row)
+                    shouldtest$MP < shellend &
+                    shouldtest$UTPOSITION== "RIGHT")
+  rt_row_l <- which(shouldtest$ROUTE == shellroute & 
+                      shouldtest$MP > shellbeg  & 
+                      shouldtest$MP < shellend &
+                      shouldtest$UTPOSITION =="LEFT")
+  shelltest[["sho_r_f"]][i] <- length(rt_row_r)
+  shelltest[["sho_l_f"]][i] <- length(rt_row_l)
+  shelltest[["sho_r_max"]][i] <- max(shouldtest[["SHLDR_WDTH"]][rt_row_r])
+  shelltest[["sho_r_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_r])
+  shelltest[["sho_l_max"]][i] <- max(shouldtest[["SHLDR_WDTH"]][rt_row_l])
+  shelltest[["sho_l_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_l])
+  shelltest[["sho_r_wavg"]][i] <- shouldtest[["SHLDR_WDTH"]][rt_row_r]
+  shelltest[["sho_l_wavg"]][i] <- ((shouldtest[["SHLDR_WDTH"]][rt_row_l]*shouldtest[["Length"]][rt_row_l])/(shelltest[["endpoints"]][i]-shelltest[["startpoints"]][i]))
 }
 
 # Pivot AADT

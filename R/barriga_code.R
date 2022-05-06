@@ -938,7 +938,7 @@ for (i in 1:nrow(shelltest)){
                     medtest$MP > shellbeg  & 
                     medtest$MP < shellend)
   shelltest[["med_f"]][i] <- length(rt_row)
-  case_when(shelltest[["med_f"]][i] > 0 ~ medtest[["MEDIAN_TYP"]][rt_row])
+  shelltest[["med_type"]][i] <- if_else(shelltest[["med_f"]][i] > 0, "TRUE" ,"NA")
 }
 
 # Add Shoulders
@@ -968,8 +968,8 @@ for (i in 1:nrow(shelltest)){
   shelltest[["sho_r_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_r])
   shelltest[["sho_l_max"]][i] <- max(shouldtest[["SHLDR_WDTH"]][rt_row_l])
   shelltest[["sho_l_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_l])
-  shelltest[["sho_r_wavg"]][i] <- shouldtest[["SHLDR_WDTH"]][rt_row_r]
-  shelltest[["sho_l_wavg"]][i] <- ((shouldtest[["SHLDR_WDTH"]][rt_row_l]*shouldtest[["Length"]][rt_row_l])/(shelltest[["endpoints"]][i]-shelltest[["startpoints"]][i]))
+  # shelltest[["sho_r_wavg"]][i] <- shouldtest[["SHLDR_WDTH"]][rt_row_r]
+  # shelltest[["sho_l_wavg"]][i] <- ((shouldtest[["SHLDR_WDTH"]][rt_row_l]*shouldtest[["Length"]][rt_row_l])/(shelltest[["endpoints"]][i]-shelltest[["startpoints"]][i]))
 }
 
 # Pivot AADT

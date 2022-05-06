@@ -357,6 +357,15 @@ aadt_neg <- function(aadt, fc, divd){
     # convert milepoints
     df[["BEG_MP"]][i] <- (beg_aadt-beg_prt_start) * c 
     df[["END_MP"]][i] <- (end_aadt-beg_prt_start) * c 
+    # fix segment breaks (treat gaps as zero)
+    if(i-1>0){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
+        end_aadt <- df[["END_MP"]][i]
+        df[["END_MP"]][i] <- end_aadt - offset
+        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
+      }
+    }
   }
   # rbind df to aadt
   df <- rbind(aadt, df) %>%
@@ -477,7 +486,7 @@ routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
 routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # fix ending endpoints
-fc <- fix_endpoints(fc, routes2)
+fc <- fix_endpoints(fc, routes)
 
 # fctest1 <- fix_endpoints(fc, routes)
 # fctest2 <- fix_endpoints(fc, routes2)
@@ -570,7 +579,7 @@ speed <- compress_seg(speed)
 # speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
-speed <- fix_endpoints(speed, routes2)
+speed <- fix_endpoints(speed, routes)
 
 # Unused Code for Filtering speed Data
 
@@ -973,7 +982,7 @@ for (i in 1:nrow(shelltest)){
 }
 
 # Pivot AADT
-test <- pivot_aadt(RC)
+RC <- pivot_aadt(RC)
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")

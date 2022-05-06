@@ -357,6 +357,15 @@ aadt_neg <- function(aadt, fc, divd){
     # convert milepoints
     df[["BEG_MP"]][i] <- (beg_aadt-beg_prt_start) * c 
     df[["END_MP"]][i] <- (end_aadt-beg_prt_start) * c 
+    # fix segment breaks (treat gaps as zero)
+    if(i-1>0){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
+        end_aadt <- df[["END_MP"]][i]
+        df[["END_MP"]][i] <- end_aadt - offset
+        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
+      }
+    }
   }
   # rbind df to aadt
   df <- rbind(aadt, df) %>%
@@ -432,21 +441,26 @@ fix_endpoints <- function(df, routes){
 ###
 
 # Read in routes File
-routes2 <- read_filez_csv(routes.filepath, routes.columns)
+routes <- read_filez_csv(routes.filepath, routes.columns)
 
 # Standardize Column Names
-names(routes2)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
 # Select only Main Routes
-routes2 <- routes2 %>% filter(grepl("M", ROUTE))
+routes <- routes %>% filter(grepl("M", ROUTE))
+
+# Round milepoints to 6 decimal places
+routes <- routes %>% 
+  mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
 
 # Find Number of Unique Routes in the routes File
-num.routes.routes <- routes2 %>% pull(ROUTE) %>% unique() %>% length()
+num.routes.routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
 
 # load divided routes data
 div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
 names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-div_routes <- div_routes %>% 
+div_routes <- div_routes %>%
+  mutate(LENGTH = END_MP - BEG_MP) %>%
   arrange(ROUTE, BEG_MP)
 
 ###
@@ -472,12 +486,12 @@ main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 # Compress fc
 fc <- compress_seg(fc)
 
-# Create routes dataframe
-routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+# # Create routes dataframe
+# routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
+# routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # fix ending endpoints
-fc <- fix_endpoints(fc, routes2)
+fc <- fix_endpoints(fc, routes)
 
 # fctest1 <- fix_endpoints(fc, routes)
 # fctest2 <- fix_endpoints(fc, routes2)
@@ -531,11 +545,11 @@ aadt <- aadt_numeric(aadt, aadt.columns)
 # Compress aadt
 aadt <- compress_seg(aadt)
 
-# fix ending endpoints
-aadt <- fix_endpoints(aadt, routes)
-
 # fix negative aadt values
 aadt <- aadt_neg(aadt, fc, div_routes)
+
+# fix ending endpoints
+aadt <- fix_endpoints(aadt, routes)
 
 # Unused Code for Filtering aadt Data
 
@@ -570,7 +584,7 @@ speed <- compress_seg(speed)
 # speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
-speed <- fix_endpoints(speed, routes2)
+speed <- fix_endpoints(speed, routes)
 
 # Unused Code for Filtering speed Data
 
@@ -973,7 +987,7 @@ for (i in 1:nrow(shelltest)){
 }
 
 # Pivot AADT
-test <- pivot_aadt(RC)
+RC <- pivot_aadt(RC)
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")

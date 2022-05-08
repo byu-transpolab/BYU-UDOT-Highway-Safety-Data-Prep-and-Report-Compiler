@@ -651,7 +651,7 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-lane <- compress_seg(lane, variables = c("THRU_CNT", "THRU_WDTH"))
+lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)

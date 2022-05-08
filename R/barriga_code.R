@@ -272,10 +272,8 @@ pivot_aadt <- function(aadt){
 }
 
 # Function to fix missing negative direction AADT values (can be optimized more)
-aadt_neg <- function(aadt, fc, divd){
-  # use fc for routes because it is already filtered to state routes
-  rtes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-  rtes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+aadt_neg <- function(aadt, rtes, divd){
+  # isolate negative routes
   rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
   # isolate positive aadt entries
   aadt_p <- aadt %>% filter(grepl("P",ROUTE)) %>%
@@ -323,13 +321,13 @@ aadt_neg <- function(aadt, fc, divd){
     if(beg_aadt > end_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(end_aadt > end_rt[1]){        # correct end mp if its greater than route
+    if(end_aadt > end_rt[1]){        # correct end mp if it's greater than route
       df[["END_MP"]][i] <- end_rt[1]
     }
     if(end_aadt < beg_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(beg_aadt < beg_rt[1]){        # correct beg mp if its less than route
+    if(beg_aadt < beg_rt[1]){        # correct beg mp if it's less than route
       df[["BEG_MP"]][i] <- beg_rt[1]
     }
   }
@@ -351,15 +349,19 @@ aadt_neg <- function(aadt, fc, divd){
     beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
     end_nrt <- divd_n[["END_MP"]][nrt_row]
     # get start of first segment
-    beg_prt_start <- divd_p[["BEG_MP"]][prt_start_row]
-    # calculate conversion factor
-    c <- (end_nrt-beg_nrt) / (end_prt-beg_prt)
-    # convert milepoints
-    df[["BEG_MP"]][i] <- (beg_aadt-beg_prt_start) * c 
-    df[["END_MP"]][i] <- (end_aadt-beg_prt_start) * c 
+    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
+    # calculate conversion factor 
+    # (converts positive milepoints to negative milepoints)
+    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
+    # convert milepoints (and offset to zero using prt_start)
+    df[["BEG_MP"]][i] <- (beg_aadt - prt_start) * c 
+    df[["END_MP"]][i] <- (end_aadt - prt_start) * c 
     # fix segment breaks (treat gaps as zero)
+    # I had to specify route 89 because there are routes with non-zero gaps which
+    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
+    # up with a more robust solution that would be great.
     if(i-1>0){
-      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
         offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
         end_aadt <- df[["END_MP"]][i]
         df[["END_MP"]][i] <- end_aadt - offset
@@ -596,7 +598,7 @@ aadt <- aadt_numeric(aadt, aadt.columns)
 aadt <- compress_seg(aadt)
 
 # fix negative aadt values
-aadt <- aadt_neg(aadt, fc, div_routes)
+aadt <- aadt_neg(aadt, routes, div_routes)
 
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)

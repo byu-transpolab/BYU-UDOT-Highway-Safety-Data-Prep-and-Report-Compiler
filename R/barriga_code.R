@@ -436,6 +436,85 @@ fix_endpoints <- function(df, routes){
   return(df)
 }
 
+# Function to fill in missing aadt and truck data
+fill_missing_aadt <- function(df, colns){
+  # ignore first 3 columns
+  colns <- tail(colns, -3)
+  # loop through columns and convert zeros to NA
+  # this assumes all zeros equate to missing data. We should confirm with UDOT.
+  for(i in 1:length(colns)){
+    col <- colns[i]
+    df[[col]][df[[col]] == 0] <- NA
+  }
+  # Make three lists of columns for aadt, sutrk, and cutrk and sort
+  aadt_colns <- grep("AADT", colns, value = TRUE) %>% str_sort()
+  sutrk_colns <- grep("SUTRK", colns, value = TRUE) %>% str_sort()
+  cutrk_colns <- grep("CUTRK", colns, value = TRUE) %>% str_sort()
+  col_tbl <- tibble(aadt_colns, sutrk_colns, cutrk_colns)
+  years <- length(aadt_colns)
+  # loop through years (except the last year)
+  for(y in 1:years){
+    # loop through rows
+    for(i in 1:nrow(df)){
+      # check if first year is blank (we won't fill in missing data if it is)
+      aadt_first <- df[[aadt_colns[1]]][i]
+      sutrk_first <- df[[sutrk_colns[1]]][i]
+      cutrk_first <- df[[cutrk_colns[1]]][i]
+      # check first year for aadt, sutrk, and cutrk
+      if(!is.na(aadt_first) | !is.na(sutrk_first) | !is.na(cutrk_first)){
+        # loop through the three columns of col_tbl
+        for(k in 1:ncol(col_tbl)){
+          cur_colns <- col_tbl[[k]]
+          # loop through columns
+          for(j in 1:length(cur_colns)){
+            # check if the value is NA
+            value <- df[[cur_colns[j]]][i]
+            if(is.na(value)){
+              # create a list of previous and next segments 
+              # (treat as NA if segment isn't on the same route)
+              prev_seg <- NA
+              nxt_seg <- NA
+              prev_yr <- NA
+              nxt_yr <- NA
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+                prev_seg <- df[[cur_colns[j]]][i-1]
+              }
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
+                nxt_seg <- df[[cur_colns[j]]][i+1]
+              }
+              if(j-1 >= 1){
+                prev_yr <- df[[cur_colns[j-1]]][i]
+              }
+              if(j+1 <= length(cur_colns)){
+                nxt_yr <- df[[cur_colns[j+1]]][i]
+              }
+              surround <- c(prev_seg, nxt_seg, prev_yr, nxt_yr)
+              # take average of previous and next segments aadt (ignore NAs)
+              df[[cur_colns[j]]][i] <- mean(surround, na.rm = TRUE)
+            }
+          }
+        }
+      }
+    }
+    # remove first year of data and repeat loop
+    # (this allows us to thoroughly fill in missing data because we don't fill in
+    # missing data if the first year is blank)
+    aadt_colns <- tail(aadt_colns, -1)
+    sutrk_colns <- tail(sutrk_colns, -1)
+    cutrk_colns <- tail(cutrk_colns, -1)
+    col_tbl <- tibble(aadt_colns, sutrk_colns, cutrk_colns)
+  }
+  # loop through columns and convert NaN to NA
+  for(i in 1:length(colns)){
+    col <- colns[i]
+    df[[col]][is.nan(df[[col]])] <- NA
+  }
+  # return df
+  return(df)
+}
+
+
+
 ###
 ## Routes Data Prep
 ###
@@ -550,6 +629,9 @@ aadt <- aadt_neg(aadt, fc, div_routes)
 
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
+
+# fill in missing data
+aadt <- fill_missing_aadt(aadt, aadt.columns)
 
 # Unused Code for Filtering aadt Data
 

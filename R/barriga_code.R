@@ -572,35 +572,6 @@ fc <- compress_seg(fc)
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes)
 
-# fctest1 <- fix_endpoints(fc, routes)
-# fctest2 <- fix_endpoints(fc, routes2)
-
-# Unused Code for Filtering fc Data
-
-# fctest <- fc
-# fctest %>%
-#   group_by(ROUTE) %>%
-#   mutate(
-#     New_fc = case_when(
-#       row_number() == 1L ~ fc,
-#       is.na(fc) & sum(fc) != rollsum(fc, k=as.scalar(row_number()), align='left') ~ lead(fc, n=1L)
-#     )
-#   )
-
-#if row(i) ROUTE, Functional, RouteDir, RouteType = row(i+1)
-#  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
-#else
-#End if 
-
-# Take First Four Numbers of Route Column
-# fc$ROUTE <- substr(fc$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# fc_pos <- fc_neg <- aadt
-# fc_pos$ROUTE <- as.character(paste(fc_pos$ROUTE, "P", sep = ""))
-# fc_neg$ROUTE <- as.character(paste(fc_neg$ROUTE, "N", sep = ""))
-# fc <- rbind(fc_pos, fc_neg)
-
 ####
 ## AADT Data Prep
 ####
@@ -633,17 +604,6 @@ aadt <- fix_endpoints(aadt, routes)
 # fill in missing data
 aadt <- fill_missing_aadt(aadt, aadt.columns)
 
-# Unused Code for Filtering aadt Data
-
-# Take First Four Numbers of Route Column
-# aadr$ROUTE <- substr(aadt$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# aadt_pos <- aadt_neg <- aadt
-# aadt_pos$ROUTE <- as.character(paste(aadt_pos$ROUTE, "P", sep = ""))
-# aadt_neg$ROUTE <- as.character(paste(aadt_neg$ROUTE, "N", sep = ""))
-# aadt <- rbind(aadt_pos, aadt_neg)
-
 ###
 ## Speed Limits Data Prep
 ###
@@ -667,17 +627,6 @@ speed <- compress_seg(speed)
 
 # fix ending endpoints
 speed <- fix_endpoints(speed, routes)
-
-# Unused Code for Filtering speed Data
-
-# Take First Four Numbers of Route Column
-# speed$ROUTE <- substr(speed$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# sl_pos <- sl_neg <- speed
-# sl_pos$ROUTE <- paste(sl_pos$ROUTE, "+", sep = "")
-# sl_neg$ROUTE <- paste(sl_neg$ROUTE, "-", sep = "")
-# speed <- rbind(sl_pos, sl_neg)
 
 ###
 ## Lanes Data Prep
@@ -704,20 +653,6 @@ lane <- compress_seg(lane, variables = c("THRU_CNT", "THRU_WDTH"))
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
-
-# Unused Code for Filtering lane Data
-
-# # Adding direction onto route variable, taking route direction out of its own column
-# lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
-#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
-#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
-
-# # Trying to define each row as separate segments, no overlap, the directions have different information
-# lane %>%
-#  group_by(ROUTE, BEG_MP) %>%
-#  summarize(should_be_one = n()) %>%
-#  filter(should_be_one > 1)
-# # No duplicates, not all data complete on negative side of the road though
 
 # ###
 # ## Intersection Data Prep
@@ -1074,76 +1009,3 @@ RC <- pivot_aadt(RC)
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Potential code to replace the shell method
-# 
-# # assign variables
-# sdtms <- list(aadt, fc, speed, lane)
-# sdtms <- lapply(sdtms, as_tibble)
-# df <- rbind(fc, lane, aadt, speed)
-# # extract columns from data
-# colns <- colnames(df)
-# colns <- tail(colns, -4)    # remove ID and first 
-# # sort by route and milepoints (assumes consistent naming convention for these)
-# df <- df %>%
-#   arrange(ROUTE, BEG_MP, END_MP) %>%
-#   select(ROUTE, BEG_MP, END_MP)
-# # loop through variables and rows
-# iter <- 0
-# count <- 0
-# route <- -1
-# value <- variables
-# df$ID <- 0
-# # create new variables to replace the old ones
-# 
-# 
-# 
-# for(i in 1:nrow(df)){
-#   new_route <- df$ROUTE[i]
-#   test = 0
-#   for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
-#     varName <- variables[j]
-#     new_value <- df[[varName]][i]
-#     if(is.na(new_value)){              # treat NA as zero to avoid errors
-#       new_value = 0
-#     }
-#     if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
-#       value[j] <- new_value
-#       test = 1
-#     }
-#   }
-#   if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
-#     iter <- iter + 1
-#     route <- new_route
-#   } else {
-#     count = count + 1
-#   }
-#   df$ID[i] <- iter
-# }
-# # use summarize to compress segments
-# df <- df %>% 
-#   group_by(ID) %>%
-#   summarise(
-#     ROUTE = unique(ROUTE),
-#     BEG_MP = min(BEG_MP),
-#     END_MP = max(END_MP), 
-#     across(.cols = col)
-#   ) %>%
-#   unique()
-# # report the number of combined rows
-# print(paste("combined", count, "rows"))

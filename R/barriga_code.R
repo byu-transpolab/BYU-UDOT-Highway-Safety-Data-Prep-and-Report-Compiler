@@ -258,10 +258,8 @@ pivot_aadt <- function(aadt){
 }
 
 # Function to fix missing negative direction AADT values (can be optimized more)
-aadt_neg <- function(aadt, fc, divd){
-  # use fc for routes because it is already filtered to state routes
-  rtes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-  rtes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
+aadt_neg <- function(aadt, rtes, divd){
+  # isolate negative routes
   rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
   # isolate positive aadt entries
   aadt_p <- aadt %>% filter(grepl("P",ROUTE)) %>%
@@ -309,13 +307,13 @@ aadt_neg <- function(aadt, fc, divd){
     if(beg_aadt > end_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(end_aadt > end_rt[1]){        # correct end mp if its greater than route
+    if(end_aadt > end_rt[1]){        # correct end mp if it's greater than route
       df[["END_MP"]][i] <- end_rt[1]
     }
     if(end_aadt < beg_rt[1]){        # flag segments that fall outside route
       df[["flag"]][i] <- TRUE
     }
-    if(beg_aadt < beg_rt[1]){        # correct beg mp if its less than route
+    if(beg_aadt < beg_rt[1]){        # correct beg mp if it's less than route
       df[["BEG_MP"]][i] <- beg_rt[1]
     }
   }
@@ -337,15 +335,19 @@ aadt_neg <- function(aadt, fc, divd){
     beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
     end_nrt <- divd_n[["END_MP"]][nrt_row]
     # get start of first segment
-    beg_prt_start <- divd_p[["BEG_MP"]][prt_start_row]
-    # calculate conversion factor
-    c <- (end_nrt-beg_nrt) / (end_prt-beg_prt)
-    # convert milepoints
-    df[["BEG_MP"]][i] <- (beg_aadt-beg_prt_start) * c 
-    df[["END_MP"]][i] <- (end_aadt-beg_prt_start) * c 
+    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
+    # calculate conversion factor 
+    # (converts positive milepoints to negative milepoints)
+    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
+    # convert milepoints (and offset to zero using prt_start)
+    df[["BEG_MP"]][i] <- (beg_aadt - prt_start) * c 
+    df[["END_MP"]][i] <- (end_aadt - prt_start) * c 
     # fix segment breaks (treat gaps as zero)
+    # I had to specify route 89 because there are routes with non-zero gaps which
+    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
+    # up with a more robust solution that would be great.
     if(i-1>0){
-      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
         offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
         end_aadt <- df[["END_MP"]][i]
         df[["END_MP"]][i] <- end_aadt - offset
@@ -422,6 +424,85 @@ fix_endpoints <- function(df, routes){
   return(df)
 }
 
+# Function to fill in missing aadt and truck data
+fill_missing_aadt <- function(df, colns){
+  # ignore first 3 columns
+  colns <- tail(colns, -3)
+  # loop through columns and convert zeros to NA
+  # this assumes all zeros equate to missing data. We should confirm with UDOT.
+  for(i in 1:length(colns)){
+    col <- colns[i]
+    df[[col]][df[[col]] == 0] <- NA
+  }
+  # Make three lists of columns for aadt, sutrk, and cutrk and sort
+  aadt_colns <- grep("AADT", colns, value = TRUE) %>% str_sort()
+  sutrk_colns <- grep("SUTRK", colns, value = TRUE) %>% str_sort()
+  cutrk_colns <- grep("CUTRK", colns, value = TRUE) %>% str_sort()
+  col_tbl <- tibble(aadt_colns, sutrk_colns, cutrk_colns)
+  years <- length(aadt_colns)
+  # loop through years (except the last year)
+  for(y in 1:years){
+    # loop through rows
+    for(i in 1:nrow(df)){
+      # check if first year is blank (we won't fill in missing data if it is)
+      aadt_first <- df[[aadt_colns[1]]][i]
+      sutrk_first <- df[[sutrk_colns[1]]][i]
+      cutrk_first <- df[[cutrk_colns[1]]][i]
+      # check first year for aadt, sutrk, and cutrk
+      if(!is.na(aadt_first) | !is.na(sutrk_first) | !is.na(cutrk_first)){
+        # loop through the three columns of col_tbl
+        for(k in 1:ncol(col_tbl)){
+          cur_colns <- col_tbl[[k]]
+          # loop through columns
+          for(j in 1:length(cur_colns)){
+            # check if the value is NA
+            value <- df[[cur_colns[j]]][i]
+            if(is.na(value)){
+              # create a list of previous and next segments 
+              # (treat as NA if segment isn't on the same route)
+              prev_seg <- NA
+              nxt_seg <- NA
+              prev_yr <- NA
+              nxt_yr <- NA
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+                prev_seg <- df[[cur_colns[j]]][i-1]
+              }
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
+                nxt_seg <- df[[cur_colns[j]]][i+1]
+              }
+              if(j-1 >= 1){
+                prev_yr <- df[[cur_colns[j-1]]][i]
+              }
+              if(j+1 <= length(cur_colns)){
+                nxt_yr <- df[[cur_colns[j+1]]][i]
+              }
+              surround <- c(prev_seg, nxt_seg, prev_yr, nxt_yr)
+              # take average of previous and next segments aadt (ignore NAs)
+              df[[cur_colns[j]]][i] <- mean(surround, na.rm = TRUE)
+            }
+          }
+        }
+      }
+    }
+    # remove first year of data and repeat loop
+    # (this allows us to thoroughly fill in missing data because we don't fill in
+    # missing data if the first year is blank)
+    aadt_colns <- tail(aadt_colns, -1)
+    sutrk_colns <- tail(sutrk_colns, -1)
+    cutrk_colns <- tail(cutrk_colns, -1)
+    col_tbl <- tibble(aadt_colns, sutrk_colns, cutrk_colns)
+  }
+  # loop through columns and convert NaN to NA
+  for(i in 1:length(colns)){
+    col <- colns[i]
+    df[[col]][is.nan(df[[col]])] <- NA
+  }
+  # return df
+  return(df)
+}
+
+
+
 ###
 ## Routes Data Prep
 ###
@@ -479,9 +560,12 @@ fc <- compress_seg(fc)
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes)
 
+<<<<<<< HEAD
 # fctest1 <- fix_endpoints(fc, routes)
 # fctest2 <- fix_endpoints(fc, routes2)
 
+=======
+>>>>>>> main
 ####
 ## AADT Data Prep
 ####
@@ -506,11 +590,17 @@ aadt <- aadt_numeric(aadt, aadt.columns)
 aadt <- compress_seg(aadt)
 
 # fix negative aadt values
-aadt <- aadt_neg(aadt, fc, div_routes)
+aadt <- aadt_neg(aadt, routes, div_routes)
 
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
 
+<<<<<<< HEAD
+=======
+# fill in missing data
+aadt <- fill_missing_aadt(aadt, aadt.columns)
+
+>>>>>>> main
 ###
 ## Speed Limits Data Prep
 ###
@@ -556,7 +646,7 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-lane <- compress_seg(lane, variables = c("THRU_CNT", "THRU_WDTH"))
+lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
@@ -884,6 +974,7 @@ RC <- pivot_aadt(RC)
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
+<<<<<<< HEAD
 
 # # Potential code to replace the shell method
 # 
@@ -942,3 +1033,5 @@ write.csv(RC, file = output)
 #   unique()
 # # report the number of combined rows
 # print(paste("combined", count, "rows"))
+=======
+>>>>>>> main

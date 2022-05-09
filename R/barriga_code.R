@@ -3,21 +3,16 @@
 ###
 
 library(tidyverse)
-# library(sf)
 
 ###
 ## Set Filepath and Column Names for each Dataset
 ###
 
-# routes <- read.csv("data/csv/UDOT_Routes_ALRS.csv")
-# routes.filepath <- "data/shapefile/UDOT_Routes_ALRS.shp"
 routes.filepath <- "data/csv/UDOT_Routes_ALRS.csv"
 routes.columns <- c("ROUTE_ID",                          
                     "BEG_MILEAGE",                             
                     "END_MILEAGE")
 
-# aadt <- read.csv("data/csv/AADT_Unrounded.csv")
-# aadt.filepath <- "data/shapefile/AADT_Unrounded.shp"
 aadt.filepath <- "data/csv/AADT_Unrounded.csv"
 aadt.columns <- c("ROUTE_NAME",
                   "START_ACCU",
@@ -44,8 +39,6 @@ aadt.columns <- c("ROUTE_NAME",
                   "SUTRK2014",
                   "CUTRK2014")
 
-# fc <- read.csv("data/csv/Functional_Class_ALRS.csv")
-# fc.filepath <- "data/shapefile/Functional_Class_ALRS.shp"
 fc.filepath <- "data/csv/Functional_Class_ALRS.csv"
 fc.columns <- c("ROUTE_ID",                          
                 "FROM_MEASURE",                             
@@ -54,16 +47,12 @@ fc.columns <- c("ROUTE_ID",
                 "RouteDir",                             
                 "RouteType")
 
-# speed <- read.csv("data/csv/UDOT_Speed_Limits_2019.csv")
-# speed.filepath <- "data/shapefile/UDOT_Speed_Limits_2019.shp"
 speed.filepath <- "data/csv/UDOT_Speed_Limits_2019.csv"
 speed.columns <- c("ROUTE_ID",
                    "FROM_MEASURE",
                    "TO_MEASURE",
                    "SPEED_LIMIT")
 
-# lane <- read.csv("data/csv/Lanes.csv")
-# lane.filepath <- "data/shapefile/Lanes.shp"
 lane.filepath <- "data/csv/Lanes.csv"
 lane.columns <- c("ROUTE",
                   "START_ACCUM",
@@ -85,7 +74,6 @@ lane.columns <- c("ROUTE",
 
 intersection <- read.csv("data/csv/Intersections.csv")
 
-# driveway <- read.csv("data/csv/Driveway.csv")
 driveway.filepath <- "data/csv/Driveway.csv"
 driveway.columns <- c("ROUTE",
                       "START_ACCUM",
@@ -93,7 +81,6 @@ driveway.columns <- c("ROUTE",
                       "DIRECTION",
                       "TYPE")
 
-# median <- read.csv("data/csv/Medians.csv")
 median.filepath <- "data/csv/Medians.csv"
 median.columns <- c("ROUTE_NAME",
                     "START_ACCUM",
@@ -102,7 +89,6 @@ median.columns <- c("ROUTE_NAME",
                     "TRFISL_TYP",
                     "MDN_PRTCTN")
 
-# shoulder <- read.csv("data/csv/Shoulders.csv")
 shoulder.filepath <-"data/csv/Shoulders.csv"
 shoulder.columns <- c("ROUTE",
                       "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
@@ -496,32 +482,6 @@ fc <- fix_endpoints(fc, routes)
 # fctest1 <- fix_endpoints(fc, routes)
 # fctest2 <- fix_endpoints(fc, routes2)
 
-# Unused Code for Filtering fc Data
-
-# fctest <- fc
-# fctest %>%
-#   group_by(ROUTE) %>%
-#   mutate(
-#     New_fc = case_when(
-#       row_number() == 1L ~ fc,
-#       is.na(fc) & sum(fc) != rollsum(fc, k=as.scalar(row_number()), align='left') ~ lead(fc, n=1L)
-#     )
-#   )
-
-#if row(i) ROUTE, Functional, RouteDir, RouteType = row(i+1)
-#  BEG_MP(i), END_MP(i+1) , ROUTE, Functional, RouteDir, RouteType
-#else
-#End if 
-
-# Take First Four Numbers of Route Column
-# fc$ROUTE <- substr(fc$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# fc_pos <- fc_neg <- aadt
-# fc_pos$ROUTE <- as.character(paste(fc_pos$ROUTE, "P", sep = ""))
-# fc_neg$ROUTE <- as.character(paste(fc_neg$ROUTE, "N", sep = ""))
-# fc <- rbind(fc_pos, fc_neg)
-
 ####
 ## AADT Data Prep
 ####
@@ -551,17 +511,6 @@ aadt <- aadt_neg(aadt, fc, div_routes)
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
 
-# Unused Code for Filtering aadt Data
-
-# Take First Four Numbers of Route Column
-# aadr$ROUTE <- substr(aadt$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# aadt_pos <- aadt_neg <- aadt
-# aadt_pos$ROUTE <- as.character(paste(aadt_pos$ROUTE, "P", sep = ""))
-# aadt_neg$ROUTE <- as.character(paste(aadt_neg$ROUTE, "N", sep = ""))
-# aadt <- rbind(aadt_pos, aadt_neg)
-
 ###
 ## Speed Limits Data Prep
 ###
@@ -585,17 +534,6 @@ speed <- compress_seg(speed)
 
 # fix ending endpoints
 speed <- fix_endpoints(speed, routes)
-
-# Unused Code for Filtering speed Data
-
-# Take First Four Numbers of Route Column
-# speed$ROUTE <- substr(speed$ROUTE, 1, 4)
-
-# Making duplicate dataset for positive and negative sides of road
-# sl_pos <- sl_neg <- speed
-# sl_pos$ROUTE <- paste(sl_pos$ROUTE, "+", sep = "")
-# sl_neg$ROUTE <- paste(sl_neg$ROUTE, "-", sep = "")
-# speed <- rbind(sl_pos, sl_neg)
 
 ###
 ## Lanes Data Prep
@@ -622,20 +560,6 @@ lane <- compress_seg(lane, variables = c("THRU_CNT", "THRU_WDTH"))
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
-
-# Unused Code for Filtering lane Data
-
-# # Adding direction onto route variable, taking route direction out of its own column
-# lane$TRAVEL_DIR <- ifelse(lane$TRAVEL_DIR == "+",
-#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "P", sep = ""),
-#                       paste(substr(lane$TRAVEL_DIR, 1, 0), "N", sep = ""))
-
-# # Trying to define each row as separate segments, no overlap, the directions have different information
-# lane %>%
-#  group_by(ROUTE, BEG_MP) %>%
-#  summarize(should_be_one = n()) %>%
-#  filter(should_be_one > 1)
-# # No duplicates, not all data complete on negative side of the road though
 
 # ###
 # ## Intersection Data Prep
@@ -735,13 +659,6 @@ median <- median %>%
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 median <- fix_endpoints(median, routes2)
 
-# filter out seemingly duplicated medians for observation
-# md_disc <- median %>%
-#   group_by(ROUTE, BEG_MP) %>%
-#   mutate(should_be_one = n()) %>%
-#   filter(should_be_one > 1) %>%
-#   arrange(ROUTE, BEG_MP)
-
 ###
 ## Driveway Data Prep
 ###
@@ -762,16 +679,6 @@ driveway <- driveway %>% mutate(MP = (BEG_MP+END_MP)/2)
 routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
 driveway <- fix_endpoints(driveway, routes2)
 
-# not sure what this is
-# driveway <- driveway %>%
-#   group_by(ROUTE, BEG_MP) %>%
-#   mutate(should_be_one = n()) %>%
-#   arrange(ROUTE, BEG_MP) %>%
-#   select(-contains("LONG")) %>%
-#   select(-contains("LAT")) %>%
-#   mutate(WIDTH = mean(WIDTH), END_MP = max(END_MP), TYPE = "Minor Residential Driveway") %>%
-#   distinct()
-
 #filter out seemingly duplicated driveways for observation
 drv_disc <- driveway %>%
   group_by(ROUTE, BEG_MP) %>%
@@ -789,22 +696,7 @@ drv_disc <- driveway %>%
 #  sdtm2: Functional Class
 #  sdtm3: UDOT Speed Limits (2019)
 #  sdtm4: Lanes
-#  sdtm5: Intersections
-#  sdtm6: Pavement Messages
-#  sdtm7: Shoulders
-#  sdtm8: Medians
-#  sdtm9: Driveway
 
-#sdtms <- list()
-
-# For illustrative purposes; to be removed before code is finished.
-#sdtm1 <- read.csv("/home/bdahl00/udot-data/original/AADT_Unrounded.csv", header = TRUE) %>% 
-#  mutate(ROUTE = ROUTE_NAME,
-#         START_ACCUM = START_ACCU)
-#sdtm2 <- read.csv("/home/bdahl00/udot-data/original/UDOT_Speed_Limits_(2019).csv", header = TRUE) %>% 
-#  mutate(ROUTE = ROUTE_ID,
-#         START_ACCUM = FROM_MEASURE,
-#         END_ACCUM = TO_MEASURE)
 sdtms <- list(aadt, fc, speed, lane)
 sdtms <- lapply(sdtms, as_tibble)
 
@@ -992,21 +884,6 @@ RC <- pivot_aadt(RC)
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # # Potential code to replace the shell method
 # 

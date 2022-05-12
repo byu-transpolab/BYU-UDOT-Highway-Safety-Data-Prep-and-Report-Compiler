@@ -967,6 +967,8 @@ for (i in 1:nrow(RC)){
   # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }
 
+RC <- RC %>% mutate(ROUTES = gregexpr("[[:digit:]]+", ROUTE))
+
 # Add Crashes
 RC$TotalCrashes <- 0
 for (i in 1:nrow(RC)){
@@ -974,10 +976,10 @@ for (i in 1:nrow(RC)){
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
   RCyear <- RC[["YEAR"]][i]
-  crash_row <- which(crash$ROUTE == RCroute & 
+  crash_row <- which(crash$route == RCroute & 
                      crash$milepoint > RCbeg & 
                      crash$milepoint < RCend &
-                     crash$crash_year = RCYear)
+                     crash$crash_year == RCyear)
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
 

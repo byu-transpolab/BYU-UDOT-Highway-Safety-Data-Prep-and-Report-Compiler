@@ -182,7 +182,10 @@ crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[
 crash$crash_time <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 2)
 crash$crash_year <- sapply(strsplit(as.character(crash$crash_date), "/"), "[", 3)
 
-
+crash$route <- paste(substr(crash$route, 1, 5), crash$route_direction, sep = "")
+crash$route <- paste(substr(crash$route, 1, 6), "M", sep = "")
+crash$route <- paste0("000", crash$route)
+crash$route <- substr(crash$route, nchar(crash$route)-6+1, nchar(crash$route))
 
 # FILTER CAMS CRASH DATA
 filter_CAMS <- function(df){

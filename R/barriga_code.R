@@ -3,6 +3,7 @@
 ###
 
 library(tidyverse)
+library(dplyr)
 
 ###
 ## Set Filepath and Column Names for each Dataset
@@ -501,8 +502,6 @@ fill_missing_aadt <- function(df, colns){
   return(df)
 }
 
-
-
 ###
 ## Routes Data Prep
 ###
@@ -884,7 +883,10 @@ shell_join <- function(sdtm) {
 
 joined_populated <- lapply(sdtms, shell_join)
 
-################# Merging joined and populated sdtms together; formatting ##################
+###
+## Merging joined and populated sdtms together; formatting
+###
+
 RC <- c(list(shell), joined_populated) %>% 
   reduce(left_join, by = c("ROUTE", "startpoints")) %>% 
   mutate(BEG_MP = startpoints,
@@ -893,83 +895,91 @@ RC <- c(list(shell), joined_populated) %>%
   select(ROUTE, BEG_MP, END_MP, everything()) %>% 
   arrange(ROUTE, BEG_MP)
 
-######### Compressing by combining rows identical except for identifying information ########
+###
+## Final Data Compilation
+###
+
+# Compressing by combining rows identical except for identifying information 
+
 RC <- compress_seg_alt(RC)
+
+# Pivot AADT
+RC <- pivot_aadt(RC)
 
 ###
 ## Adding Other Data
 ###
 
-library(dplyr)
-
-shelltest <- shell
-drivetest <- driveway
-shouldtest <- shoulder
-medtest <- median
-
-
 # Add Driveways
- shelltest$drv_f <- 0
-for (i in 1:nrow(shelltest)){
-  shellroute <- shelltest[["ROUTE"]][i]
-  shellbeg <- shelltest[["startpoints"]][i]
-  shellend <- shelltest[["endpoints"]][i]
-  rt_row <- which(drivetest$ROUTE == shellroute & 
-                    drivetest$MP > shellbeg  & 
-                    drivetest$MP < shellend)
-  shelltest[["drv_f"]][i] <- length(rt_row)
+RC$Driveway_Freq <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  drive_row <- which(driveway$ROUTE == RCroute & 
+                       driveway$MP > RCbeg & 
+                       driveway$MP < RCend)
+  RC[["Driveway_Freq"]][i] <- length(drive_row)
 }
 
-# Create Driveway per Mile Column
-shelltest <- shelltest %>% mutate(DrivewayperMile = drv_f/(endpoints-startpoints))
-
 # Add Medians
-shelltest$med_f <- 0
-shelltest$med_type <- 0
-for (i in 1:nrow(shelltest)){
-  shellroute <- shelltest[["ROUTE"]][i]
-  shellbeg <- shelltest[["startpoints"]][i]
-  shellend <- shelltest[["endpoints"]][i]
-  rt_row <- which(medtest$ROUTE == shellroute & 
-                    medtest$MP > shellbeg  & 
-                    medtest$MP < shellend)
-  shelltest[["med_f"]][i] <- length(rt_row)
-  shelltest[["med_type"]][i] <- if_else(shelltest[["med_f"]][i] > 0, "TRUE" ,"NA")
+RC$Median_Freq <- 0
+RC$Median_Type <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  med_row <- which(median$ROUTE == RCroute & 
+                     median$MP > RCbeg  & 
+                     median$MP < RCend)
+  RC[["Median_Freq"]][i] <- length(med_row)
+  RC[["Median_Type"]][i] <- if_else(RC[["med_f"]][i] > 0, "TRUE" ,"NA")
 }
 
 # Add Shoulders
-shelltest$sho_r_f <- 0
-shelltest$sho_l_f <- 0
-shelltest$sho_r_max <- 0
-shelltest$sho_r_min <- 0
-shelltest$sho_l_max <- 0
-shelltest$sho_l_min <- 0
-shelltest$sho_r_wavg <- 0
-shelltest$sho_l_wavg <- 0
-for (i in 1:nrow(shelltest)){
-  shellroute <- shelltest[["ROUTE"]][i]
-  shellbeg <- shelltest[["startpoints"]][i]
-  shellend <- shelltest[["endpoints"]][i]
-  rt_row_r <- which(shouldtest$ROUTE == shellroute & 
-                    shouldtest$MP > shellbeg  & 
-                    shouldtest$MP < shellend &
-                    shouldtest$UTPOSITION== "RIGHT")
-  rt_row_l <- which(shouldtest$ROUTE == shellroute & 
-                      shouldtest$MP > shellbeg  & 
-                      shouldtest$MP < shellend &
-                      shouldtest$UTPOSITION =="LEFT")
-  shelltest[["sho_r_f"]][i] <- length(rt_row_r)
-  shelltest[["sho_l_f"]][i] <- length(rt_row_l)
-  shelltest[["sho_r_max"]][i] <- max(shouldtest[["SHLDR_WDTH"]][rt_row_r])
-  shelltest[["sho_r_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_r])
-  shelltest[["sho_l_max"]][i] <- max(shouldtest[["SHLDR_WDTH"]][rt_row_l])
-  shelltest[["sho_l_min"]][i] <- min(shouldtest[["SHLDR_WDTH"]][rt_row_l])
-  # shelltest[["sho_r_wavg"]][i] <- shouldtest[["SHLDR_WDTH"]][rt_row_r]
-  # shelltest[["sho_l_wavg"]][i] <- ((shouldtest[["SHLDR_WDTH"]][rt_row_l]*shouldtest[["Length"]][rt_row_l])/(shelltest[["endpoints"]][i]-shelltest[["startpoints"]][i]))
+RC$Right_Shoulder_Freq <- 0
+RC$Left_Shoulder_Freq <- 0
+RC$Right_Shoulder_Max <- 0
+RC$Right_Shoulder_Min <- 0
+RC$Left_Shoulder_Max <- 0
+RC$Left_Shoulder_Min <- 0
+RC$Right_Shoulder_Avg <- 0
+RC$Left_Shoulder_Avg <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  r_sho_row <- which(shoulder$ROUTE == RCroute & 
+                       shoulder$MP > RCbeg  & 
+                       shoulder$MP < RCend &
+                       shoulder$UTPOSITION== "RIGHT")
+  l_sho_row <- which(shoulder$ROUTE == RCroute & 
+                       shoulder$MP > RCbeg  & 
+                       shoulder$MP < RCend &
+                       shoulder$UTPOSITION =="LEFT")
+  RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
+  RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
+  RC[["Right_Shoulder_Max"]][i] <- max(shoulder[["SHLDR_WDTH"]][r_sho_row])
+  RC[["Right_Shoulder_Min"]][i] <- min(shoulder[["SHLDR_WDTH"]][r_sho_row])
+  RC[["Left_Shoulder_Max"]][i] <- max(shoulder[["SHLDR_WDTH"]][l_sho_row])
+  RC[["Left_Shoulder_Min"]][i] <- min(shoulder[["SHLDR_WDTH"]][l_sho_row])
+  # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
+  # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }
 
-# Pivot AADT
-RC <- pivot_aadt(RC)
+# Add Crashes
+RC$TotalCrashes <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  RCyear <- RC[["YEAR"]][i]
+  crash_row <- which(crash$ROUTE == RCroute & 
+                     crash$milepoint > RCbeg & 
+                     crash$milepoint < RCend &
+                     crash$crash_year = RCYear)
+  RC[["TotalCrashes"]][i] <- length(crash_row)
+}
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")

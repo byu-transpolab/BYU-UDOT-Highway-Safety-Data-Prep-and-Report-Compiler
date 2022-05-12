@@ -87,7 +87,7 @@ location_fp <- "data/csv/Crash_Data_14-20.csv"
 location_col <- c("crash_id", 
                   "crash_datetime", 
                   "route", 
-                  "direction", 
+                  "route_direction", 
                   "ramp_id", 
                   "milepoint", 
                   "lat", 
@@ -174,7 +174,15 @@ rollups <- read_csv_file(rollups_fp, rollups_col)
 vehicle <- read_csv_file(vehicle_fp, vehicle_col)
 
 crash <- left_join(location,rollups,by='crash_id')
-crash <- left_join(crash,vehicle,by='crash_id')
+fullcrash <- left_join(crash,vehicle,by='crash_id')
+
+crash <- crash %>% filter(is.na(ramp_id))
+
+crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 1)
+crash$crash_time <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 2)
+crash$crash_year <- sapply(strsplit(as.character(crash$crash_date), "/"), "[", 3)
+
+
 
 # FILTER CAMS CRASH DATA
 filter_CAMS <- function(df){

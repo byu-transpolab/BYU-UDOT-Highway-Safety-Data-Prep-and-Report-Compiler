@@ -35,7 +35,7 @@ rollups <- check_rollups(rollups)
 
 ```{r Join Crash Data}
 crash <- left_join(location,rollups,by='crash_id')
-crash <- left_join(crash,vehicle,by='crash_id')
+full_crash <- left_join(crash,vehicle,by='crash_id')
 rm("location","vehicle","rollups")
 # crash <- filter_CAMS(crash)
 ```

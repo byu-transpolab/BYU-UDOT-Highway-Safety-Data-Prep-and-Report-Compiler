@@ -455,21 +455,46 @@ fill_missing_aadt <- function(df, colns){
             if(is.na(value)){
               # create a list of previous and next segments 
               # (treat as NA if segment isn't on the same route)
-              prev_seg <- NA
-              nxt_seg <- NA
-              prev_yr <- NA
-              nxt_yr <- NA
+              # these variables represent the grid layout with years on the x axis
+              # and segments on the y axis
+              # [[a1 a2 a3]
+              #  [b1 ?? b3]
+              #  [c1 c2 c3]]
+              a1 <- NA
+              a2 <- NA
+              a3 <- NA
+              b1 <- NA
+              b3 <- NA
+              c1 <- NA
+              c2 <- NA
+              c3 <- NA
+              # fill top row
               if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
-                prev_seg <- df[[cur_colns[j]]][i-1]
+                if(j-1 >= 1){
+                  a1 <- df[[cur_colns[j-1]]][i-1]
+                }
+                a2 <- df[[cur_colns[j]]][i-1]
+                if(j+1 <= length(cur_colns)){
+                  a3 <- df[[cur_colns[j+1]]][i-1]
+                }
               }
-              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
-                nxt_seg <- df[[cur_colns[j]]][i+1]
-              }
+              # fill middle row
               if(j-1 >= 1){
-                prev_yr <- df[[cur_colns[j-1]]][i]
+                b1 <- df[[cur_colns[j-1]]][i]
               }
+              a2 <- df[[cur_colns[j]]][i-1]
               if(j+1 <= length(cur_colns)){
-                nxt_yr <- df[[cur_colns[j+1]]][i]
+                b3 <- df[[cur_colns[j+1]]][i]
+              }
+              # fill bottom row
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
+                if(j-1 >= 1){
+                  c1 <- df[[cur_colns[j-1]]][i+1]
+                }
+                c2 <- df[[cur_colns[j]]][i+1]
+                if(j+1 <= length(cur_colns)){
+                  c3 <- df[[cur_colns[j+1]]][i+1]
+                }
               }
               surround <- c(prev_seg, nxt_seg, prev_yr, nxt_yr)
               # take average of previous and next segments aadt (ignore NAs)

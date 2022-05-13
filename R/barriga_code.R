@@ -458,12 +458,13 @@ fill_missing_aadt <- function(df, colns){
               # these variables represent the grid layout with years on the x axis
               # and segments on the y axis
               # [[a1 a2 a3]
-              #  [b1 ?? b3]
+              #  [b1 b2 b3]
               #  [c1 c2 c3]]
               a1 <- NA
               a2 <- NA
               a3 <- NA
               b1 <- NA
+              b2 <- NA
               b3 <- NA
               c1 <- NA
               c2 <- NA
@@ -496,9 +497,26 @@ fill_missing_aadt <- function(df, colns){
                   c3 <- df[[cur_colns[j+1]]][i+1]
                 }
               }
-              surround <- c(prev_seg, nxt_seg, prev_yr, nxt_yr)
-              # take average of previous and next segments aadt (ignore NAs)
-              df[[cur_colns[j]]][i] <- mean(surround, na.rm = TRUE)
+              # estimate b2 using the comprehensive method (best case)
+              r1 <- b1/a1
+              r2 <- b1/c1
+              r3 <- b3/a3
+              r4 <- b3/c3
+              R1 <- mean(c(r1,r3), na.rm = TRUE)
+              R2 <- mean(c(r2,r4), na.rm = TRUE)
+              b2 <- mean(c(a2*R1, c2*R2), na.rm = TRUE)
+              # take average of previous and next segments aadt (worst case)
+              if(is.na(b2) | is.nan(b2)){
+                surround <- c(a2, c2)
+                b2 <- mean(surround, na.rm = TRUE)
+              }
+              # take average of previous and next years (really worst case)
+              if(is.na(b2) | is.nan(b2)){
+                surround <- c(b1, b3)
+                b2 <- mean(surround, na.rm = TRUE)
+              }
+              # assign b2 to the current cell
+              df[[cur_colns[j]]][i] <- b2
             }
           }
         }

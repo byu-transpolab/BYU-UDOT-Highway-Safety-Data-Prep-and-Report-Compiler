@@ -780,6 +780,9 @@ driveway$ROUTE <- paste(substr(driveway$ROUTE, 1, 6), "M", sep = "")
 # Create Point to Reference Driveways
 driveway <- driveway %>% mutate(MP = (BEG_MP+END_MP)/2)
 
+# compress points
+driveway <- driveway %>% unique()
+
 #filter out seemingly duplicated driveways for observation
 drv_disc <- driveway %>%
   group_by(ROUTE, BEG_MP) %>%

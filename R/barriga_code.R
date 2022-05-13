@@ -553,12 +553,6 @@ fc <- compress_seg(fc)
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes)
 
-<<<<<<< HEAD
-# fctest1 <- fix_endpoints(fc, routes)
-# fctest2 <- fix_endpoints(fc, routes2)
-
-=======
->>>>>>> main
 ####
 ## AADT Data Prep
 ####
@@ -588,12 +582,9 @@ aadt <- aadt_neg(aadt, routes, div_routes)
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
 
-<<<<<<< HEAD
-=======
 # fill in missing data
 aadt <- fill_missing_aadt(aadt, aadt.columns)
 
->>>>>>> main
 ###
 ## Speed Limits Data Prep
 ###
@@ -800,6 +791,7 @@ drv_disc <- driveway %>%
 #  sdtm2: Functional Class
 #  sdtm3: UDOT Speed Limits (2019)
 #  sdtm4: Lanes
+#  sdtm4: Urban Code
 
 sdtms <- list(aadt, fc, speed, lane, urban)
 sdtms <- lapply(sdtms, as_tibble)
@@ -918,8 +910,6 @@ RC <- c(list(shell), joined_populated) %>%
 
 RC <- compress_seg_alt(RC)
 
-# Pivot AADT
-RC <- pivot_aadt(RC)
 
 ###
 ## Adding Other Data
@@ -996,10 +986,12 @@ for (i in 1:nrow(RC)){
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
 
+# Pivot AADT
+RC <- pivot_aadt(RC)
+
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")
 write.csv(RC, file = output)
-<<<<<<< HEAD
 
 # # Potential code to replace the shell method
 # 
@@ -1058,5 +1050,3 @@ write.csv(RC, file = output)
 #   unique()
 # # report the number of combined rows
 # print(paste("combined", count, "rows"))
-=======
->>>>>>> main

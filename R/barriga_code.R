@@ -61,17 +61,11 @@ lane.columns <- c("ROUTE",
                   "THRU_CNT",
                   "THRU_WDTH")
 
-# small <- read_sf("data/shapefile/Urban_Boundaries_Small.shp")
-# small.filepath <- "data/shapefile/Urban_Boundaries_Small.shp"
-# small.columns <- c("NAME",                         
-#                    "TYPE_",
-#                    "geometry")
-
-# large <- read_sf("data/shapefile/Urban_Boundaries_Large.shp")
-# large.filepath <- "data/shapefile/Urban_Boundaries_Large.shp"
-# large.columns <- c("NAME",                         
-#                    "TYPE_",
-#                    "geometry")
+urban.filepath <- "data/csv/Urban_Code.csv"
+urban.columns <- c("ROUTE_ID",
+                   "FROM_MEASURE",
+                   "TO_MEASURE",
+                   "URBAN_CODE")
 
 intersection <- read.csv("data/csv/Intersections.csv")
 
@@ -650,6 +644,36 @@ lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
 
+###
+## Urban Code Data Prep
+###
+
+# Read in lane file
+urban <- read_filez_csv(urban.filepath, urban.columns)
+
+# Standardize Column Names
+names(urban)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+# Select only Main Routes
+urban <- urban %>% filter(grepl("M", ROUTE))
+
+# Round milepoints to 6 decimal places
+urban <- urban %>% 
+  mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
+
+# Get Only Main Routes
+urban <- urban %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+  filter(BEG_MP < END_MP)
+
+# Find Number of Unique Routes in urban code file
+num.urban.routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
+
+# Compress urban code
+urban <- compress_seg(urban)     # note: the alt function is much slower for lanes
+
+# fix ending endpoints
+urban <- fix_endpoints(urban, routes)
+
 # ###
 # ## Intersection Data Prep
 # ###
@@ -702,10 +726,6 @@ shoulder <- shoulder %>%
   mutate(MP = (BEG_MP+END_MP)/2) %>% 
   mutate(Length = (END_MP-BEG_MP))
 
-# fix ending endpoints
-routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
-shoulder <- fix_endpoints(shoulder, routes2)
-
 # filter out seemingly duplicated shoulders for observation
 shd_disc <- shoulder %>%
   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
@@ -744,10 +764,6 @@ median <- median %>%
   mutate(MP = (BEG_MP+END_MP)/2) %>% 
   mutate(Length = (END_MP-BEG_MP))
 
-# fix ending endpoints
-routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
-median <- fix_endpoints(median, routes2)
-
 ###
 ## Driveway Data Prep
 ###
@@ -763,10 +779,6 @@ driveway$ROUTE <- paste(substr(driveway$ROUTE, 1, 6), "M", sep = "")
 
 # Create Point to Reference Driveways
 driveway <- driveway %>% mutate(MP = (BEG_MP+END_MP)/2)
-
-# fix ending endpoints
-routes2 <- routes %>% mutate(ROUTE = sub("M","",ROUTE))
-driveway <- fix_endpoints(driveway, routes2)
 
 #filter out seemingly duplicated driveways for observation
 drv_disc <- driveway %>%
@@ -786,7 +798,7 @@ drv_disc <- driveway %>%
 #  sdtm3: UDOT Speed Limits (2019)
 #  sdtm4: Lanes
 
-sdtms <- list(aadt, fc, speed, lane)
+sdtms <- list(aadt, fc, speed, lane, urban)
 sdtms <- lapply(sdtms, as_tibble)
 
 ####################### Generating time x distance merge shell #########################

@@ -67,7 +67,24 @@ urban.columns <- c("ROUTE_ID",
                    "TO_MEASURE",
                    "URBAN_CODE")
 
-intersection <- read.csv("data/csv/Intersections.csv")
+intersection.filepath <- "data/csv/Intersections.csv"
+intersection.columns <- c("ROUTE",
+                          "START_ACCUM",
+                          "END_ACCUM",
+                          "ID",
+                          "INT_TYPE",
+                          "TRAFFIC_CO",
+                          "SR_SR",
+                          "INT_RT_1",
+                          "INT_RT_2",
+                          "INT_RT_3",
+                          "INT_RT_4",
+                          "STATION",
+                          "REGION",
+                          "BEG_LONG",
+                          "BEG_LAT",
+                          "BEG_ELEV")
+
 
 driveway.filepath <- "data/csv/Driveway.csv"
 driveway.columns <- c("ROUTE",
@@ -978,10 +995,11 @@ for (i in 1:nrow(RC)){
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
   med_row <- which(median$ROUTE == RCroute & 
-                     median$MP > RCbeg  & 
-                     median$MP < RCend)
+                   median$MP > RCbeg  & 
+                   median$MP < RCend)
+  med_type <- max(median[["MEDIAN_TYP"]][med_row])
   RC[["Median_Freq"]][i] <- length(med_row)
-  RC[["Median_Type"]][i] <- if_else(RC[["med_f"]][i] > 0, "TRUE" ,"NA")
+  RC[["Median_Type"]][i] <- if_else(RC[["Median_Freq"]][i] == 0,"NA", med_type)
 }
 
 # Add Shoulders

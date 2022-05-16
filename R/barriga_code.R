@@ -725,29 +725,31 @@ urban <- compress_seg(urban)
 # fix ending endpoints
 urban <- fix_endpoints(urban, routes)
 
-# ###
-# ## Intersection Data Prep
-# ###
-#
-# # Read in intersection file
-# intersection <- read_filez(intersection.filepath, intersection.columns)
-# 
-# #Finding all intersections with at least one state route
-# intersection <- intersection %>%
-#   filter(INT_RT_1 %in% substr(main.routes,1,4) |
-#            INT_RT_2 %in% substr(main.routes,1,4) | INT_RT_3 %in% substr(main.routes,1,4) |
-#            INT_RT_4 %in% substr(main.routes,1,4))
-# #Intersections are labeled at a point, not a segment
-# 
-# #Adding direction onto route variable, taking route direction out of its own column
-# intersection$ROUTE <- paste(substr(intersection$ROUTE,1,4), intersection$TRAVEL_DIR, sep = "")
-# intersection <- intersection %>% select(-TRAVEL_DIR)
-# 
-# #WTHeck
-# #intersection %>%
-# #  group_by(ROUTE, BEG_MP) %>%
-# #  summarize(should_be_one = n()) %>%
-# #  filter(should_be_one > 1)
+###
+## Intersection Data Prep
+###
+
+# Read in intersection file
+intersection <- read_filez_csv(intersection.filepath, intersection.columns)
+
+# Standardize Column Names
+names(intersection)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+
+# Add M to Route Column to Standardize Route Format
+intersection$ROUTE <- paste(substr(intersection$ROUTE, 1, 5), "M", sep = "")
+
+# Getting only state routes
+intersection <- intersection %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+
+# Find Number of Unique Routes in shoulder file
+num.intersection.routes <- intersection %>% pull(ROUTE) %>% unique() %>% length()
+
+#Finding all intersections with at least one state route
+intersection <- intersection %>%
+  filter(INT_RT_1 %in% substr(main.routes,1,4) |
+           INT_RT_2 %in% substr(main.routes,1,4) | INT_RT_3 %in% substr(main.routes,1,4) |
+           INT_RT_4 %in% substr(main.routes,1,4))
+#Intersections are labeled at a point, not a segment
 
 ###
 ## Shoulder Data Prep

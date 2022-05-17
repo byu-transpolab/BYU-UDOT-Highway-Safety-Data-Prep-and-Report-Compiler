@@ -556,6 +556,92 @@ fill_missing_aadt <- function(df, colns){
   return(df)
 }
 
+# Get all measurements where a road segment stops or starts
+segment_breaks <- function(sdtm) {
+  breaks_df <- sdtm %>% 
+    group_by(ROUTE) %>% 
+    summarize(startpoints = unique(c(BEG_MP, END_MP))) %>% 
+    arrange(startpoints)
+  return(breaks_df)
+}
+
+# This function is robust to data missing for segments of road presumed to exist (such as within
+# the bounds of other declared road segments) where there is no data.
+# This mostly seems to happen when a road changes hands (state road to interstate, or state to
+# city road, or something like that).
+shell_creator <- function(sdtms) {
+  # This part might have to be adapted to exclude intersections.
+  all_breaks <- bind_rows(lapply(sdtms, segment_breaks)) %>% 
+    group_by(ROUTE) %>% 
+    summarize(startpoints = unique(startpoints)) %>% 
+    arrange(ROUTE, startpoints)
+  
+  endpoints <- c(all_breaks$startpoints[-1],
+                 all_breaks$startpoints[length(all_breaks$startpoints)])
+  
+  all_segments <- bind_cols(all_breaks, endpoints = endpoints) %>% 
+    group_by(ROUTE) %>% 
+    mutate(lastrecord = (startpoints == max(startpoints))) # %>%    # This isn't actually getting used
+  #  filter(!lastrecord) %>% 
+  #  select(-lastrecord)
+  # NOTE: Function produces, then discards one record per ROUTE whose starting and
+  # ending point are both the biggest ending END_ACCUM value observed for that ROUTE.
+  # This record could be useful depending on how certain characteristics are cataloged,
+  # but it is removed here. If you want to un-remove it, just take out the last two
+  # filter and select statements (and the pipe above them).
+  
+  shell <- all_segments %>% 
+    group_by(ROUTE) %>% 
+    select(ROUTE, startpoints, endpoints) %>%
+    filter(endpoints != 0) %>%
+    arrange(ROUTE, startpoints)
+  
+  return(shell)
+}
+
+# This segment of the program is essentially reconstructing a SAS DATA step with a RETAIN
+# statement to populate through rows.
+
+# We start by left joining the shell to each sdtm dataset and populating through all the
+# records whose union is the space interval we have data on. We then get rid
+# of the original START_ACCUM, END_ACCUM variables, since
+# startpoints, endpoints have all the information we need.
+
+shell_join <- function(sdtm) {
+  joinable_sdtm <- sdtm %>% 
+    mutate(startpoints = BEG_MP)
+  with_shell <- left_join(shell, joinable_sdtm, by = c("ROUTE", "startpoints")) %>% 
+    select(ROUTE, startpoints, endpoints,
+           BEG_MP, END_MP, everything()) %>% 
+    arrange(ROUTE, startpoints)
+  
+  # pdv contains everyting besides ROUTE, startpoints, endpoints
+  # The idea is to reset the pdv everytime we get a new sdtm record, and then copy the 
+  # pdv into every row where the window referred to is completely contained in the
+  # START_ACCUM to END_ACCUM window 
+  pdv <- with_shell[1, 4:ncol(with_shell)]
+  for (i in 1:nrow(with_shell)) {
+    if (!is.na(with_shell$BEG_MP[i]) &
+        with_shell$BEG_MP[i] == with_shell$startpoints[i]){
+      pdv <- with_shell[i, 4:ncol(with_shell)]
+    }
+    
+    if (!is.na(pdv$BEG_MP) & !is.na(pdv$END_MP) &
+        pdv$BEG_MP <= with_shell$startpoints[i] &
+        with_shell$endpoints[i] <= pdv$END_MP) {
+      with_shell[i, 4:ncol(with_shell)] <- pdv
+    }
+  }
+  
+  with_shell <- with_shell %>% 
+    select(-BEG_MP, -END_MP,
+           # This part is done to avoid merge issues when everything gets
+           # joined later
+           -endpoints)
+  
+  return(with_shell)
+}
+
 ###
 ## Routes Data Prep
 ###
@@ -858,97 +944,9 @@ drv_disc <- driveway %>%
 sdtms <- list(aadt, fc, speed, lane, urban)
 sdtms <- lapply(sdtms, as_tibble)
 
-####################### Generating time x distance merge shell #########################
-# Intersection data has to be handled separately. But talk to the PhDs about how
-# intersection lookup is supposed to happen anyway.
-
-# Get all measurements where a road segment stops or starts
-segment_breaks <- function(sdtm) {
-  breaks_df <- sdtm %>% 
-    group_by(ROUTE) %>% 
-    summarize(startpoints = unique(c(BEG_MP, END_MP))) %>% 
-    arrange(startpoints)
-  return(breaks_df)
-}
-
-# This function is robust to data missing for segments of road presumed to exist (such as within
-# the bounds of other declared road segments) where there is no data.
-# This mostly seems to happen when a road changes hands (state road to interstate, or state to
-# city road, or something like that).
-shell_creator <- function(sdtms) {
-  # This part might have to be adapted to exclude intersections.
-  all_breaks <- bind_rows(lapply(sdtms, segment_breaks)) %>% 
-    group_by(ROUTE) %>% 
-    summarize(startpoints = unique(startpoints)) %>% 
-    arrange(ROUTE, startpoints)
-  
-  endpoints <- c(all_breaks$startpoints[-1],
-                 all_breaks$startpoints[length(all_breaks$startpoints)])
-  
-  all_segments <- bind_cols(all_breaks, endpoints = endpoints) %>% 
-    group_by(ROUTE) %>% 
-    mutate(lastrecord = (startpoints == max(startpoints))) # %>%    # This isn't actually getting used
-  #  filter(!lastrecord) %>% 
-  #  select(-lastrecord)
-  # NOTE: Function produces, then discards one record per ROUTE whose starting and
-  # ending point are both the biggest ending END_ACCUM value observed for that ROUTE.
-  # This record could be useful depending on how certain characteristics are cataloged,
-  # but it is removed here. If you want to un-remove it, just take out the last two
-  # filter and select statements (and the pipe above them).
-  
-  shell <- all_segments %>% 
-    group_by(ROUTE) %>% 
-    select(ROUTE, startpoints, endpoints) %>%
-    filter(endpoints != 0) %>%
-    arrange(ROUTE, startpoints)
-  
-  return(shell)
-}
+####################### Generating merge shell #########################
 
 shell <- shell_creator(sdtms)
-
-# This segment of the program is essentially reconstructing a SAS DATA step with a RETAIN
-# statement to populate through rows.
-
-# We start by left joining the shell to each sdtm dataset and populating through all the
-# records whose union is the space interval we have data on. We then get rid
-# of the original START_ACCUM, END_ACCUM variables, since
-# startpoints, endpoints have all the information we need.
-
-shell_join <- function(sdtm) {
-  joinable_sdtm <- sdtm %>% 
-    mutate(startpoints = BEG_MP)
-  with_shell <- left_join(shell, joinable_sdtm, by = c("ROUTE", "startpoints")) %>% 
-    select(ROUTE, startpoints, endpoints,
-           BEG_MP, END_MP, everything()) %>% 
-    arrange(ROUTE, startpoints)
-  
-  # pdv contains everyting besides ROUTE, startpoints, endpoints
-  # The idea is to reset the pdv everytime we get a new sdtm record, and then copy the 
-  # pdv into every row where the window referred to is completely contained in the
-  # START_ACCUM to END_ACCUM window 
-  pdv <- with_shell[1, 4:ncol(with_shell)]
-  for (i in 1:nrow(with_shell)) {
-    if (!is.na(with_shell$BEG_MP[i]) &
-        with_shell$BEG_MP[i] == with_shell$startpoints[i]){
-      pdv <- with_shell[i, 4:ncol(with_shell)]
-    }
-    
-    if (!is.na(pdv$BEG_MP) & !is.na(pdv$END_MP) &
-        pdv$BEG_MP <= with_shell$startpoints[i] &
-        with_shell$endpoints[i] <= pdv$END_MP) {
-      with_shell[i, 4:ncol(with_shell)] <- pdv
-    }
-  }
-  
-  with_shell <- with_shell %>% 
-    select(-BEG_MP, -END_MP,
-           # This part is done to avoid merge issues when everything gets
-           # joined later
-           -endpoints)
-  
-  return(with_shell)
-}
 
 joined_populated <- lapply(sdtms, shell_join)
 
@@ -971,7 +969,6 @@ RC <- c(list(shell), joined_populated) %>%
 # Compressing by combining rows identical except for identifying information 
 
 RC <- compress_seg_alt(RC)
-
 
 ###
 ## Adding Other Data
@@ -1073,6 +1070,9 @@ end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Time taken for code to run:", time.taken))
 
+# Pivot AADT
+RC <- pivot_aadt(RC)
+
 # Add Crashes
 RC$TotalCrashes <- 0
 for (i in 1:nrow(RC)){
@@ -1086,9 +1086,6 @@ for (i in 1:nrow(RC)){
                      crash$crash_year == RCyear)
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
-
-# Pivot AADT
-RC <- pivot_aadt(RC)
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H.%M"),".csv")

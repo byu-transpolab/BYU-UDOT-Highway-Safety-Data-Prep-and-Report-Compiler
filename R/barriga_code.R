@@ -888,7 +888,7 @@ median <- median %>% filter(nchar(ROUTE) == 5)
 # Add M to Route Column to Standardize Route Format
 median$ROUTE <- paste(substr(median$ROUTE, 1, 6), "M", sep = "")
 
-#Getting only state routes
+# Getting only state routes
 median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 

@@ -308,3 +308,99 @@ shoulders <- read_sf("data/shapefile/Shoulders.shp") %>%
   st_transform(crs = 26912) %>%
   select() %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+
+
+
+###############################################
+# Fix Spatial Gaps ############################
+###############################################
+
+# Use fc file to build a gaps dataset
+gaps <- read_filez_csv(fc.filepath, fc.columns)
+names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+gaps <- gaps %>% filter(grepl("M", ROUTE))
+gaps <- gaps %>% filter(grepl("State", RouteType))
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_MP, END_MP) %>% 
+  arrange(ROUTE, BEG_MP)
+
+gaps$BEG_GAP <- 0
+gaps$END_GAP <- 0
+for(i in 1:(nrow(gaps)-1)){
+  if(gaps$ROUTE[i] == gaps$ROUTE[i+1] & gaps$END_MP[i] < gaps$BEG_MP[i+1]){
+    gaps$BEG_GAP[i] <- gaps$END_MP[i]
+    gaps$END_GAP[i] <- gaps$BEG_MP[i+1]
+  }
+}
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_GAP, END_GAP) %>%
+  filter(BEG_GAP != 0)
+
+# Delete segments which fall within gaps
+RC <- RC %>% mutate(MID_MP = BEG_MP + (END_MP - BEG_MP) / 2)
+
+RC$flag <- 0
+for(i in 1:nrow(RC)){
+  for(j in 1:nrow(gaps)){
+    if(RC$MID_MP[i] > gaps$BEG_GAP[j] & 
+       RC$MID_MP[i] < gaps$END_GAP[j] &
+       RC$BEG_MP[i] >= gaps$BEG_GAP[j] &
+       RC$END_MP[i] <= gaps$END_GAP[j] &
+       RC$ROUTE[i] == gaps$ROUTE[j]){
+      RC$flag[i] <- 1
+    }
+  }
+}
+
+RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
+
+# Load exploded CAMS file created in ArcGIS
+r_exp.filepath <- "data/shapefile/CAMS_exploded.shp"
+r_exp.columns <- c("ROUTE",
+                    "BEG_MILEAG",
+                    "END_MILEAG",
+                    "Match_ID",
+                    "Shape_Le_1")
+r_exp <- read_filez_shp(r_exp.filepath, r_exp.columns)
+names(r_exp)[c(1:5)] <- c("ROUTE", "BEG_MP", "END_MP", "MATCH_ID", "LENGTH")
+r_exp <- r_exp %>% 
+  mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
+
+# Convert length to miles
+r_exp$LENGTH <- r_exp$LENGTH / 1609.344
+
+# Correct Beg and End milepoints
+rt <- ""
+for(i in 1:nrow(r_exp)){
+  if(r_exp$ROUTE[i] == rt){
+    gap_num <- gap_num + 1
+    gap <- 0
+    gap_chk <- 0
+    for(j in 1:nrow(gaps)){
+      if(r_exp$ROUTE[i] == gaps$ROUTE[j]){
+        gap_chk <- gap_chk + 1
+        if(gap_num == gap_chk){
+          gap <- gaps$END_GAP[j] - gaps$BEG_GAP[j]
+          break
+        }
+      }
+    }
+    r_exp$END_MP[i-1] <- r_exp$BEG_MP[i-1] + r_exp$LENGTH[i-1]
+    r_exp$BEG_MP[i] <- r_exp$BEG_MP[i-1] + r_exp$LENGTH[i-1] + gap
+    r_exp$END_MP[i] <- r_exp$BEG_MP[i] + r_exp$LENGTH[i]
+  } else{
+    gap_num <- 0
+  }
+  rt <- r_exp$ROUTE[i]
+}
+
+# Write to shapfile for analysis in ArcGIS
+st_write(r_exp,"data/shapefile/routes_exploded.shp")
+
+# Read in spatially segmented shapefile from ArcGIS
+seg_spatial <- read_sf("data/shapefile/CAMS_spatial.shp")
+
+# Once we are certain of segment IDs we can right join this spatial data into 
+# the segments file then we can do a buffer and spatial join with the crashes

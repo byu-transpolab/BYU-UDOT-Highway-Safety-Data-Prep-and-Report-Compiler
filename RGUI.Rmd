@@ -106,19 +106,22 @@ rm("aadt","functional_class","intersections","lanes","pavement_messages","speed_
 ```{r Temporary Load Excel GUI Data}
 # The code before this should hopefully get us to this point. In the meanwhile,
 # we can just use the file created by the Excel GUI and modify it as needed.
-CAMS_no_spatial <- read_csv("data/CAMSinput.csv")
-ISAM <- read_csv("data/UICPMinput.csv")
+# CAMS_no_spatial <- read_csv("data/CAMSinput.csv")
+# ISAM <- read_csv("data/UICPMinput.csv")
+test <- RC
+RC <- test
 
 # CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
 # load sf data
-sf <- read_sf("data/UDOT_Routes_(ALRS)/UDOT_Routes_(ALRS).shp") %>%
+sf <- read_sf("data/shapefile/UDOT_Routes_(ALRS).shp") %>%
   select(ROUTE_ALIA, BEG_MILEAG, END_MILEAG, SHAPE_Leng)
+sf$ROUTE_ALIA <- paste(substr(sf$ROUTE_ALIA, 1, 6), "M", sep = "")
 # append spatial data
-CAMS <- right_join(sf, CAMS_no_spatial, by = c("ROUTE_ALIA"="LABEL"), keep = TRUE) %>%
+CAMS <- right_join(sf, RC, by = c("ROUTE_ALIA"="ROUTE"), keep = TRUE) %>%
   select(-ROUTE_ALIA) %>%
   st_transform(crs = 26912) #convert to UTM Zone 12 Projection
 # remove intermediate data
-rm(CAMS_no_spatial,sf)
+# rm(CAMS_no_spatial,sf)
 # segment the routes based on segment milepoints
 #CAMS_lineref <- ogrlineref(
 #  l = CAMS$geometry,
@@ -128,13 +131,22 @@ rm(CAMS_no_spatial,sf)
 
 # write CAMS data to shapefile
 CAMS_write <- CAMS %>%
-  select(LABEL, SEG_ID, BEG_MILEPOINT, END_MILEPOINT, BEG_MILEAG, END_MILEAG, Seg_Length, SHAPE_Leng) %>%
-  group_by(LABEL) %>%
-  mutate(BEG_MILEPOINT = case_when(
-           BEG_MILEPOINT == 0 ~ BEG_MILEAG,
-           BEG_MILEPOINT != 0 ~ BEG_MILEPOINT
+  select(ROUTE, BEG_MP, END_MP, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
+  group_by(ROUTE) %>%
+  mutate(BEG_MP = case_when(
+           BEG_MP == min(BEG_MP) ~ BEG_MILEAG,
+           BEG_MP != min(BEG_MP) ~ BEG_MP
            ),
-         Seg_Length = END_MILEPOINT - BEG_MILEPOINT
+         Seg_Length = END_MP - BEG_MP
+         ) %>%
+  filter(Seg_Length > 0) %>%
+  mutate(BEG_MP = case_when(
+           BEG_MP == min(BEG_MP) ~ BEG_MILEAG,
+           BEG_MP != min(BEG_MP) ~ BEG_MP
+           ),
+         BEG_MP = min(BEG_MP) + (BEG_MP-min(BEG_MP)) * (END_MILEAG - BEG_MILEAG)/(max(END_MP) - min(BEG_MP)),
+         END_MP = min(BEG_MP) + (END_MP-min(BEG_MP)) * (END_MILEAG - BEG_MILEAG)/(max(END_MP) - min(BEG_MP)),
+         Seg_Length = END_MP - BEG_MP
          ) %>%
   #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
    #      BEG_MILEPOINT = BEG_MILEPOINT - BEG_MILEAG,
@@ -142,10 +154,11 @@ CAMS_write <- CAMS %>%
      #    BEG_MILEAG = 0
       #   ) %>%
   unique()
+CAMS_write <- CAMS_write %>% rowid_to_column("SEG_ID")
 st_write(CAMS_write,"data/shapefile/CAMS.shp")
 
 CAMS_write <- CAMS %>%
-  select(LABEL, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
+  select(ROUTE, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
   #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
    #      BEG_MILEAG = 0
     #     ) %>%

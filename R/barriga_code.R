@@ -1058,10 +1058,10 @@ for (i in 1:nrow(RC)){
   
   RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
   RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
-  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", max(shoulder[["SHLDR_WDTH"]][r_sho_row]))
-  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", min(shoulder[["SHLDR_WDTH"]][r_sho_row]))
-  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, "NA", max(shoulder[["SHLDR_WDTH"]][l_sho_row]))
-  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, "NA", min(shoulder[["SHLDR_WDTH"]][l_sho_row]))
+  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][l_sho_row])))
+  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][l_sho_row])))
   # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
   # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }

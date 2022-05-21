@@ -1077,7 +1077,7 @@ RC <- pivot_aadt(RC)
 RC$TotalCrashes <- 0
 for (i in 1:nrow(RC)){
   RCroute <- RC[["ROUTE"]][i]
-  RCbeg <- RC[["BEG_MP"]][i]====
+  RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
   RCyear <- RC[["YEAR"]][i]
   crash_row <- which(crash$route == RCroute & 
@@ -1088,8 +1088,16 @@ for (i in 1:nrow(RC)){
 }
 
 # Unlist AADT for output
-cbind(RC[!sapply(RC, is.list)], (t(apply(RC[sapply(RC, is.list)], 1, unlist))))
-RC$AADT <- unlist(RC$AADT)
+for (i in 1:nrow(RC)){
+  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
+    RC$AADT[i] <- unlist(RC$AADT[i])[1]
+    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
+    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
+  }
+}
+RC$AADT <- as.numeric(RC$AADT)
+RC$SUTRK <- as.numeric(RC$SUTRK)
+RC$CUTRK <- as.numeric(RC$CUTRK)
 
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
@@ -1152,17 +1160,3 @@ write_csv(RC, file = output)
 #   unique()
 # # report the number of combined rows
 # print(paste("combined", count, "rows"))
-
-
-
-
-for (i in 1:nrow(RC)){
-  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
-    RC$AADT[i] <- unlist(RC$AADT[i])[1]
-    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
-    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
-  }
-}
-RC$AADT <- as.numeric(RC$AADT)
-RC$SUTRK <- as.numeric(RC$SUTRK)
-RC$CUTRK <- as.numeric(RC$CUTRK)

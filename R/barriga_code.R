@@ -1058,10 +1058,10 @@ for (i in 1:nrow(RC)){
   
   RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
   RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
-  RC[["Right_Shoulder_Max"]][i] <- max(shoulder[["SHLDR_WDTH"]][r_sho_row])
-  RC[["Right_Shoulder_Min"]][i] <- min(shoulder[["SHLDR_WDTH"]][r_sho_row])
-  RC[["Left_Shoulder_Max"]][i] <- max(shoulder[["SHLDR_WDTH"]][l_sho_row])
-  RC[["Left_Shoulder_Min"]][i] <- min(shoulder[["SHLDR_WDTH"]][l_sho_row])
+  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", max(shoulder[["SHLDR_WDTH"]][r_sho_row]))
+  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", min(shoulder[["SHLDR_WDTH"]][r_sho_row]))
+  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, "NA", max(shoulder[["SHLDR_WDTH"]][l_sho_row]))
+  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, "NA", min(shoulder[["SHLDR_WDTH"]][l_sho_row]))
   # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
   # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }
@@ -1072,6 +1072,18 @@ print(paste("Time taken for code to run:", time.taken))
 
 # Pivot AADT
 RC <- pivot_aadt(RC)
+
+# Unlist AADT for output
+for (i in 1:nrow(RC)){
+  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
+    RC$AADT[i] <- unlist(RC$AADT[i])[1]
+    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
+    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
+  }
+}
+RC$AADT <- as.numeric(RC$AADT)
+RC$SUTRK <- as.numeric(RC$SUTRK)
+RC$CUTRK <- as.numeric(RC$CUTRK)
 
 # Add Crashes
 RC$TotalCrashes <- 0
@@ -1086,19 +1098,6 @@ for (i in 1:nrow(RC)){
                      crash$crash_year == RCyear)
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
-
-# Unlist AADT for output
-for (i in 1:nrow(RC)){
-  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
-    RC$AADT[i] <- unlist(RC$AADT[i])[1]
-    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
-    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
-  }
-}
-RC$AADT <- as.numeric(RC$AADT)
-RC$SUTRK <- as.numeric(RC$SUTRK)
-RC$CUTRK <- as.numeric(RC$CUTRK)
-
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(RC, file = output)

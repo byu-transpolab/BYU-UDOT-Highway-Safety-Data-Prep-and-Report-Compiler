@@ -1008,8 +1008,8 @@ RC$Right_Shoulder_Max <- 0
 RC$Right_Shoulder_Min <- 0
 RC$Left_Shoulder_Max <- 0
 RC$Left_Shoulder_Min <- 0
-RC$Right_Shoulder_Avg <- 0
-RC$Left_Shoulder_Avg <- 0
+# RC$Right_Shoulder_Avg <- 0
+# RC$Left_Shoulder_Avg <- 0
 # shoulder <- shoulder %>% arrange(ROUTE, MP)
 # RC <- RC %>% arrange(ROUTE, BEG_MP, END_MP)
 # row <- 1
@@ -1098,6 +1098,20 @@ for (i in 1:nrow(RC)){
                      crash$crash_year == RCyear)
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
+
+# Test Add Crashes
+# RC$TotalCrashes <- 0
+# for (i in 1:nrow(RC)){
+#   RCroute <- RC[["ROUTE"]][i]
+#   RCbeg <- RC[["BEG_MP"]][i]
+#   RCend <- RC[["END_MP"]][i]
+#   RCyear <- RC[["YEAR"]][i]
+#   crash_row <- which(crash$route == RCroute & 
+#                        crash$milepoint > RCbeg & 
+#                        crash$milepoint < RCend &
+#                        crash$crash_year == RCyear)
+#   RC[["TotalCrashes"]][i] <- length(crash_row)
+# }
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(RC, file = output)

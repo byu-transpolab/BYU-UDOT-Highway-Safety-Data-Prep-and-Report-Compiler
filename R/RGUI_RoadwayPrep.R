@@ -1,93 +1,129 @@
-# The following is the functions that prepare the roadway data to be joined
+###
+## Load in Libraries
+###
 
-# Keeps the following columns from the aadt file
-check_aadt <- function(df){
-  df %>%
-    select(route_id = rt_num, 
-           beg_milepoint = start_accu,
-           end_milepoint = end_accum, 
-           station = station, 
-           starts_with('aadt'),
-           #aadt2020, aadt2019, aadt2018, aadt2017, aadt2016,
-           starts_with('sutrk'),
-           starts_with('cutrk')
-           #sutrk2020, cutrk2020, sutrk2019, cutrk2019, sutrk2018, cutrk2018, sutrk2017, cutrk2017, sutrk2016, cutrk2016
-           )
-}
+library(tidyverse)
+library(dplyr)
 
-# Keeps the following columns from the functional class file
-<<<<<<< Updated upstream
-check_functionalclass <- function(df){
-  df %>%
-    select(from_measure, 
-           to_measure, 
-           functional_class, 
-           )
-=======
-check_functionalclass <- function(table){
-  table %>%
-    select(from_measure, to_measure, functional_class)
->>>>>>> Stashed changes
-}
+###
+## Set Filepath and Column Names for each Dataset
+###
 
-# Keeps the following columns from the intersections file
-check_intersections <- function(df){
-  df %>%
-    select(orig_int_id = ID,
-           lat = BEG_LAT,
-           long = BEG_LONG,
-           elevation = BEG_ELEV,
-           traffic_ctrl = TRAFFIC_CO,
-           sr_sr = SR_SR,
-           route = ROUTE,
-           int_rt_1 = INT_RT_1,
-           int_rt_2 = INT_RT_2,
-           int_rt_3 = INT_RT_3,
-           int_rt_4 = INT_RT_4,
-           udot_bmp = MANDLI_BMP,
-           int_type = INT_TYPE,
-           station = STATION,
-           region = REGION,
-           #group_num = GROUP_NUM  -can't find this one
-           num_schools = NUM_SCHOOLS,
-           num_uta = NUM_UTA)
-}
+routes_fp <- "data/csv/UDOT_Routes_ALRS.csv"
+routes_col <- c("ROUTE_ID",                          
+                    "BEG_MILEAGE",                             
+                    "END_MILEAGE")
 
-# Keeps the following columns from the lanes file
-check_lanes <- function(df){
-  df %>%
-    select(route = ROUTE,
-           beg_milepoint = START_ACCUM,
-           end_milepoint = END_ACCUM,
-           
-           )
-}
+aadt_fp <- "data/csv/AADT_Unrounded.csv"
+aadt_col <- c("ROUTE_NAME",
+                  "START_ACCU",
+                  "END_ACCUM",
+                  "AADT2020",
+                  "SUTRK2020",
+                  "CUTRK2020",
+                  "AADT2019",
+                  "SUTRK2019",
+                  "CUTRK2019",
+                  "AADT2018",
+                  "SUTRK2018",
+                  "CUTRK2018",
+                  "AADT2017",
+                  "SUTRK2017",
+                  "CUTRK2017",
+                  "AADT2016",
+                  "SUTRK2016",
+                  "CUTRK2016",
+                  "AADT2015",
+                  "SUTRK2015",
+                  "CUTRK2015",
+                  "AADT2014",
+                  "SUTRK2014",
+                  "CUTRK2014")
 
-# Keeps the following columns from the pavement messages file
-check_pavementmessages <- function(df){
-  df %>%
-    select()
-}
+fc_fp <- "data/csv/Functional_Class_ALRS.csv"
+fc_col <- c("ROUTE_ID",                          
+                "FROM_MEASURE",                             
+                "TO_MEASURE",
+                "FUNCTIONAL_CLASS",                             
+                "RouteDir",                             
+                "RouteType")
 
-# Keeps the following columns from the speed limits file
-check_speedlimits <- function(df){
-  df %>%
-    select()
-}
+speed_fp <- "data/csv/UDOT_Speed_Limits_2019.csv"
+speed_col <- c("ROUTE_ID",
+                   "FROM_MEASURE",
+                   "TO_MEASURE",
+                   "SPEED_LIMIT")
+
+lane_fp <- "data/csv/Lanes.csv"
+lane_col <- c("ROUTE",
+                  "START_ACCUM",
+                  "END_ACCUM",
+                  "THRU_CNT",
+                  "THRU_WDTH")
+
+urban_fp <- "data/csv/Urban_Code.csv"
+urban_col <- c("ROUTE_ID",
+                   "FROM_MEASURE",
+                   "TO_MEASURE",
+                   "URBAN_CODE")
+
+intersection_fp <- "data/csv/Intersections.csv"
+intersection_col <- c("ROUTE",
+                          "START_ACCUM",
+                          "END_ACCUM",
+                          "ID",
+                          "INT_TYPE",
+                          "TRAFFIC_CO",
+                          "SR_SR",
+                          "INT_RT_1",
+                          "INT_RT_2",
+                          "INT_RT_3",
+                          "INT_RT_4",
+                          "STATION",
+                          "REGION",
+                          "BEG_LONG",
+                          "BEG_LAT",
+                          "BEG_ELEV")
 
 
-# Modify intersections to include bus stops and schools near intersections
-mod_intersections <- function(intersections,UTA_Stops,schools){
-  intersections <- st_join(intersections, schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID)
-  
-  intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-    select(-UTA_StopID)
-  
-  intersections <- unique(intersections)
-  st_drop_geometry(intersections)
-}
+driveway_fp<- "data/csv/Driveway.csv"
+driveway_col<- c("ROUTE",
+                      "START_ACCUM",
+                      "END_ACCUM",
+                      "DIRECTION",
+                      "TYPE")
+
+median_fp <- "data/csv/Medians.csv"
+median_col <- c("ROUTE_NAME",
+                    "START_ACCUM",
+                    "END_ACCUM",
+                    "MEDIAN_TYP",
+                    "TRFISL_TYP",
+                    "MDN_PRTCTN")
+
+shoulder_fp <-"data/csv/Shoulders.csv"
+shoulder_col <- c("ROUTE",
+                      "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
+                      "END_ACCUM",
+                      "UTPOSITION",
+                      "SHLDR_WDTH")
+
+# ###
+# ## Unused Intersection Code
+# ###
+#
+# # Modify intersections to include bus stops and schools near intersections
+# mod_intersections <- function(intersections,UTA_Stops,schools){
+#   intersections <- st_join(intersections, schools, join = st_within) %>%
+#     group_by(Int_ID) %>%
+#     mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+#     select(-SchoolID)
+#   
+#   intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
+#     group_by(Int_ID) %>%
+#     mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+#     select(-UTA_StopID)
+#   
+#   intersections <- unique(intersections)
+#   st_drop_geometry(intersections)
+# }

@@ -136,13 +136,13 @@ read_csv_file <- function(filepath, columns) {
 }
 
 # Compress Segments Function
-compress_seg <- function(df, col, variables) {
+compress_seg <- function(fc, fc_col, variables) {
   # start timer
   start.time <- Sys.time()
   # sort by route and milepoints (assumes consistent naming convention for these)
-  df <- df %>% 
+  df <- df %>%
     filter(BEG_MP < END_MP) %>%
-    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
     arrange(ROUTE, BEG_MP)
   # get columns to preserve
   if(missing(col)) {
@@ -182,12 +182,12 @@ compress_seg <- function(df, col, variables) {
     df$ID[i] <- iter
   }
   # use summarize to compress segments
-  df <- df %>% 
+  df <- df %>%
     group_by(ID) %>%
     summarise(
       ROUTE = unique(ROUTE),
       BEG_MP = min(BEG_MP),
-      END_MP = max(END_MP), 
+      END_MP = max(END_MP),
       across(.cols = col)
     ) %>%
     unique() %>%
@@ -201,16 +201,16 @@ compress_seg <- function(df, col, variables) {
   print(paste("Time taken for code to run:", time.taken))
   # return df
   return(df)
-} 
+}
 
 # Alternate Compress Segments Function (created by the stats team)
 compress_seg_alt <- function(df) {
   # start timer
   start.time <- Sys.time()
   # sort and filter
-  df <- df %>% 
+  df <- df %>%
     filter(BEG_MP < END_MP) %>%
-    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
     arrange(ROUTE, BEG_MP)
   # Adjust road segment boundaries and flag duplicate rows for deletion.
   df$dropflag <- FALSE
@@ -375,18 +375,18 @@ aadt_neg <- function(aadt, rtes, divd){
 }
 
 # Fix last ending milepoints
-fix_endpoints <- function(df, routes){  
+fix_endpoints <- function(fc, routes){  
   error_count <- 0
   error_count2 <- 0
   error_count3 <- 0
   count <- 0
-  for(i in 1:nrow(df)){
-    end <- df[["END_MP"]][i]
-    nxt <- df[["END_MP"]][i+1]
+  for(i in 1:nrow(fc)){
+    end <- fc[["END_MP"]][i]
+    nxt <- fc[["END_MP"]][i+1]
     # check if the next segment endpoint is less than the current
     if(end > nxt | is.na(nxt)){
-      rt <- df[["ROUTE"]][i]
-      rt2 <- df[["ROUTE"]][i+1]
+      rt <- fc[["ROUTE"]][i]
+      rt2 <- fc[["ROUTE"]][i+1]
       # check if the segments in question are on the same route. If they are, skip the iteration and count error
       if(rt == rt2 & !is.na(rt2)){
         error_count <- error_count + 1
@@ -398,15 +398,15 @@ fix_endpoints <- function(df, routes){
       end_rt <- routes[["END_MP"]][rt_row]
       # if the endpoints are not the same, correct the endpoint
       if(end_rt != end){
-        prev <- df[["END_MP"]][i-1]
-        prev_rt <- df[["ROUTE"]][i-1]
+        prev <- fc[["END_MP"]][i-1]
+        prev_rt <- fc[["ROUTE"]][i-1]
         # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
         if(i == 1){
           # nothing
         } else if(end_rt < prev & rt == prev_rt){
           error_count2 <- error_count2 + 1
           print(paste("segment not on LRS:", rt, "previous endpoint:", round(prev,3), "endpoint:", round(end,3), "route endpoint:", round(end_rt,3)))
-          df[["END_MP"]][i-1]
+          fc[["END_MP"]][i-1]
           next
         }
         # check if the endpoint varies greatly from the LRS
@@ -416,7 +416,7 @@ fix_endpoints <- function(df, routes){
           next
         }
         # assign new endpoint value to the segment
-        df[["END_MP"]][i] <- end_rt
+        fc[["END_MP"]][i] <- end_rt
         count <- count + 1
       }
     }
@@ -433,7 +433,7 @@ fix_endpoints <- function(df, routes){
   if(error_count3 > 0){
     print(paste("WARNING,", error_count3, "route(s) vary from the LRS by 0.5 miles or more."))
   }
-  return(df)
+  return(fc)
 }
 
 # Function to fill in missing aadt and truck data
@@ -689,7 +689,7 @@ fcfilter <- function(fc){
 }
 
 # Compress fc
-fc <- compress_seg(fc)
+# fc <- compress_seg(fc)
 
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes)
@@ -715,7 +715,7 @@ num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 aadt <- aadt_numeric(aadt, aadt_col)
 
 # Compress aadt
-aadt <- compress_seg(aadt)
+# aadt <- compress_seg(aadt)
 
 # fix negative aadt values
 aadt <- aadt_neg(aadt, routes, div_routes)
@@ -744,7 +744,7 @@ speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress speed
-speed <- compress_seg(speed)
+# speed <- compress_seg(speed)
 # speed <- compress_seg_alt(speed)
 
 # fix ending endpoints
@@ -771,7 +771,7 @@ lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress lanes
-lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
+# lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
 
 # fix ending endpoints
 lane <- fix_endpoints(lane, routes)
@@ -801,7 +801,7 @@ urban <- urban %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.urban.routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress urban code
-urban <- compress_seg(urban)     
+# urban <- compress_seg(urban)     
 
 # fix ending endpoints
 urban <- fix_endpoints(urban, routes)
@@ -891,7 +891,7 @@ median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress Medians
-median <- compress_seg(median, variables = c("MEDIAN_TYP", "TRFISL_TYP", "MDN_PRTCTN"))
+# median <- compress_seg(median, variables = c("MEDIAN_TYP", "TRFISL_TYP", "MDN_PRTCTN"))
 
 # Create Point to Reference Driveways
 median <- median %>% 
@@ -963,7 +963,7 @@ RC <- c(list(shell), joined_populated) %>%
 
 # Compressing by combining rows identical except for identifying information 
 
-RC <- compress_seg_alt(RC)
+# RC <- compress_seg_alt(RC)
 
 ###
 ## Adding Other Data

@@ -101,6 +101,7 @@ vehicle <- read_csv_file(vehicle_fp, vehicle_col)
 crash <- left_join(location,rollups,by='crash_id')
 fullcrash <- left_join(crash,vehicle,by='crash_id')
 
+
 crash <- crash %>% filter(is.na(ramp_id))
 
 crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 1)

@@ -101,16 +101,17 @@ vehicle <- read_csv_file(vehicle_fp, vehicle_col)
 crash <- left_join(location,rollups,by='crash_id')
 fullcrash <- left_join(crash,vehicle,by='crash_id')
 
-
-crash <- crash %>% filter(is.na(ramp_id))
-
-crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 1)
-crash$crash_time <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 2)
-crash$crash_year <- sapply(strsplit(as.character(crash$crash_date), "/"), "[", 3)
-
-crash$route <- paste(substr(crash$route, 1, 5), crash$route_direction, sep = "")
-crash$route <- paste(substr(crash$route, 1, 6), "M", sep = "")
-crash$route <- paste0("000", crash$route)
-crash$route <- substr(crash$route, nchar(crash$route)-6+1, nchar(crash$route))
-crash <- crash %>% filter(route %in% substr(main.routes, 1, 6))
-
+crashfilter <- function(crash){
+  # Filter Out all Ramp Crashes
+  crash <- crash %>% filter(is.na(ramp_id))
+  # Split Date Time Column
+  crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 1)
+  crash$crash_time <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 2)
+  crash$crash_year <- sapply(strsplit(as.character(crash$crash_date), "/"), "[", 3)
+  # Format Routes to match other Datasets
+  crash$route <- paste(substr(crash$route, 1, 5), crash$route_direction, sep = "")
+  crash$route <- paste(substr(crash$route, 1, 6), "M", sep = "")
+  crash$route <- paste0("000", crash$route)
+  crash$route <- substr(crash$route, nchar(crash$route)-6+1, nchar(crash$route))
+  crash <- crash %>% filter(route %in% substr(main.routes, 1, 6))
+}

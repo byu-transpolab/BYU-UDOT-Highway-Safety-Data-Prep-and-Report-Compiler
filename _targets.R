@@ -9,5 +9,7 @@ list(
   tar_target(vehicle, read_csv_file(vehicle_fp, vehicle_col)),
   # Combine Crash Files
   tar_target(crash, left_join(location,rollups,by='crash_id')),
-  tar_target(fullcrash,left_join(crash,vehicle,by='crash_id'))
+  tar_target(fullcrash,left_join(crash,vehicle,by='crash_id')),
+  #
+  tar_target(crashdata, crashfilter(crash))
 )

@@ -9,111 +9,111 @@ library(dplyr)
 ## Set Filepath and Column Names for each Dataset
 ###
 
-routes.filepath <- "data/csv/UDOT_Routes_ALRS.csv"
-routes.columns <- c("ROUTE_ID",                          
-                    "BEG_MILEAGE",                             
-                    "END_MILEAGE")
+routes_fp <- "data/csv/UDOT_Routes_ALRS.csv"
+routes_col <- c("ROUTE_ID",                          
+                "BEG_MILEAGE",                             
+                "END_MILEAGE")
 
-aadt.filepath <- "data/csv/AADT_Unrounded.csv"
-aadt.columns <- c("ROUTE_NAME",
-                  "START_ACCU",
-                  "END_ACCUM",
-                  "AADT2020",
-                  "SUTRK2020",
-                  "CUTRK2020",
-                  "AADT2019",
-                  "SUTRK2019",
-                  "CUTRK2019",
-                  "AADT2018",
-                  "SUTRK2018",
-                  "CUTRK2018",
-                  "AADT2017",
-                  "SUTRK2017",
-                  "CUTRK2017",
-                  "AADT2016",
-                  "SUTRK2016",
-                  "CUTRK2016",
-                  "AADT2015",
-                  "SUTRK2015",
-                  "CUTRK2015",
-                  "AADT2014",
-                  "SUTRK2014",
-                  "CUTRK2014")
+aadt_fp <- "data/csv/AADT_Unrounded.csv"
+aadt_col <- c("ROUTE_NAME",
+              "START_ACCU",
+              "END_ACCUM",
+              "AADT2020",
+              "SUTRK2020",
+              "CUTRK2020",
+              "AADT2019",
+              "SUTRK2019",
+              "CUTRK2019",
+              "AADT2018",
+              "SUTRK2018",
+              "CUTRK2018",
+              "AADT2017",
+              "SUTRK2017",
+              "CUTRK2017",
+              "AADT2016",
+              "SUTRK2016",
+              "CUTRK2016",
+              "AADT2015",
+              "SUTRK2015",
+              "CUTRK2015",
+              "AADT2014",
+              "SUTRK2014",
+              "CUTRK2014")
 
-fc.filepath <- "data/csv/Functional_Class_ALRS.csv"
-fc.columns <- c("ROUTE_ID",                          
-                "FROM_MEASURE",                             
-                "TO_MEASURE",
-                "FUNCTIONAL_CLASS",                             
-                "RouteDir",                             
-                "RouteType")
+fc_fp <- "data/csv/Functional_Class_ALRS.csv"
+fc_col <- c("ROUTE_ID",                          
+            "FROM_MEASURE",                             
+            "TO_MEASURE",
+            "FUNCTIONAL_CLASS",                             
+            "RouteDir",                             
+            "RouteType")
 
-speed.filepath <- "data/csv/UDOT_Speed_Limits_2019.csv"
-speed.columns <- c("ROUTE_ID",
-                   "FROM_MEASURE",
-                   "TO_MEASURE",
-                   "SPEED_LIMIT")
+speed_fp <- "data/csv/UDOT_Speed_Limits_2019.csv"
+speed_col <- c("ROUTE_ID",
+               "FROM_MEASURE",
+               "TO_MEASURE",
+               "SPEED_LIMIT")
 
-lane.filepath <- "data/csv/Lanes.csv"
-lane.columns <- c("ROUTE",
-                  "START_ACCUM",
-                  "END_ACCUM",
-                  "THRU_CNT",
-                  "THRU_WDTH")
+lane_fp <- "data/csv/Lanes.csv"
+lane_col <- c("ROUTE",
+              "START_ACCUM",
+              "END_ACCUM",
+              "THRU_CNT",
+              "THRU_WDTH")
 
-urban.filepath <- "data/csv/Urban_Code.csv"
-urban.columns <- c("ROUTE_ID",
-                   "FROM_MEASURE",
-                   "TO_MEASURE",
-                   "URBAN_CODE")
+urban_fp <- "data/csv/Urban_Code.csv"
+urban_col <- c("ROUTE_ID",
+               "FROM_MEASURE",
+               "TO_MEASURE",
+               "URBAN_CODE")
 
-intersection.filepath <- "data/csv/Intersections.csv"
-intersection.columns <- c("ROUTE",
-                          "START_ACCUM",
-                          "END_ACCUM",
-                          "ID",
-                          "INT_TYPE",
-                          "TRAFFIC_CO",
-                          "SR_SR",
-                          "INT_RT_1",
-                          "INT_RT_2",
-                          "INT_RT_3",
-                          "INT_RT_4",
-                          "STATION",
-                          "REGION",
-                          "BEG_LONG",
-                          "BEG_LAT",
-                          "BEG_ELEV")
-
-
-driveway.filepath <- "data/csv/Driveway.csv"
-driveway.columns <- c("ROUTE",
+intersection_fp <- "data/csv/Intersections.csv"
+intersection_col <- c("ROUTE",
                       "START_ACCUM",
                       "END_ACCUM",
-                      "DIRECTION",
-                      "TYPE")
+                      "ID",
+                      "INT_TYPE",
+                      "TRAFFIC_CO",
+                      "SR_SR",
+                      "INT_RT_1",
+                      "INT_RT_2",
+                      "INT_RT_3",
+                      "INT_RT_4",
+                      "STATION",
+                      "REGION",
+                      "BEG_LONG",
+                      "BEG_LAT",
+                      "BEG_ELEV")
 
-median.filepath <- "data/csv/Medians.csv"
-median.columns <- c("ROUTE_NAME",
-                    "START_ACCUM",
-                    "END_ACCUM",
-                    "MEDIAN_TYP",
-                    "TRFISL_TYP",
-                    "MDN_PRTCTN")
 
-shoulder.filepath <-"data/csv/Shoulders.csv"
-shoulder.columns <- c("ROUTE",
-                      "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
-                      "END_ACCUM",
-                      "UTPOSITION",
-                      "SHLDR_WDTH")
+driveway_fp<- "data/csv/Driveway.csv"
+driveway_col<- c("ROUTE",
+                 "START_ACCUM",
+                 "END_ACCUM",
+                 "DIRECTION",
+                 "TYPE")
+
+median_fp <- "data/csv/Medians.csv"
+median_col <- c("ROUTE_NAME",
+                "START_ACCUM",
+                "END_ACCUM",
+                "MEDIAN_TYP",
+                "TRFISL_TYP",
+                "MDN_PRTCTN")
+
+shoulder_fp <-"data/csv/Shoulders.csv"
+shoulder_col <- c("ROUTE",
+                  "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
+                  "END_ACCUM",
+                  "UTPOSITION",
+                  "SHLDR_WDTH")
 
 ###
 ## Functions
 ###
 
 # Read File functions
-read_filez_shp <- function(filepath, columns) {
+read_shape_file <- function(filepath, columns) {
   if (str_detect(filepath, ".shp")) {
     print("reading shapefile")
     read_sf(filepath) %>% select(all_of(columns))
@@ -124,7 +124,7 @@ read_filez_shp <- function(filepath, columns) {
   }
 }
 
-read_filez_csv <- function(filepath, columns) {
+read_csv_file <- function(filepath, columns) {
   if (str_detect(filepath, ".csv")) {
     print("reading csv")
     read_csv(filepath) %>% select(all_of(columns))
@@ -239,10 +239,10 @@ compress_seg_alt <- function(df) {
 }
 
 # Convert AADT to Numeric Function
-aadt_numeric <- function(aadt, aadt.columns){
+aadt_numeric <- function(aadt, aadt_col){
   # coerce aadt to numeric
-  for(i in 1:length(aadt.columns)){
-    string <- substr(aadt.columns[i],1,4)
+  for(i in 1:length(aadt_col)){
+    string <- substr(aadt_col[i],1,4)
     if(string == "AADT" | string == "SUTR" | string == "CUTR"){
       aadt[i] <- as.numeric(unlist(aadt[i]))
     } 
@@ -647,7 +647,7 @@ shell_join <- function(sdtm) {
 ###
 
 # Read in routes File
-routes <- read_filez_csv(routes.filepath, routes.columns)
+routes <- read_csv_file(routes_fp, routes_col)
 
 # Standardize Column Names
 names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -674,7 +674,7 @@ div_routes <- div_routes %>%
 ###
 
 # Read in fc File
-fc <- read_filez_csv(fc.filepath, fc.columns)
+fc <- read_csv_file(fc_fp, fc_col)
 
 # Standardize Column Names
 names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -704,7 +704,7 @@ fc <- fix_endpoints(fc, routes)
 ####
 
 # Read in aadt File
-aadt <- read_filez_csv(aadt.filepath, aadt.columns)
+aadt <- read_csv_file(aadt_fp, aadt_col)
 
 # Standardize Column Names
 names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -717,7 +717,7 @@ aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
 # Convert aadt to numeric
-aadt <- aadt_numeric(aadt, aadt.columns)
+aadt <- aadt_numeric(aadt, aadt_col)
 
 # Compress aadt
 aadt <- compress_seg(aadt)
@@ -729,14 +729,14 @@ aadt <- aadt_neg(aadt, routes, div_routes)
 aadt <- fix_endpoints(aadt, routes)
 
 # fill in missing data
-aadt <- fill_missing_aadt(aadt, aadt.columns)
+aadt <- fill_missing_aadt(aadt, aadt_col)
 
 ###
 ## Speed Limits Data Prep
 ###
 
 # Read in speed File
-speed <- read_filez_csv(speed.filepath, speed.columns)
+speed <- read_csv_file(speed_fp, speed_col)
 
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -760,7 +760,7 @@ speed <- fix_endpoints(speed, routes)
 ###
 
 # Read in lane file
-lane <- read_filez_csv(lane.filepath, lane.columns)
+lane <- read_csv_file(lane_fp, lane_col)
 
 # Standardize Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -786,7 +786,7 @@ lane <- fix_endpoints(lane, routes)
 ###
 
 # Read in urban code file
-urban <- read_filez_csv(urban.filepath, urban.columns)
+urban <- read_csv_file(urban_fp, urban_col)
 
 # Standardize Column Names
 names(urban)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -816,7 +816,7 @@ urban <- fix_endpoints(urban, routes)
 ###
 
 # Read in intersection file
-intersection <- read_filez_csv(intersection.filepath, intersection.columns)
+intersection <- read_csv_file(intersection_fp, intersection_col)
 
 # Standardize Column Names
 names(intersection)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -842,7 +842,7 @@ intersection <- intersection %>%
 ###
 
 # Read in shoulder file
-shoulder <- read_filez_csv(shoulder.filepath, shoulder.columns)
+shoulder <- read_csv_file(shoulder_fp, shoulder_col)
 
 # Standardize Column Names
 names(shoulder)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -877,7 +877,7 @@ shd_disc <- shoulder %>%
 ###
 
 # Read in median file
-median <- read_filez_csv(median.filepath, median.columns)
+median <- read_csv_file(median_fp, median_col)
 
 # Standardize Column Names
 names(median)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -908,7 +908,7 @@ median <- median %>%
 ###
 
 # Read in driveway file
-driveway <- read_filez_csv(driveway.filepath, driveway.columns)
+driveway <- read_csv_file(driveway_fp, driveway_col)
 
 # Standardize Column Names
 names(driveway)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
@@ -1010,43 +1010,10 @@ RC$Left_Shoulder_Max <- 0
 RC$Left_Shoulder_Min <- 0
 # RC$Right_Shoulder_Avg <- 0
 # RC$Left_Shoulder_Avg <- 0
-# shoulder <- shoulder %>% arrange(ROUTE, MP)
-# RC <- RC %>% arrange(ROUTE, BEG_MP, END_MP)
-# row <- 1
 for (i in 1:nrow(RC)){
-  # start timer
-  start.time <- Sys.time()
-  
   RCroute <- RC[["ROUTE"]][i]
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
-  
-  # r_sho_row <- NA
-  # l_sho_row <- NA
-  # r_idx <- 1
-  # l_idx <- 1
-  # repeat{
-  #   if(shoulder[["ROUTE"]][row] == RCroute & 
-  #      shoulder[["MP"]][row] >= RCbeg  & 
-  #      shoulder[["MP"]][row] <= RCend){
-  #     if(shoulder[["UTPOSITION"]][row] == "RIGHT"){
-  #       r_sho_row[r_idx] <- row
-  #       r_idx <- r_idx + 1
-  #     } else if(shoulder[["UTPOSITION"]][row] =="LEFT"){
-  #       l_sho_row[l_idx] <- row
-  #       l_idx <- l_idx + 1
-  #     }
-  #   } else{
-  #     if(shoulder[["MP"]][row] > ){
-  #       row <- row + 1
-  #       print(paste("Route",shoulder[["ROUTE"]][row],"at MP",shoulder[["MP"]][row],"not on RC"))
-  #     }
-  #     break #exit the loop once we are no longer on the segment
-  #   }
-  #   row <- row + 1 #increment row
-  # }
-  # print(paste(row,RCroute,shoulder[["ROUTE"]][row],RCbeg,RCend,shoulder[["MP"]][row]))
-  
   r_sho_row <- which(shoulder$ROUTE == RCroute &
                        shoulder$MP >= RCbeg  &
                        shoulder$MP <= RCend &
@@ -1055,8 +1022,7 @@ for (i in 1:nrow(RC)){
                        shoulder$MP >= RCbeg  &
                        shoulder$MP <= RCend &
                        shoulder$UTPOSITION =="LEFT")
-  
-  RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
+    RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
   RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
   RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
   RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
@@ -1065,10 +1031,6 @@ for (i in 1:nrow(RC)){
   # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
   # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }
-# record time
-end.time <- Sys.time()
-time.taken <- end.time - start.time
-print(paste("Time taken for code to run:", time.taken))
 
 # Pivot AADT
 RC <- pivot_aadt(RC)
@@ -1099,77 +1061,7 @@ for (i in 1:nrow(RC)){
   RC[["TotalCrashes"]][i] <- length(crash_row)
 }
 
-# Test Add Crashes
-# RC$TotalCrashes <- 0
-# for (i in 1:nrow(RC)){
-#   RCroute <- RC[["ROUTE"]][i]
-#   RCbeg <- RC[["BEG_MP"]][i]
-#   RCend <- RC[["END_MP"]][i]
-#   RCyear <- RC[["YEAR"]][i]
-#   crash_row <- which(crash$route == RCroute & 
-#                        crash$milepoint > RCbeg & 
-#                        crash$milepoint < RCend &
-#                        crash$crash_year == RCyear)
-#   RC[["TotalCrashes"]][i] <- length(crash_row)
-# }
 # Write to output
 output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(RC, file = output)
 
-# # Potential code to replace the shell method
-# 
-# # assign variables
-# sdtms <- list(aadt, fc, speed, lane)
-# sdtms <- lapply(sdtms, as_tibble)
-# df <- rbind(fc, lane, aadt, speed)
-# # extract columns from data
-# colns <- colnames(df)
-# colns <- tail(colns, -4)    # remove ID and first 
-# # sort by route and milepoints (assumes consistent naming convention for these)
-# df <- df %>%
-#   arrange(ROUTE, BEG_MP, END_MP) %>%
-#   select(ROUTE, BEG_MP, END_MP)
-# # loop through variables and rows
-# iter <- 0
-# count <- 0
-# route <- -1
-# value <- variables
-# df$ID <- 0
-# # create new variables to replace the old ones
-# 
-# 
-# 
-# for(i in 1:nrow(df)){
-#   new_route <- df$ROUTE[i]
-#   test = 0
-#   for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
-#     varName <- variables[j]
-#     new_value <- df[[varName]][i]
-#     if(is.na(new_value)){              # treat NA as zero to avoid errors
-#       new_value = 0
-#     }
-#     if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
-#       value[j] <- new_value
-#       test = 1
-#     }
-#   }
-#   if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
-#     iter <- iter + 1
-#     route <- new_route
-#   } else {
-#     count = count + 1
-#   }
-#   df$ID[i] <- iter
-# }
-# # use summarize to compress segments
-# df <- df %>% 
-#   group_by(ID) %>%
-#   summarise(
-#     ROUTE = unique(ROUTE),
-#     BEG_MP = min(BEG_MP),
-#     END_MP = max(END_MP), 
-#     across(.cols = col)
-#   ) %>%
-#   unique()
-# # report the number of combined rows
-# print(paste("combined", count, "rows"))

@@ -649,25 +649,24 @@ shell_join <- function(sdtm) {
 # Read in routes File
 routes <- read_csv_file(routes_fp, routes_col)
 
-# Standardize Column Names
-names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-
-# Select only Main Routes
-routes <- routes %>% filter(grepl("M", ROUTE))
-
-# Round milepoints to 6 decimal places
-routes <- routes %>% 
-  mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
-
-# Find Number of Unique Routes in the routes File
-num.routes.routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
-
-# load divided routes data
-div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
-names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-div_routes <- div_routes %>%
-  mutate(LENGTH = END_MP - BEG_MP) %>%
-  arrange(ROUTE, BEG_MP)
+# Filter routes data
+routefilter <- function(routes){
+  # Standardize Column Names
+  names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+  # Select only Main Routes
+  routes <- routes %>% filter(grepl("M", ROUTE))
+  # Round milepoints to 6 decimal places
+  routes <- routes %>% 
+    mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
+  # Find Number of Unique Routes in the routes File
+  num.routes.routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
+  # load divided routes data
+  div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
+  names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+  div_routes <- div_routes %>%
+    mutate(LENGTH = END_MP - BEG_MP) %>%
+    arrange(ROUTE, BEG_MP)
+}
 
 ###
 ## Functional Class Data Prep
@@ -676,25 +675,21 @@ div_routes <- div_routes %>%
 # Read in fc File
 fc <- read_csv_file(fc_fp, fc_col)
 
-# Standardize Column Names
-names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-
-# Select only Main Routes
-fc <- fc %>% filter(grepl("M", ROUTE))
-
-# Select only State Routes
-fc <- fc %>% filter(grepl("State", RouteType))
-
-# Find Number of Unique Routes in the fc File
-num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
-main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
+# Filter fc data
+fcfilter <- function(fc){
+  # Standardize Column Names
+  names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+  # Select only Main Routes
+  fc %>% filter(grepl("M", ROUTE))
+  # Select only State Routes
+  fc %>% filter(grepl("State", RouteType))
+  # Find Number of Unique Routes in the fc File
+  num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
+  main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
+}
 
 # Compress fc
 fc <- compress_seg(fc)
-
-# # Create routes dataframe
-# routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-# routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # fix ending endpoints
 fc <- fix_endpoints(fc, routes)

@@ -421,3 +421,71 @@ st_write(crash_sf,"data/shapefile/crash.shp")
 # there is no way it will work. We have to rely on milepoints. On the bright 
 # side, visualizing this in ArcGIS has allowed us to notice details we would have 
 # otherwise missed, such as the presence of spatial gaps in the routes.
+
+
+
+###############################################
+# Determine intersection related crashes ######
+###############################################
+
+# Create functional area reference table
+FA_ref <- tibble(
+  speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75), 
+  d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275), 
+  d2 = c(70,70,70,70,105,150,225,290,360,440,525,655,755,875,995)
+  ) %>%
+  mutate(
+    d3 = 50,
+    total = d1 + d2 + d3
+  )
+
+# Create fed routes list
+fed <- read_filez_csv(fc.filepath, fc.columns)
+names(fed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+fed <- fed %>% filter(grepl("M", ROUTE))
+fed <- fed %>% filter(grepl("Fed Aid", RouteType))
+
+fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
+
+# Filter intersections
+test <- intersection
+intersection <- test
+
+intersection <- intersection %>%
+  filter(
+    SR_SR == "YES" | 
+    TRAFFIC_CO == "SIGNAL" | 
+    INT_RT_1 %in% substr(fed.routes,1,4) |
+    INT_RT_2 %in% substr(fed.routes,1,4) | 
+    INT_RT_3 %in% substr(fed.routes,1,4) |
+    INT_RT_4 %in% substr(fed.routes,1,4)
+  )
+
+# Add speed limit for each intersection approach on intersections file
+intersection$INT_RT_1_SL <- NA
+intersection$INT_RT_2_SL <- NA
+intersection$INT_RT_3_SL <- NA
+intersection$INT_RT_4_SL <- NA
+for (i in 1:nrow(intersection)){
+  int_route1 <- intersection[["INT_RT_1"]][i]
+  int_route2 <- intersection[["INT_RT_2"]][i]
+  int_route3 <- intersection[["INT_RT_3"]][i]
+  int_route4 <- intersection[["INT_RT_4"]][i]
+  int_mp <- int[["BEG_MP"]][i]
+  speed_row1 <- which(speed$ROUTE == int_route1 & 
+                       speed$BEG_MP < int_mp & 
+                       speed$END_MP > int_mp)
+  speed_row2 <- which(speed$ROUTE == int_route2 & 
+                        speed$BEG_MP < int_mp & 
+                        speed$END_MP > int_mp)
+  speed_row3 <- which(speed$ROUTE == int_route3 & 
+                        speed$BEG_MP < int_mp & 
+                        speed$END_MP > int_mp)
+  speed_row4 <- which(speed$ROUTE == int_route4 & 
+                        speed$BEG_MP < int_mp & 
+                        speed$END_MP > int_mp)
+  intersection[["INT_RT_1_SL"]][i] <- speed$SPEED_LIMIT[speed_row1]
+  intersection[["INT_RT_2_SL"]][i] <- speed$SPEED_LIMIT[speed_row2]
+  intersection[["INT_RT_3_SL"]][i] <- speed$SPEED_LIMIT[speed_row3]
+  intersection[["INT_RT_4_SL"]][i] <- speed$SPEED_LIMIT[speed_row4]
+}

@@ -402,5 +402,22 @@ st_write(r_exp,"data/shapefile/routes_exploded.shp")
 # Read in spatially segmented shapefile from ArcGIS
 seg_spatial <- read_sf("data/shapefile/CAMS_spatial.shp")
 
+# Convert crash dataframe to shapefile
+crash_sf <- crash %>%
+  st_as_sf(
+    coords = c("long", "lat"), 
+    crs = 4326,
+    remove = F) %>%
+  st_transform(crs = 26912) #convert to UTM zone 12
+
+st_write(crash_sf,"data/shapefile/crash.shp")
+
 # Once we are certain of segment IDs we can right join this spatial data into 
 # the segments file then we can do a buffer and spatial join with the crashes
+
+# Bad news... the roadway buffer works beautifully, but the crashes don't always
+# fall on the current roadway due to roadwork, and there is no way to tell apart
+# crashes on an under or overpass. This seemed like a good idea in theory, but 
+# there is no way it will work. We have to rely on milepoints. On the bright 
+# side, visualizing this in ArcGIS has allowed us to notice details we would have 
+# otherwise missed, such as the presence of spatial gaps in the routes.

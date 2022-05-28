@@ -40,6 +40,53 @@ RC <- c(list(shell), joined_populated) %>%
 
 RC <- compress_seg_alt(RC)
 
+
+###
+## Fix Spatial Gaps
+###
+
+# Use fc file to build a gaps dataset
+gaps <- read_filez_csv(fc.filepath, fc.columns)
+names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+gaps <- gaps %>% filter(grepl("M", ROUTE))
+gaps <- gaps %>% filter(grepl("State", RouteType))
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_MP, END_MP) %>% 
+  arrange(ROUTE, BEG_MP)
+
+gaps$BEG_GAP <- 0
+gaps$END_GAP <- 0
+for(i in 1:(nrow(gaps)-1)){
+  if(gaps$ROUTE[i] == gaps$ROUTE[i+1] & gaps$END_MP[i] < gaps$BEG_MP[i+1]){
+    gaps$BEG_GAP[i] <- gaps$END_MP[i]
+    gaps$END_GAP[i] <- gaps$BEG_MP[i+1]
+  }
+}
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_GAP, END_GAP) %>%
+  filter(BEG_GAP != 0)
+
+# Delete segments which fall within gaps
+RC <- RC %>% mutate(MID_MP = BEG_MP + (END_MP - BEG_MP) / 2)
+
+RC$flag <- 0
+for(i in 1:nrow(RC)){
+  for(j in 1:nrow(gaps)){
+    if(RC$MID_MP[i] > gaps$BEG_GAP[j] & 
+       RC$MID_MP[i] < gaps$END_GAP[j] &
+       RC$BEG_MP[i] >= gaps$BEG_GAP[j] &
+       RC$END_MP[i] <= gaps$END_GAP[j] &
+       RC$ROUTE[i] == gaps$ROUTE[j]){
+      RC$flag[i] <- 1
+    }
+  }
+}
+
+RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
+
+
 ###
 ## Adding Other Data
 ###

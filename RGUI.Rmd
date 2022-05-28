@@ -12,12 +12,23 @@ output: html_document
 if (!require("pacman")) install.packages("pacman")
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse, readxl, sf, reticulate)
+pacman::p_load(magrittr, pacman, tidyverse, sf, reticulate)
 
 source("R/RGUI_Functions.R")
+source("R/RGUI_ReadIn.R")
+```
+
+```{r code, include=FALSE}
+
 source("R/RGUI_CrashPrep.R")
 source("R/RGUI_RoadwayPrep.R")
+source("R/RGUI_Compile.R")
+
 ```
+
+
+
+# The code below this point is old, but may have some useful parts
 
 # CRASH DATA
 

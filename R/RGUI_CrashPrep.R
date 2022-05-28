@@ -9,11 +9,6 @@ library(dplyr)
 ## Crash Data Prep
 ###
 
-# Read in Files
-location <- read_csv_file(location_fp, location_col)
-rollups <- read_csv_file(rollups_fp, rollups_col)
-vehicle <- read_csv_file(vehicle_fp, vehicle_col)
-
 # Join Crash Files
 crash <- left_join(location,rollups,by='crash_id')
 fullcrash <- left_join(crash,vehicle,by='crash_id')

@@ -639,3 +639,20 @@ for(i in 1:nrow(intersection)){
     intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
   }
 }
+
+
+
+
+
+############ random
+
+# # change route 089A to 0011... There seems to be more to this though
+# df$ROUTE_ID[df$ROUTE_ID == '089A'] <- 0011
+# 
+# # change route ID to 194 from 0085 for milepoint less than 2.977 
+# df$ROUTE_ID[df$MILEPOINT < 2.977 & df$ROUTE_ID == 0085] <- 0194
+# 
+# # eliminate rows with ramps
+# df %>%
+#   as_tibble() %>%
+#   filter(RAMP_ID == 0 | is.na(RAMP_ID))

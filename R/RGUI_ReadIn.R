@@ -478,3 +478,11 @@ drv_disc <- driveway %>%
   mutate(should_be_one = n()) %>%
   filter(should_be_one > 1) %>%
   arrange(ROUTE, BEG_MP)
+
+###
+## Read in crash Files
+###
+
+location <- read_csv_file(location_fp, location_col)
+rollups <- read_csv_file(rollups_fp, rollups_col)
+vehicle <- read_csv_file(vehicle_fp, vehicle_col)

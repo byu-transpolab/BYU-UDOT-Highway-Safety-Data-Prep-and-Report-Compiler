@@ -6,124 +6,151 @@ library(tidyverse)
 library(dplyr)
 
 ###
-## Set Filepath and Column Names for each Dataset
+## Roadway Data Prep
 ###
 
-routes_fp <- "data/csv/UDOT_Routes_ALRS.csv"
-routes_col <- c("ROUTE_ID",                          
-                    "BEG_MILEAGE",                             
-                    "END_MILEAGE")
+# List Data needed for Aggregation
 
-aadt_fp <- "data/csv/AADT_Unrounded.csv"
-aadt_col <- c("ROUTE_NAME",
-                  "START_ACCU",
-                  "END_ACCUM",
-                  "AADT2020",
-                  "SUTRK2020",
-                  "CUTRK2020",
-                  "AADT2019",
-                  "SUTRK2019",
-                  "CUTRK2019",
-                  "AADT2018",
-                  "SUTRK2018",
-                  "CUTRK2018",
-                  "AADT2017",
-                  "SUTRK2017",
-                  "CUTRK2017",
-                  "AADT2016",
-                  "SUTRK2016",
-                  "CUTRK2016",
-                  "AADT2015",
-                  "SUTRK2015",
-                  "CUTRK2015",
-                  "AADT2014",
-                  "SUTRK2014",
-                  "CUTRK2014")
+sdtms <- list(aadt, fc, speed, lane, urban)
+sdtms <- lapply(sdtms, as_tibble)
 
-fc_fp <- "data/csv/Functional_Class_ALRS.csv"
-fc_col <- c("ROUTE_ID",                          
-                "FROM_MEASURE",                             
-                "TO_MEASURE",
-                "FUNCTIONAL_CLASS",                             
-                "RouteDir",                             
-                "RouteType")
+# Generating Merge Cell
 
-speed_fp <- "data/csv/UDOT_Speed_Limits_2019.csv"
-speed_col <- c("ROUTE_ID",
-                   "FROM_MEASURE",
-                   "TO_MEASURE",
-                   "SPEED_LIMIT")
+shell <- shell_creator(sdtms)
 
-lane_fp <- "data/csv/Lanes.csv"
-lane_col <- c("ROUTE",
-                  "START_ACCUM",
-                  "END_ACCUM",
-                  "THRU_CNT",
-                  "THRU_WDTH")
+joined_populated <- lapply(sdtms, shell_join)
 
-urban_fp <- "data/csv/Urban_Code.csv"
-urban_col <- c("ROUTE_ID",
-                   "FROM_MEASURE",
-                   "TO_MEASURE",
-                   "URBAN_CODE")
+###
+## Merging joined and populated sdtms together; formatting
+###
 
-intersection_fp <- "data/csv/Intersections.csv"
-intersection_col <- c("ROUTE",
-                          "START_ACCUM",
-                          "END_ACCUM",
-                          "ID",
-                          "INT_TYPE",
-                          "TRAFFIC_CO",
-                          "SR_SR",
-                          "INT_RT_1",
-                          "INT_RT_2",
-                          "INT_RT_3",
-                          "INT_RT_4",
-                          "STATION",
-                          "REGION",
-                          "BEG_LONG",
-                          "BEG_LAT",
-                          "BEG_ELEV")
+RC <- c(list(shell), joined_populated) %>% 
+  reduce(left_join, by = c("ROUTE", "startpoints")) %>% 
+  mutate(BEG_MP = startpoints,
+         END_MP = endpoints) %>% 
+  select(-startpoints, -endpoints) %>% 
+  select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+  arrange(ROUTE, BEG_MP)
 
+###
+## Final Data Compilation
+###
 
-driveway_fp<- "data/csv/Driveway.csv"
-driveway_col<- c("ROUTE",
-                      "START_ACCUM",
-                      "END_ACCUM",
-                      "DIRECTION",
-                      "TYPE")
+# Compressing by combining rows identical except for identifying information 
 
-median_fp <- "data/csv/Medians.csv"
-median_col <- c("ROUTE_NAME",
-                    "START_ACCUM",
-                    "END_ACCUM",
-                    "MEDIAN_TYP",
-                    "TRFISL_TYP",
-                    "MDN_PRTCTN")
+RC <- compress_seg_alt(RC)
 
-shoulder_fp <-"data/csv/Shoulders.csv"
-shoulder_col <- c("ROUTE",
-                      "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
-                      "END_ACCUM",
-                      "UTPOSITION",
-                      "SHLDR_WDTH")
+###
+## Adding Other Data
+###
 
-# ###
-# ## Unused Intersection Code
-# ###
-#
-# # Modify intersections to include bus stops and schools near intersections
-# mod_intersections <- function(intersections,UTA_Stops,schools){
-#   intersections <- st_join(intersections, schools, join = st_within) %>%
-#     group_by(Int_ID) %>%
-#     mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-#     select(-SchoolID)
-#   
-#   intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-#     group_by(Int_ID) %>%
-#     mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-#     select(-UTA_StopID)
-#   
-#   intersections <- unique(intersections)
-#   st_drop_geometry(intersections)
-# }
+# Add Driveways
+RC$Driveway_Freq <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  drive_row <- which(driveway$ROUTE == RCroute & 
+                       driveway$MP > RCbeg & 
+                       driveway$MP < RCend)
+  RC[["Driveway_Freq"]][i] <- length(drive_row)
+}
+
+# Add Medians
+RC$Median_Freq <- 0
+RC$Median_Type <- 0
+for (i in 1:nrow(RC)){
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  med_row <- which(median$ROUTE == RCroute & 
+                     median$MP > RCbeg  & 
+                     median$MP < RCend)
+  med_type <- max(median[["MEDIAN_TYP"]][med_row])
+  RC[["Median_Freq"]][i] <- length(med_row)
+  RC[["Median_Type"]][i] <- if_else(RC[["Median_Freq"]][i] == 0,"NA", med_type)
+}
+
+# Add Shoulders
+RC$Right_Shoulder_Freq <- 0
+RC$Left_Shoulder_Freq <- 0
+RC$Right_Shoulder_Max <- 0
+RC$Right_Shoulder_Min <- 0
+RC$Left_Shoulder_Max <- 0
+RC$Left_Shoulder_Min <- 0
+# RC$Right_Shoulder_Avg <- 0
+# RC$Left_Shoulder_Avg <- 0
+# shoulder <- shoulder %>% arrange(ROUTE, MP)
+# RC <- RC %>% arrange(ROUTE, BEG_MP, END_MP)
+# row <- 1
+for (i in 1:nrow(RC)){
+  # start timer
+  start.time <- Sys.time()
+  
+  RCroute <- RC[["ROUTE"]][i]
+  RCbeg <- RC[["BEG_MP"]][i]
+  RCend <- RC[["END_MP"]][i]
+  
+  # r_sho_row <- NA
+  # l_sho_row <- NA
+  # r_idx <- 1
+  # l_idx <- 1
+  # repeat{
+  #   if(shoulder[["ROUTE"]][row] == RCroute & 
+  #      shoulder[["MP"]][row] >= RCbeg  & 
+  #      shoulder[["MP"]][row] <= RCend){
+  #     if(shoulder[["UTPOSITION"]][row] == "RIGHT"){
+  #       r_sho_row[r_idx] <- row
+  #       r_idx <- r_idx + 1
+  #     } else if(shoulder[["UTPOSITION"]][row] =="LEFT"){
+  #       l_sho_row[l_idx] <- row
+  #       l_idx <- l_idx + 1
+  #     }
+  #   } else{
+  #     if(shoulder[["MP"]][row] > ){
+  #       row <- row + 1
+  #       print(paste("Route",shoulder[["ROUTE"]][row],"at MP",shoulder[["MP"]][row],"not on RC"))
+  #     }
+  #     break #exit the loop once we are no longer on the segment
+  #   }
+  #   row <- row + 1 #increment row
+  # }
+  # print(paste(row,RCroute,shoulder[["ROUTE"]][row],RCbeg,RCend,shoulder[["MP"]][row]))
+  
+  r_sho_row <- which(shoulder$ROUTE == RCroute &
+                       shoulder$MP >= RCbeg  &
+                       shoulder$MP <= RCend &
+                       shoulder$UTPOSITION== "RIGHT")
+  l_sho_row <- which(shoulder$ROUTE == RCroute &
+                       shoulder$MP >= RCbeg  &
+                       shoulder$MP <= RCend &
+                       shoulder$UTPOSITION =="LEFT")
+  
+  RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
+  RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
+  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][l_sho_row])))
+  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][l_sho_row])))
+  # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
+  # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
+}
+# record time
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+print(paste("Time taken for code to run:", time.taken))
+
+# Pivot AADT
+RC <- pivot_aadt(RC)
+
+# Unlist AADT for output
+for (i in 1:nrow(RC)){
+  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
+    RC$AADT[i] <- unlist(RC$AADT[i])[1]
+    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
+    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
+  }
+}
+RC$AADT <- as.numeric(RC$AADT)
+RC$SUTRK <- as.numeric(RC$SUTRK)
+RC$CUTRK <- as.numeric(RC$CUTRK)

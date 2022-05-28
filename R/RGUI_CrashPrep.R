@@ -13,9 +13,6 @@ library(dplyr)
 crash <- left_join(location,rollups,by='crash_id')
 fullcrash <- left_join(crash,vehicle,by='crash_id')
 
-crash <- crash %>% filter(is.na(ramp_id) | ramp_id == 0) %>%
-  mutate(ramp_id = case_when(ramp_id == 0 ~ 1))
-
 # Filter out Ramps
 crash <- crash %>% filter(is.na(ramp_id) | ramp_id == 0)
 

@@ -376,6 +376,12 @@ for(i in 1:nrow(RC)){
 
 RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
 
+
+
+###############################################
+# Spatially join segments with crashes ########
+###############################################
+
 # Load exploded CAMS file created in ArcGIS
 r_exp.filepath <- "data/shapefile/CAMS_exploded.shp"
 r_exp.columns <- c("ROUTE",
@@ -416,7 +422,7 @@ for(i in 1:nrow(r_exp)){
   rt <- r_exp$ROUTE[i]
 }
 
-# Write to shapfile for analysis in ArcGIS
+# Write to shapefile for analysis in ArcGIS
 st_write(r_exp,"data/shapefile/routes_exploded.shp")
 
 # Read in spatially segmented shapefile from ArcGIS
@@ -463,7 +469,7 @@ FA_ref <- tibble(
   )
 
 # Create fed routes list
-fed <- read_filez_csv(fc.filepath, fc.columns)
+fed <- read_csv_file(fc_fp, fc_col)
 names(fed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 fed <- fed %>% filter(grepl("M", ROUTE))
 fed <- fed %>% filter(grepl("Fed Aid", RouteType))
@@ -471,8 +477,8 @@ fed <- fed %>% filter(grepl("Fed Aid", RouteType))
 fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Read and filter intersections (SR_SR or SR_FedAid or Signalized SR)
-intersection.filepath <- "data/csv/Intersections_Compiled.csv"
-intersection.columns <- c("ROUTE",
+intersection_fp <- "data/csv/Intersections_Compiled.csv"
+intersection_col <- c("ROUTE",
                           "UDOT_BMP",
                           "UDOT_EMP",
                           "Int_ID",
@@ -493,7 +499,7 @@ intersection.columns <- c("ROUTE",
                           "BEG_LAT",
                           "BEG_ELEV")
 
-intersection <- read_filez_csv(intersection.filepath, intersection.columns)
+intersection <- read_csv_file(intersection_fp, intersection_col)
 names(intersection)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Add M to Route Column to Standardize Route Format
 intersection$ROUTE <- paste(substr(intersection$ROUTE, 1, 5), "M", sep = "")
@@ -513,7 +519,7 @@ intersection <- intersection %>%
 intersection <- intersection %>% arrange(ROUTE, BEG_MP)
 
 # Create full speed file for merging with intersections
-speed_full <- read_filez_csv(speed.filepath, speed.columns)
+speed_full <- read_csv_file(speed_fp, speed_col)
 names(speed_full)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 speed_full <- speed_full %>% filter(grepl("M", ROUTE))
 speed_full <- compress_seg(speed_full)
@@ -539,7 +545,7 @@ for (i in 1:nrow(intersection)){
   # get route direction
   suffix = substr(intersection$ROUTE[i],5,6)
   # find rows in speed limit file
-  if(!is.na(int_route1) & int_route1 != "Local"){
+  if(!is.na(int_route1) & tolower(int_route1) != "local"){
     int_route1 <- paste0(int_route1, suffix)
     speed_row1 <- which(speed_full$ROUTE == int_route1 & 
                           speed_full$BEG_MP <= int_mp_1 & 
@@ -547,9 +553,9 @@ for (i in 1:nrow(intersection)){
     if(length(speed_row1) == 0 ){
       speed_row1 <- NA
     }
-    print(paste(speed_row1, "at", int_route1, int_mp_1))
+    # print(paste(speed_row1, "at", int_route1, int_mp_1))
   }
-  if(!is.na(int_route2) & int_route2 != "Local"){
+  if(!is.na(int_route2) & tolower(int_route2) != "local"){
     int_route2 <- paste0(int_route2, suffix)
     speed_row2 <- which(speed_full$ROUTE == int_route2 & 
                           speed_full$BEG_MP <= int_mp_2 & 
@@ -558,7 +564,7 @@ for (i in 1:nrow(intersection)){
       speed_row2 <- NA
     }
   }
-  if(!is.na(int_route3) & int_route3 != "Local"){
+  if(!is.na(int_route3) & tolower(int_route3) != "local"){
     int_route3 <- paste0(int_route3, suffix)
     speed_row3 <- which(speed_full$ROUTE == int_route3 & 
                           speed_full$BEG_MP <= int_mp_3 & 
@@ -567,7 +573,7 @@ for (i in 1:nrow(intersection)){
       speed_row3 <- NA
     }
   }
-  if(!is.na(int_route4) & int_route4 != "Local"){
+  if(!is.na(int_route4) & tolower(int_route4) != "local"){
     int_route4 <- paste0(int_route4, suffix)
     speed_row4 <- which(speed_full$ROUTE == int_route4 & 
                           speed_full$BEG_MP <= int_mp_4 & 

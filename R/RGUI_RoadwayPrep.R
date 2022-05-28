@@ -46,7 +46,7 @@ RC <- compress_seg_alt(RC)
 ###
 
 # Use fc file to build a gaps dataset
-gaps <- read_filez_csv(fc.filepath, fc.columns)
+gaps <- read_csv_file(fc.filepath, fc.columns)
 names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 gaps <- gaps %>% filter(grepl("M", ROUTE))
 gaps <- gaps %>% filter(grepl("State", RouteType))

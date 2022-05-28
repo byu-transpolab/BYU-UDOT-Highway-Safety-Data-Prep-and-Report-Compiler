@@ -247,6 +247,26 @@ df <- left_join(df, cw, by = c("UDOT_BMP" = "MILEPOINT"))
 
 
 
+###############################################
+# Modify Intersections ########################
+###############################################
+
+# Modify intersections to include bus stops and schools near intersections
+mod_intersections <- function(intersections,UTA_Stops,schools){
+  intersections <- st_join(intersections, schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID)
+
+  intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+    select(-UTA_StopID)
+
+  intersections <- unique(intersections)
+  st_drop_geometry(intersections)
+}
+
 
 
 ###############################################
@@ -428,11 +448,14 @@ st_write(crash_sf,"data/shapefile/crash.shp")
 # Determine intersection related crashes ######
 ###############################################
 
+# Filter "Intersection Related" crashes
+crash <- crash %>% filter(intersection_related == "N")
+
 # Create functional area reference table
 FA_ref <- tibble(
-  speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75), 
-  d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275), 
-  d2 = c(70,70,70,70,105,150,225,290,360,440,525,655,755,875,995)
+  speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
+  d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275,275), 
+  d2 = c(70,70,70,70,105,150,225,290,360,440,525,655,755,875,995,995)
   ) %>%
   mutate(
     d3 = 50,
@@ -447,10 +470,36 @@ fed <- fed %>% filter(grepl("Fed Aid", RouteType))
 
 fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
 
-# Filter intersections
-test <- intersection
-intersection <- test
+# Read and filter intersections (SR_SR or SR_FedAid or Signalized SR)
+intersection.filepath <- "data/csv/Intersections_Compiled.csv"
+intersection.columns <- c("ROUTE",
+                          "UDOT_BMP",
+                          "UDOT_EMP",
+                          "Int_ID",
+                          "INT_TYPE",
+                          "TRAFFIC_CO",
+                          "SR_SR",
+                          "INT_RT_1",
+                          "INT_RT_2",
+                          "INT_RT_3",
+                          "INT_RT_4",
+                          "INT_RT_1_M",
+                          "INT_RT_2_M",
+                          "INT_RT_3_M",
+                          "INT_RT_4_M",
+                          "STATION",
+                          "REGION",
+                          "BEG_LONG",
+                          "BEG_LAT",
+                          "BEG_ELEV")
 
+intersection <- read_filez_csv(intersection.filepath, intersection.columns)
+names(intersection)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+# Add M to Route Column to Standardize Route Format
+intersection$ROUTE <- paste(substr(intersection$ROUTE, 1, 5), "M", sep = "")
+# Getting only state routes
+intersection <- intersection %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+# Filter SR_SR, Fed_Aid, and Signalized
 intersection <- intersection %>%
   filter(
     SR_SR == "YES" | 
@@ -460,6 +509,14 @@ intersection <- intersection %>%
     INT_RT_3 %in% substr(fed.routes,1,4) |
     INT_RT_4 %in% substr(fed.routes,1,4)
   )
+# Sort
+intersection <- intersection %>% arrange(ROUTE, BEG_MP)
+
+# Create full speed file for merging with intersections
+speed_full <- read_filez_csv(speed.filepath, speed.columns)
+names(speed_full)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+speed_full <- speed_full %>% filter(grepl("M", ROUTE))
+speed_full <- compress_seg(speed_full)
 
 # Add speed limit for each intersection approach on intersections file
 intersection$INT_RT_1_SL <- NA
@@ -471,21 +528,114 @@ for (i in 1:nrow(intersection)){
   int_route2 <- intersection[["INT_RT_2"]][i]
   int_route3 <- intersection[["INT_RT_3"]][i]
   int_route4 <- intersection[["INT_RT_4"]][i]
-  int_mp <- int[["BEG_MP"]][i]
-  speed_row1 <- which(speed$ROUTE == int_route1 & 
-                       speed$BEG_MP < int_mp & 
-                       speed$END_MP > int_mp)
-  speed_row2 <- which(speed$ROUTE == int_route2 & 
-                        speed$BEG_MP < int_mp & 
-                        speed$END_MP > int_mp)
-  speed_row3 <- which(speed$ROUTE == int_route3 & 
-                        speed$BEG_MP < int_mp & 
-                        speed$END_MP > int_mp)
-  speed_row4 <- which(speed$ROUTE == int_route4 & 
-                        speed$BEG_MP < int_mp & 
-                        speed$END_MP > int_mp)
-  intersection[["INT_RT_1_SL"]][i] <- speed$SPEED_LIMIT[speed_row1]
-  intersection[["INT_RT_2_SL"]][i] <- speed$SPEED_LIMIT[speed_row2]
-  intersection[["INT_RT_3_SL"]][i] <- speed$SPEED_LIMIT[speed_row3]
-  intersection[["INT_RT_4_SL"]][i] <- speed$SPEED_LIMIT[speed_row4]
+  int_mp_1 <- intersection[["INT_RT_1_M"]][i]
+  int_mp_2 <- intersection[["INT_RT_2_M"]][i]
+  int_mp_3 <- intersection[["INT_RT_3_M"]][i]
+  int_mp_4 <- intersection[["INT_RT_4_M"]][i]
+  speed_row1 <- NA
+  speed_row2 <- NA
+  speed_row3 <- NA
+  speed_row4 <- NA
+  # get route direction
+  suffix = substr(intersection$ROUTE[i],5,6)
+  # find rows in speed limit file
+  if(!is.na(int_route1) & int_route1 != "Local"){
+    int_route1 <- paste0(int_route1, suffix)
+    speed_row1 <- which(speed_full$ROUTE == int_route1 & 
+                          speed_full$BEG_MP <= int_mp_1 & 
+                          speed_full$END_MP >= int_mp_1)
+    if(length(speed_row1) == 0 ){
+      speed_row1 <- NA
+    }
+    print(paste(speed_row1, "at", int_route1, int_mp_1))
+  }
+  if(!is.na(int_route2) & int_route2 != "Local"){
+    int_route2 <- paste0(int_route2, suffix)
+    speed_row2 <- which(speed_full$ROUTE == int_route2 & 
+                          speed_full$BEG_MP <= int_mp_2 & 
+                          speed_full$END_MP >= int_mp_2)
+    if(length(speed_row2) == 0 ){
+      speed_row2 <- NA
+    }
+  }
+  if(!is.na(int_route3) & int_route3 != "Local"){
+    int_route3 <- paste0(int_route3, suffix)
+    speed_row3 <- which(speed_full$ROUTE == int_route3 & 
+                          speed_full$BEG_MP <= int_mp_3 & 
+                          speed_full$END_MP >= int_mp_3)
+    if(length(speed_row3) == 0 ){
+      speed_row3 <- NA
+    }
+  }
+  if(!is.na(int_route4) & int_route4 != "Local"){
+    int_route4 <- paste0(int_route4, suffix)
+    speed_row4 <- which(speed_full$ROUTE == int_route4 & 
+                          speed_full$BEG_MP <= int_mp_4 & 
+                          speed_full$END_MP >= int_mp_4)
+    if(length(speed_row4) == 0 ){
+      speed_row4 <- NA
+    }
+  }
+  # fill values
+  intersection[["INT_RT_1_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row1]
+  intersection[["INT_RT_2_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row2]
+  intersection[["INT_RT_3_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row3]
+  intersection[["INT_RT_4_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row4]
+}
+
+# Add Functional Area for each approach
+intersection$INT_RT_1_FA <- NA
+intersection$INT_RT_2_FA <- NA
+intersection$INT_RT_3_FA <- NA
+intersection$INT_RT_4_FA <- NA
+stopbar <- 60
+for(i in 1:nrow(intersection)){
+  route1 <- intersection[["INT_RT_1"]][i]
+  route2 <- intersection[["INT_RT_2"]][i]
+  route3 <- intersection[["INT_RT_3"]][i]
+  route4 <- intersection[["INT_RT_4"]][i]
+  route1_sl <- intersection[["INT_RT_1_SL"]][i]
+  route2_sl <- intersection[["INT_RT_2_SL"]][i]
+  route3_sl <- intersection[["INT_RT_3_SL"]][i]
+  route4_sl <- intersection[["INT_RT_4_SL"]][i]
+  dist1 <- 0
+  dist2 <- 0
+  dist3 <- 0
+  dist4 <- 0
+  if(!is.na(route1)){
+    if(!is.na(route1_sl)){
+      FA_row1 <- which(FA_ref$speed == route1_sl)
+      dist1 <- FA_ref$total[FA_row1]
+    } else{
+      dist1 <- 250   # this is the default if there is no speed limit
+    }
+    intersection[["INT_RT_1_FA"]][i] <- dist1 + stopbar
+  }
+  if(!is.na(route2)){
+    if(!is.na(route2_sl)){
+      FA_row2 <- which(FA_ref$speed == route2_sl)
+      dist2 <- FA_ref$total[FA_row2]
+    } else{
+      dist2 <- 250   # this is the default if there is no speed limit
+    }
+    intersection[["INT_RT_2_FA"]][i] <- dist2 + stopbar
+  }
+  if(!is.na(route3)){
+    if(!is.na(route3_sl)){
+      FA_row3 <- which(FA_ref$speed == route3_sl)
+      dist3 <- FA_ref$total[FA_row3]
+    } else{
+      dist3 <- 250   # this is the default if there is no speed limit
+    }
+    intersection[["INT_RT_3_FA"]][i] <- dist3 + stopbar
+  }
+  if(!is.na(route4)){
+    if(!is.na(route4_sl)){
+      FA_row4 <- which(FA_ref$speed == route4_sl)
+      dist4 <- FA_ref$total[FA_row4]
+    } else{
+      dist4 <- 250   # this is the default if there is no speed limit
+    }
+    intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
+  }
 }

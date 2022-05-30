@@ -671,7 +671,7 @@ for(i in 1:nrow(crash)){
   row <- which(FA$ROUTE == rt &
                  FA$BEG_MP < mp &
                  FA$END_MP > mp)
-  if(length(row) > 0 | crash$intersection_related == Y){
+  if(length(row) > 0 | crash$intersection_related == "Y"){
     crash$int_related[i] <- TRUE
   }
 }

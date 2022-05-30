@@ -67,11 +67,29 @@ urban_col <- c("ROUTE_ID",
                "TO_MEASURE",
                "URBAN_CODE")
 
-intersection_fp <- "data/csv/Intersections.csv"
+# intersection_fp <- "data/csv/Intersections.csv"
+# intersection_col <- c("ROUTE",
+#                       "START_ACCUM",
+#                       "END_ACCUM",
+#                       "ID",
+#                       "INT_TYPE",
+#                       "TRAFFIC_CO",
+#                       "SR_SR",
+#                       "INT_RT_1",
+#                       "INT_RT_2",
+#                       "INT_RT_3",
+#                       "INT_RT_4",
+#                       "STATION",
+#                       "REGION",
+#                       "BEG_LONG",
+#                       "BEG_LAT",
+#                       "BEG_ELEV")
+
+intersection_fp <- "data/csv/Intersections_Compiled.csv"
 intersection_col <- c("ROUTE",
-                      "START_ACCUM",
-                      "END_ACCUM",
-                      "ID",
+                      "UDOT_BMP",
+                      "UDOT_EMP",
+                      "Int_ID",
                       "INT_TYPE",
                       "TRAFFIC_CO",
                       "SR_SR",
@@ -79,12 +97,15 @@ intersection_col <- c("ROUTE",
                       "INT_RT_2",
                       "INT_RT_3",
                       "INT_RT_4",
+                      "INT_RT_1_M",
+                      "INT_RT_2_M",
+                      "INT_RT_3_M",
+                      "INT_RT_4_M",
                       "STATION",
                       "REGION",
                       "BEG_LONG",
                       "BEG_LAT",
                       "BEG_ELEV")
-
 
 driveway_fp<- "data/csv/Driveway.csv"
 driveway_col<- c("ROUTE",
@@ -103,7 +124,7 @@ median_col <- c("ROUTE_NAME",
 
 shoulder_fp <-"data/csv/Shoulders.csv"
 shoulder_col <- c("ROUTE",
-                  "START_ACCUM", # these columns are rounded quite a bit. Should we use Mandli_BMP and Mandli_EMP?
+                  "START_ACCUM", # these columns are rounded quite a bit.
                   "END_ACCUM",
                   "UTPOSITION",
                   "SHLDR_WDTH")
@@ -364,6 +385,7 @@ urban <- fix_endpoints(urban, routes)
 ###
 ## Intersection Data Prep
 ###
+#Intersections are labeled at a point, not a segment
 
 # Read in intersection file
 intersection <- read_csv_file(intersection_fp, intersection_col)
@@ -380,12 +402,19 @@ intersection <- intersection %>% filter(ROUTE %in% substr(main.routes, 1, 6))
 # Find Number of Unique Routes in shoulder file
 num.intersection.routes <- intersection %>% pull(ROUTE) %>% unique() %>% length()
 
-#Finding all intersections with at least one state route
+# Filter SR_SR, Fed_Aid, and Signalized
 intersection <- intersection %>%
-  filter(INT_RT_1 %in% substr(main.routes,1,4) |
-           INT_RT_2 %in% substr(main.routes,1,4) | INT_RT_3 %in% substr(main.routes,1,4) |
-           INT_RT_4 %in% substr(main.routes,1,4))
-#Intersections are labeled at a point, not a segment
+  filter(
+    SR_SR == "YES" | 
+      TRAFFIC_CO == "SIGNAL" | 
+      INT_RT_1 %in% substr(fed.routes,1,4) |
+      INT_RT_2 %in% substr(fed.routes,1,4) | 
+      INT_RT_3 %in% substr(fed.routes,1,4) |
+      INT_RT_4 %in% substr(fed.routes,1,4)
+  )
+
+# Sort intersections
+intersection <- intersection %>% arrange(ROUTE, BEG_MP)
 
 ###
 ## Shoulder Data Prep

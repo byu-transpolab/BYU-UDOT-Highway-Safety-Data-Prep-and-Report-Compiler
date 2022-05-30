@@ -454,9 +454,6 @@ st_write(crash_sf,"data/shapefile/crash.shp")
 # Determine intersection related crashes ######
 ###############################################
 
-# Filter "Intersection Related" crashes
-crash <- crash %>% filter(intersection_related == "N")
-
 # Create functional area reference table
 FA_ref <- tibble(
   speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
@@ -646,6 +643,42 @@ for(i in 1:nrow(intersection)){
   }
 }
 
+# Create FA file which has FA's for each route
+ROUTE <- NA
+BEG_MP <- NA
+END_MP <- NA
+row <- 0
+for(i in 1:nrow(intersection)){
+  for(j in 1:4){
+    rt <- intersection[[paste0("INT_RT_",j)]][i]
+    mp <- intersection[[paste0("INT_RT_",j,"_M")]][i]
+    fa <- intersection[[paste0("INT_RT_",j,"_FA")]][i]
+    if(rt %in% substr(main.routes,1,4)){
+      row <- row + 1
+      ROUTE[row] <- rt
+      BEG_MP[row] <- mp - (fa/5280)
+      END_MP[row] <- mp + (fa/5280)
+    }
+  }
+}
+FA <- tibble(ROUTE, BEG_MP, END_MP)
+
+# Separate crashes into intersection and non-intersection related
+crash$int_related <- FALSE
+for(i in 1:nrow(crash)){
+  rt <- crash$route[i]
+  mp <- crash$milepoint[i]
+  row <- which(FA$ROUTE == rt &
+                 FA$BEG_MP < mp &
+                 FA$END_MP > mp)
+  if(length(row) > 0 | crash$intersection_related == Y){
+    crash$int_related[i] <- TRUE
+  }
+}
+
+# Filter "Intersection Related" crashes
+crash_seg <- crash %>% filter(int_related == FALSE)
+crash_int <- crash %>% filter(int_related == TRUE)
 
 
 

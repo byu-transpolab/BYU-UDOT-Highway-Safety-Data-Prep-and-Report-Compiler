@@ -253,6 +253,10 @@ names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Select only Main Routes
 fc <- fc %>% filter(grepl("M", ROUTE))
 
+# Create fed routes list
+fed <- fc %>% filter(grepl("Fed Aid", RouteType))
+fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
+
 # Select only State Routes
 fc <- fc %>% filter(grepl("State", RouteType))
 

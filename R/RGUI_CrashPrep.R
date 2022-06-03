@@ -39,13 +39,6 @@ FA_ref <- tibble(
     total = d1 + d2 + d3
   )
 
-# Create fed routes list
-fed <- read_csv_file(fc_fp, fc_col)
-names(fed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-fed <- fed %>% filter(grepl("M", ROUTE))
-fed <- fed %>% filter(grepl("Fed Aid", RouteType))
-fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
-
 # Create full speed file for merging with intersections
 speed_full <- read_csv_file(speed_fp, speed_col)
 names(speed_full)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")

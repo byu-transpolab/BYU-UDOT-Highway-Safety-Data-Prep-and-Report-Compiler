@@ -44,23 +44,27 @@ compress_seg <- function(df, col, variables) {
   iter <- 0
   count <- 0
   route <- -1
-  value <- variables
   df$ID <- 0
-  for(i in 1:nrow(df)){
+  for(i in 2:nrow(df)){
     new_route <- df$ROUTE[i]
     test = 0
     for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
       varName <- variables[j]
       new_value <- df[[varName]][i]
-      if(is.na(new_value)){              # treat NA as zero to avoid errors
-        new_value = 0
+      prev_value <- df[[varName]][i-1]
+      if(is.na(new_value)){              # treat NA as unique string to avoid errors
+        new_value = "N/A"
       }
-      if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
-        value[j] <- new_value
+      if(is.na(prev_value)){           
+        prev_value = "N/A"
+      }
+      if(new_value != prev_value){         # set test = 1 if any of the variables are unique from prev row
         test = 1
       }
     }
-    if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
+    if((new_route != route) |               # create new ID ("iter") if there is a unique route
+       (test == 1) |                        # or test = 1 (unique row)
+       (df$BEG_MP[i] != df$END_MP[i-1])){   # or there is a gap between segments
       iter <- iter + 1
       route <- new_route
     } else {
@@ -103,7 +107,8 @@ compress_seg_alt <- function(df) {
   df$dropflag <- FALSE
   count <- 0
   for (i in 1:(nrow(df) - 1)) {
-    if (identical(df[i, -c(2, 3)], df[i + 1, -c(2, 3)])) {
+    if (identical(df[i, -c(2, 3)], df[i + 1, -c(2, 3)]) &   # check for identical rows except for milepoints
+        df$END_MP[i] == df$BEG_MP[i+1]) {                   # and check that there is no gap between segments
       df$dropflag[i] <- TRUE
       df[i + 1, 2] <- df[i, 2]    # change beg_mp to match previous
       count <- count + 1

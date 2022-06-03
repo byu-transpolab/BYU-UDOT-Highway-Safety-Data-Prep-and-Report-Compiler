@@ -683,6 +683,49 @@ crash_int <- crash %>% filter(int_related == TRUE)
 
 
 
+###############################################
+# Join Crash Vehicles to Crashes ##############
+###############################################
+
+
+
+
+
+###############################################
+# Join Crash attributes to segments ###########
+###############################################
+
+att_name <- "crash_severity_id"
+segs <- RC
+csh <- crash_seg
+
+# Add Crash Attributes
+add_crash_attribute <- function(att_name, segs, csh){
+  # set up dataframe for joining
+  csh <- csh %>% select(seg_id, crash_year, !!att_name)
+  att_name <- sym(att_name)
+  # pivot wider
+  csh <- csh %>%
+    group_by(seg_id, crash_year, !!att_name) %>% 
+    mutate(n = n()) %>% 
+    pivot_wider(id_cols = c(seg_id, crash_year),
+                names_from = !!att_name,
+                names_prefix = paste0(att_name,"_"),
+                values_from = n,
+                values_fill = 0,
+                values_fn = first)
+  # join to segments
+  segs <- left_join(segs, csh, by = c("SEG_ID"="seg_id", "YEAR"="crash_year"))
+  # return segments
+  return(segs)
+}
+
+
+
+
+
+
+
 ############ random
 
 # # change route 089A to 0011... There seems to be more to this though

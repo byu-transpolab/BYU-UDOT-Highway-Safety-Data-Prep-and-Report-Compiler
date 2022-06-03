@@ -11,6 +11,8 @@ library(dplyr)
 
 # Join Crash Files
 crash <- left_join(location,rollups,by='crash_id')
+
+# Join Crash Vehicle File
 fullcrash <- left_join(crash,vehicle,by='crash_id')
 
 # Filter out Ramps
@@ -20,6 +22,7 @@ crash <- crash %>% filter(is.na(ramp_id) | ramp_id == 0)
 crash$crash_date <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 1)
 crash$crash_time <- sapply(strsplit(as.character(crash$crash_datetime), " "), "[", 2)
 crash$crash_year <- sapply(strsplit(as.character(crash$crash_date), "/"), "[", 3)
+crash$crash_year <- as.integer(crash$crash_year)
 
 # Format Routes to Match Roadway
 crash$route <- paste(substr(crash$route, 1, 5), crash$route_direction, sep = "")

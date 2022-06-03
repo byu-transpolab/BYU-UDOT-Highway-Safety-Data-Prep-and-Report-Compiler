@@ -46,7 +46,7 @@ RC <- compress_seg_alt(RC)
 ###
 
 # Use fc file to build a gaps dataset
-gaps <- read_csv_file(fc.filepath, fc.columns)
+gaps <- read_csv_file(fc_fp, fc_col)
 names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 gaps <- gaps %>% filter(grepl("M", ROUTE))
 gaps <- gaps %>% filter(grepl("State", RouteType))
@@ -186,6 +186,12 @@ for (i in 1:nrow(RC)){
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Time taken for code to run:", time.taken))
+
+# Add segment id column
+RC <- RC %>% rowid_to_column("SEG_ID")
+
+# Save a copy for future use
+RC_byseg <- RC
 
 # Pivot AADT
 RC <- pivot_aadt(RC)

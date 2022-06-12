@@ -196,14 +196,15 @@ RC_byseg <- RC
 # Pivot AADT
 RC <- pivot_aadt(RC)
 
-# Unlist AADT for output
-for (i in 1:nrow(RC)){
-  if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
-    RC$AADT[i] <- unlist(RC$AADT[i])[1]
-    RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
-    RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
-  }
-}
-RC$AADT <- as.numeric(RC$AADT)
-RC$SUTRK <- as.numeric(RC$SUTRK)
-RC$CUTRK <- as.numeric(RC$CUTRK)
+# Fixed this with the values_fn parameter of pivot_wider()
+# # Unlist AADT for output
+# for (i in 1:nrow(RC)){
+#   if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
+#     RC$AADT[i] <- unlist(RC$AADT[i])[1]
+#     RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
+#     RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
+#   }
+# }
+# RC$AADT <- as.numeric(RC$AADT)
+# RC$SUTRK <- as.numeric(RC$SUTRK)
+# RC$CUTRK <- as.numeric(RC$CUTRK)

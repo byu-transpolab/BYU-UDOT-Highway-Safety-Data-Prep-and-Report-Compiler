@@ -420,6 +420,17 @@ intersection <- intersection %>%
 # Sort intersections
 intersection <- intersection %>% arrange(ROUTE, BEG_MP)
 
+# Make sure Intersection IDs are unique
+n <- 1
+for(i in 2:nrow(intersection)){
+  if(intersection$Int_ID[i] == intersection$Int_ID[i-n]){
+    intersection$Int_ID[i] <- paste0(intersection$Int_ID[i],"_(",n,")")
+    n <- n + 1
+  } else{
+    n <- 1
+  }
+}
+
 ###
 ## Shoulder Data Prep
 ###

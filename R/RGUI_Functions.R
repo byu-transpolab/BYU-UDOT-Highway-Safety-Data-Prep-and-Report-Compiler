@@ -157,6 +157,7 @@ pivot_aadt <- function(aadt){
     pivot_wider(
       names_from = count_type,
       values_from = count,
+      values_fn = first
     )
   return(aadt)
 }
@@ -533,6 +534,58 @@ shell_join <- function(sdtm) {
   
   return(with_shell)
 }
+
+
+# Add Crash Attributes Function
+add_crash_attribute <- function(att_name, segs, csh){
+  # set up dataframe for joining
+  csh <- csh %>% select(seg_id, crash_year, !!att_name)
+  att_name <- sym(att_name)
+  # pivot wider
+  csh <- csh %>%
+    group_by(seg_id, crash_year, !!att_name) %>% 
+    mutate(n = n()) %>% 
+    pivot_wider(id_cols = c(seg_id, crash_year),
+                names_from = !!att_name,
+                names_prefix = paste0(att_name,"_"),
+                values_from = n,
+                values_fill = 0,
+                values_fn = first) %>%
+    ungroup()
+  # join to segments
+  segs <- left_join(segs, csh, by = c("SEG_ID"="seg_id", "YEAR"="crash_year"))
+  # mutate(across(contains("crash_severity_id"), ~ replace(is.na(.x), 0), .names = "{col}"))
+  # return segments
+  return(segs)
+}
+
+# Add Crash Attributes Function for Intersections
+add_crash_attribute_int <- function(att_name, ints, csh){
+  # set up dataframe for joining
+  csh <- csh %>% select(int_id, crash_year, !!att_name)
+  att_name <- sym(att_name)
+  # pivot wider
+  csh <- csh %>%
+    group_by(int_id, crash_year, !!att_name) %>% 
+    mutate(n = n()) %>% 
+    pivot_wider(id_cols = c(int_id, crash_year),
+                names_from = !!att_name,
+                names_prefix = paste0(att_name,"_"),
+                values_from = n,
+                values_fill = 0,
+                values_fn = first) %>%
+    ungroup()
+  # join to segments
+  ints <- left_join(ints, csh, by = c("Int_ID"="int_id", "YEAR"="crash_year"))
+  # mutate(across(contains("crash_severity_id"), ~ replace(is.na(.x), 0), .names = "{col}"))
+  # return segments
+  return(ints)
+}
+
+
+
+
+
 
 ###
 ## Unused Code

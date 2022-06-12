@@ -699,7 +699,7 @@ att_name <- "crash_severity_id"
 segs <- RC
 csh <- crash_seg
 
-# Add Crash Attributes
+# Add Crash Attributes Function
 add_crash_attribute <- function(att_name, segs, csh){
   # set up dataframe for joining
   csh <- csh %>% select(seg_id, crash_year, !!att_name)

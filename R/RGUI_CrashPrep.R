@@ -174,24 +174,34 @@ for(i in 1:nrow(intersection)){
 ROUTE <- NA
 BEG_MP <- NA
 END_MP <- NA
+MP <- NA
+Int_ID <- NA
 row <- 0
 for(i in 1:nrow(intersection)){
+  id <- intersection[["Int_ID"]][i]
   for(j in 1:4){
     rt <- intersection[[paste0("INT_RT_",j)]][i]
     mp <- intersection[[paste0("INT_RT_",j,"_M")]][i]
     fa <- intersection[[paste0("INT_RT_",j,"_FA")]][i]
     if(rt %in% substr(main.routes,1,4)){
       row <- row + 1
-      ROUTE[row] <- rt
+      if(rt == substr(intersection$ROUTE[i],0,4)){
+        ROUTE[row] <- intersection$ROUTE[i]
+      } else{
+        ROUTE[row] <- paste0(rt,"PM")   # assuming if direction not specified it is positive
+      }
       BEG_MP[row] <- mp - (fa/5280)
       END_MP[row] <- mp + (fa/5280)
+      MP[row] <- mp
+      Int_ID[row] <- id
     }
   }
 }
-FA <- tibble(ROUTE, BEG_MP, END_MP)
+FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID)
 
 # Separate crashes into intersection and non-intersection related
-crash$int_related <- FALSE
+crash$int_related <- FALSE       # we may just rely on int_id instead
+crash$int_id <- NA
 for(i in 1:nrow(crash)){
   rt <- crash$route[i]
   mp <- crash$milepoint[i]
@@ -200,9 +210,43 @@ for(i in 1:nrow(crash)){
                  FA$END_MP > mp)
   if(length(row) > 0 | crash$intersection_related[i] == "Y"){
     crash$int_related[i] <- TRUE
+    if(length(row) > 0){                           # identify intersection ids
+      # print(paste("ID #",crash$crash_id[i]))
+      closest <- 100
+      closest_row <- NA
+      for(k in 1:length(row)){                    # if which returns multiple intersections, return the closest
+        # print(FA$Int_ID[row[k]])
+        center <- FA$MP[row[k]]
+        dist <- abs(center - mp)
+        if(dist < closest){
+          closest <- dist
+          closest_row <- row[k]
+        }
+      }
+      crash$int_id[i] <- FA$Int_ID[closest_row]     
+    } else{                                      # figure out closest intersection if it doesn't fall under a functional area
+      row <- which(FA$ROUTE == rt)      # redefine row to entire route
+      if(length(row) > 0){
+        # print(paste("ID #",crash$crash_id[i]))
+        closest <- 100
+        closest_row <- NA
+        for(k in 1:length(row)){                    # if which returns multiple intersections, return the closest
+          center <- FA$MP[row[k]]
+          dist <- abs(center - mp)
+          if(dist < closest){
+            closest <- dist
+            closest_row <- row[k]
+          }
+        }
+        # print(paste(FA$Int_ID[closest_row],FA$MP[closest_row]))
+        if(!is.na(closest_row)){
+          crash$int_id[i] <- FA$Int_ID[closest_row]
+        }
+      }
+    }
   }
 }
 
 # Filter "Intersection Related" crashes
-crash_seg <- crash %>% filter(int_related == FALSE)
-crash_int <- crash %>% filter(int_related == TRUE)
+crash_seg <- crash %>% filter(is.na(int_id)) %>% select(-int_related,-int_id)
+crash_int <- crash %>% filter(!is.na(int_id)) %>% select(-int_related)

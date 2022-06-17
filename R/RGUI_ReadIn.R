@@ -85,7 +85,7 @@ urban_col <- c("ROUTE_ID",
 #                       "BEG_LAT",
 #                       "BEG_ELEV")
 
-intersection_fp <- "data/csv/Intersections_Compiled.csv"
+intersection_fp <- "data/csv/Intersection_w_ID_MEV_MP.csv"
 intersection_col <- c("ROUTE",
                       "UDOT_BMP",
                       "UDOT_EMP",

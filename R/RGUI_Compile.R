@@ -98,7 +98,64 @@ IC <- intersection %>%
     MIN_SPEED_LIMIT = min(c_across(INT_RT_1_SL:INT_RT_4_SL), na.rm = TRUE)
   ) %>%
   select(ROUTE, MP, Int_ID, everything()) %>%
-  select(-BEG_MP, -END_MP, -contains("INT_RT"))
+  select(-BEG_MP, -END_MP, -contains("_SL"), -contains("_FA"))
+
+# Add roadway data
+int <- IC
+att <- urban
+add_int_att <- function(int, att){
+  # create row id column for attribute data
+  att <- att %>% rownames_to_column("att_rw")
+  # identify attribute segments on intersection file
+  for(k in 1:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
+    int[[paste0("att_rw_",k)]] <- NA
+  }
+  for (i in 1:nrow(int)){
+    rt1 <- int$INT_RT_1[i]
+    mp1 <- int$INT_RT_1_MP[i]
+    rt2 <- int$INT_RT_2[i]
+    mp2 <- int$INT_RT_2_MP[i]
+    rt3 <- int$INT_RT_3[i]
+    mp3 <- int$INT_RT_3_MP[i]
+    rt4 <- int$INT_RT_4[i]
+    mp4 <- int$INT_RT_4_MP[i]
+    if(!is.na(rt1)){
+      rw1 <- which(att$ROUTE == rt1 & 
+                     att$BEG_MP < mp1 & 
+                     att$END_MP > mp1)
+    }
+    if(!is.na(rt2)){
+      rw2 <- which(att$ROUTE == rt2 & 
+                     att$BEG_MP < mp2 & 
+                     att$END_MP > mp2)
+    }
+    if(!is.na(rt3)){
+      rw3 <- which(att$ROUTE == rt3 & 
+                     att$BEG_MP < mp3 & 
+                     att$END_MP > mp3)
+    }
+    if(!is.na(rt4)){
+      rw4 <- which(att$ROUTE == rt4 & 
+                     att$BEG_MP < mp4 & 
+                     att$END_MP > mp4)
+    }
+    if(length(rw1) > 0 | length(rw2) > 0 | length(rw3) > 0 | length(rw4) > 0){
+      j <- 0
+      for(n in 1:4){
+        rw <- sym(paste0("rw",n))
+        for(m in 1:length(rw)){
+          j <- j + 1
+          int[[paste0("att_rw_",j)]][i] <- rw[m]
+        }
+      }
+    }
+  }
+  # join to segments
+  ints <- left_join(int, att, by = c("att_rw"="att_rw"))
+  # remove att_rw and return segments
+  int <- int %>% select(-contains("att_rw"))
+  return(int)
+}
 
 # Add years to intersection shell
 yrs <- crash_int %>% select(crash_year) %>% unique()

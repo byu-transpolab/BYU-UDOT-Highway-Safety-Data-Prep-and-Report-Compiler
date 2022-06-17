@@ -118,35 +118,49 @@ for(i in 1:nrow(IC)){
 # Create a Num_Legs column
 IC <- IC %>%
   mutate(
-    NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE)),
+    NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
+  ) %>%
+  mutate(
     NUM_LEGS = case_when(
       INT_TYPE == "DDI" |
       INT_TYPE == "CFI CENTRAL" |
-      INT_TYPE == "CFI OFFSET LEFT TURN" |
       INT_TYPE == "ROUNDABOUT" |
       INT_TYPE == "CFI CENTRAL" |
       INT_TYPE == "SPUI" |
       INT_TYPE == "THRU TURN CENTRAL" |
-      INT_TYPE == "THRU TURN OFFSET U-TURN"
-      ~ 4,
-      INT_TYPE == "DDI" |
-      INT_TYPE == "CFI CENTRAL" |
-      INT_TYPE == "CFI OFFSET LEFT TURN" |
-      INT_TYPE == "ROUNDABOUT" |
-      INT_TYPE == "CFI CENTRAL" |
-      INT_TYPE == "SPUI" |
-      INT_TYPE == "THRU TURN CENTRAL" |
-      INT_TYPE == "THRU TURN OFFSET U-TURN"
-      ~ 3,
-      INT_TYPE == "DDI" |
-      INT_TYPE == "CFI CENTRAL" |
-      INT_TYPE == "CFI OFFSET LEFT TURN" |
-      INT_TYPE == "ROUNDABOUT" |
-      INT_TYPE == "CFI CENTRAL" |
-      INT_TYPE == "SPUI" |
-      INT_TYPE == "THRU TURN CENTRAL" |
-      INT_TYPE == "THRU TURN OFFSET U-TURN"
-      ~ 2
+      Int_ID == "0173P-7.167-0173" |
+      Int_ID == "0173P-7.369-0173" |
+      Int_ID == "0265P-0.65-0265" |
+      Int_ID == "0265P-0.823-0256" |
+      Int_ID == "0071P-5.207-0071" |
+      Int_ID == "0126P-1.803-0126"
+      ~ 4L,
+      Int_ID == "0154P-5.602-None" |
+      Int_ID == "0154P-5.884-0154" |
+      Int_ID == "0154P-14.756-None" |
+      Int_ID == "0154P-15.072-0154" |
+      Int_ID == "0154P-15.801-None" |
+      Int_ID == "0154P-16.822-None" |
+      Int_ID == "0154P-17.054-0154" |
+      Int_ID == "0154P-17.817-None" |
+      Int_ID == "0154P-18.062-0154" |
+      Int_ID == "0154P-19.024-0154" |
+      Int_ID == "0154P-19.31-None" |
+      Int_ID == "0154P-19.6-0154" |
+      Int_ID == "0232P-0.39-None" |
+      Int_ID == "0266P-7.665-None" |
+      Int_ID == "0126P-1.61-0126"
+      ~ 3L,
+      Int_ID == "0172P-0.456-None" |
+      Int_ID == "0172P-2.775-None" |
+      Int_ID == "0289P-0.458-None" |
+      Int_ID == "0089P-366.513-None" |
+      Int_ID == "0089P-380.099-None" |
+      Int_ID == "0089P-362.667-None" |
+      Int_ID == "0126P-1.797-None" |
+      Int_ID == "0154P-18.863-None"
+      ~ 2L,
+      TRUE ~ NUM_LEGS
     )
   )
 

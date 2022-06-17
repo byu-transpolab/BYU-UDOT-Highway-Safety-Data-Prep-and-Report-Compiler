@@ -582,6 +582,91 @@ add_crash_attribute_int <- function(att_name, ints, csh){
   return(ints)
 }
 
+# Add roadway attributes to intersections function
+add_int_att <- function(int, att){
+  # create row id column for attribute data
+  att <- att %>% rownames_to_column("att_rw")
+  att$att_rw <- as.integer(att$att_rw)
+  # identify attribute segments on intersection file
+  for(k in 1:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
+    int[[paste0("att_rw_",k)]] <- NA
+  }
+  for (i in 1:nrow(int)){
+    rt1 <- int$INT_RT_1[i]
+    mp1 <- int$INT_RT_1_M[i]
+    rt2 <- int$INT_RT_2[i]
+    mp2 <- int$INT_RT_2_M[i]
+    rt3 <- int$INT_RT_3[i]
+    mp3 <- int$INT_RT_3_M[i]
+    rt4 <- int$INT_RT_4[i]
+    mp4 <- int$INT_RT_4_M[i]
+    rw1 <- which(att$ROUTE == rt1 & 
+                   att$BEG_MP < mp1 & 
+                   att$END_MP > mp1)
+    rw2 <- which(att$ROUTE == rt2 & 
+                   att$BEG_MP < mp2 & 
+                   att$END_MP > mp2)
+    rw3 <- which(att$ROUTE == rt3 & 
+                   att$BEG_MP < mp3 & 
+                   att$END_MP > mp3)
+    rw4 <- which(att$ROUTE == rt4 & 
+                   att$BEG_MP < mp4 & 
+                   att$END_MP > mp4)
+    if(length(rw1) > 0){
+      int$att_rw_1[i] <- att$att_rw[rw1]
+    }
+    if(length(rw2) > 0){
+      int$att_rw_2[i] <- att$att_rw[rw2]
+    }
+    if(length(rw3) > 0){
+      int$att_rw_3[i] <- att$att_rw[rw3]
+    }
+    if(length(rw4) > 0){
+      int$att_rw_4[i] <- att$att_rw[rw4]
+    }
+    # for(n in 1:4){
+    #   rw <- sym(paste0("rw",n))
+    #   if(length(rw) > 0){
+    #     int[[paste0("att_rw_",n)]][i] <- rw
+    #   }
+    # }
+  }
+  # remove basic info from att to avoid redundancy
+  att <- att %>% select(-ROUTE, -BEG_MP, -END_MP)
+  # join to segments
+  int <- left_join(int, att, by = c("att_rw_1"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_2"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_3"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_4"="att_rw"))
+  # determine max, min, etc...
+  for(i in colnames(int)){
+    if(substrRight(i,4) == ".y.y"){
+      var <- substrMinusRight(i,4)
+      int <- int %>%
+        rowwise() %>%
+        mutate(
+          !!sym(paste0("MAX_",var)) := max(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
+          !!sym(paste0("MIN_",var)) := min(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
+          !!sym(paste0("AVG_",var)) := mean(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
+          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".x")),
+          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".y")),
+          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".x.x")),
+          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".y.y"))
+        )
+    }
+  }
+  # remove att_rw info and return segments
+  int <- int %>% select(-contains("att_rw"), -contains(".x"), -contains(".y"))
+  return(int)
+}
+
+# Simple computational functions
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+substrMinusRight <- function(x, n){
+  substr(x, 1, nchar(x)-n)
+}
 
 
 

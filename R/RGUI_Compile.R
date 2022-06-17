@@ -100,62 +100,72 @@ IC <- intersection %>%
   select(ROUTE, MP, Int_ID, everything()) %>%
   select(-BEG_MP, -END_MP, -contains("_SL"), -contains("_FA"))
 
-# Add roadway data
-int <- IC
-att <- urban
-add_int_att <- function(int, att){
-  # create row id column for attribute data
-  att <- att %>% rownames_to_column("att_rw")
-  # identify attribute segments on intersection file
-  for(k in 1:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
-    int[[paste0("att_rw_",k)]] <- NA
-  }
-  for (i in 1:nrow(int)){
-    rt1 <- int$INT_RT_1[i]
-    mp1 <- int$INT_RT_1_MP[i]
-    rt2 <- int$INT_RT_2[i]
-    mp2 <- int$INT_RT_2_MP[i]
-    rt3 <- int$INT_RT_3[i]
-    mp3 <- int$INT_RT_3_MP[i]
-    rt4 <- int$INT_RT_4[i]
-    mp4 <- int$INT_RT_4_MP[i]
-    if(!is.na(rt1)){
-      rw1 <- which(att$ROUTE == rt1 & 
-                     att$BEG_MP < mp1 & 
-                     att$END_MP > mp1)
-    }
-    if(!is.na(rt2)){
-      rw2 <- which(att$ROUTE == rt2 & 
-                     att$BEG_MP < mp2 & 
-                     att$END_MP > mp2)
-    }
-    if(!is.na(rt3)){
-      rw3 <- which(att$ROUTE == rt3 & 
-                     att$BEG_MP < mp3 & 
-                     att$END_MP > mp3)
-    }
-    if(!is.na(rt4)){
-      rw4 <- which(att$ROUTE == rt4 & 
-                     att$BEG_MP < mp4 & 
-                     att$END_MP > mp4)
-    }
-    if(length(rw1) > 0 | length(rw2) > 0 | length(rw3) > 0 | length(rw4) > 0){
-      j <- 0
-      for(n in 1:4){
-        rw <- sym(paste0("rw",n))
-        for(m in 1:length(rw)){
-          j <- j + 1
-          int[[paste0("att_rw_",j)]][i] <- rw[m]
-        }
+# append "PM" or "NM" to routes
+for(i in 1:nrow(IC)){
+  id <- IC[["Int_ID"]][i]
+  for(j in 1:4){
+    rt <- IC[[paste0("INT_RT_",j)]][i]
+    if(rt %in% substr(main.routes,1,4)){
+      if(rt == substr(IC$ROUTE[i],0,4)){
+        IC[[paste0("INT_RT_",j)]][i] <- IC$ROUTE[i]
+      } else{
+        IC[[paste0("INT_RT_",j)]][i] <- paste0(rt,"PM")   # assuming if direction not specified it is positive
       }
     }
   }
-  # join to segments
-  ints <- left_join(int, att, by = c("att_rw"="att_rw"))
-  # remove att_rw and return segments
-  int <- int %>% select(-contains("att_rw"))
-  return(int)
 }
+
+# Create a Num_Legs column
+IC <- IC %>%
+  mutate(
+    NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE)),
+    NUM_LEGS = case_when(
+      INT_TYPE == "DDI" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "CFI OFFSET LEFT TURN" |
+      INT_TYPE == "ROUNDABOUT" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "SPUI" |
+      INT_TYPE == "THRU TURN CENTRAL" |
+      INT_TYPE == "THRU TURN OFFSET U-TURN"
+      ~ 4,
+      INT_TYPE == "DDI" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "CFI OFFSET LEFT TURN" |
+      INT_TYPE == "ROUNDABOUT" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "SPUI" |
+      INT_TYPE == "THRU TURN CENTRAL" |
+      INT_TYPE == "THRU TURN OFFSET U-TURN"
+      ~ 3,
+      INT_TYPE == "DDI" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "CFI OFFSET LEFT TURN" |
+      INT_TYPE == "ROUNDABOUT" |
+      INT_TYPE == "CFI CENTRAL" |
+      INT_TYPE == "SPUI" |
+      INT_TYPE == "THRU TURN CENTRAL" |
+      INT_TYPE == "THRU TURN OFFSET U-TURN"
+      ~ 2
+    )
+  )
+
+# Add roadway data
+IC <- add_int_att(IC, urban) %>% 
+  select(-(MIN_URBAN_CODE:URBAN_CODE_4)) %>%
+  rename(URBAN_CODE = MAX_URBAN_CODE)
+IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
+  select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
+
+IC <- add_int_att(IC, aadt)  
+IC <- IC %>%
+  select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
+         -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
+         -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK")) %>%
+  
+
+IC <- add_int_att(IC, lane) %>%
+  select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
 
 # Add years to intersection shell
 yrs <- crash_int %>% select(crash_year) %>% unique()

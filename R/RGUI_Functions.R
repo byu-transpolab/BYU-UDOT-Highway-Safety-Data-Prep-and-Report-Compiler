@@ -583,7 +583,9 @@ add_crash_attribute_int <- function(att_name, ints, csh){
 }
 
 # Add roadway attributes to intersections function
-add_int_att <- function(int, att){
+add_int_att <- function(int, att, is_aadt){
+  # optional arguments
+  if(missing(is_aadt)) {is_aadt <- FALSE}
   # create row id column for attribute data
   att <- att %>% rownames_to_column("att_rw")
   att$att_rw <- as.integer(att$att_rw)
@@ -639,24 +641,150 @@ add_int_att <- function(int, att){
   int <- left_join(int, att, by = c("att_rw_3"="att_rw"))
   int <- left_join(int, att, by = c("att_rw_4"="att_rw"))
   # determine max, min, etc...
-  for(i in colnames(int)){
-    if(substrRight(i,4) == ".y.y"){
-      var <- substrMinusRight(i,4)
-      int <- int %>%
-        rowwise() %>%
-        mutate(
-          !!sym(paste0("MAX_",var)) := max(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
-          !!sym(paste0("MIN_",var)) := min(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
-          !!sym(paste0("AVG_",var)) := mean(c_across(!!sym(paste0(var,".x")):!!sym(paste0(var,".y.y"))), na.rm = TRUE),
-          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".x")),
-          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".y")),
-          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".x.x")),
-          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".y.y"))
-        )
+  if(is_aadt == FALSE){
+    for(i in colnames(int)){
+      if(substrRight(i,4) == ".y.y"){
+        var <- substrMinusRight(i,4)
+        int <- int %>%
+          rowwise() %>%
+          mutate(
+            !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".x")),
+                                               !!sym(paste0(var,".y")),
+                                               !!sym(paste0(var,".x.x")),
+                                               !!sym(paste0(var,".y.y"))), 
+                                             na.rm = TRUE),
+            !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".x")),
+                                               !!sym(paste0(var,".y")),
+                                               !!sym(paste0(var,".x.x")),
+                                               !!sym(paste0(var,".y.y"))), 
+                                             na.rm = TRUE),
+            !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".x")),
+                                                !!sym(paste0(var,".y")),
+                                                !!sym(paste0(var,".x.x")),
+                                                !!sym(paste0(var,".y.y"))), 
+                                              na.rm = TRUE),
+            !!sym(paste0(var,"_1")) := !!sym(paste0(var,".x")),
+            !!sym(paste0(var,"_2")) := !!sym(paste0(var,".y")),
+            !!sym(paste0(var,"_3")) := !!sym(paste0(var,".x.x")),
+            !!sym(paste0(var,"_4")) := !!sym(paste0(var,".y.y"))
+          )
+      }
+    }
+  }
+  # aadt specific
+  if(is_aadt == TRUE){
+    for(i in colnames(int)){
+      if(substrRight(i,4) == ".y.y"){
+        var <- substrMinusRight(i,4)
+        if(substr(var,1,4) == "AADT"){
+          int <- int %>%
+            rowwise() %>%
+            mutate(
+              KNOWN_LEGS := 4L - sum(is.na(c(!!sym(paste0(var,".x")),
+                                             !!sym(paste0(var,".y")),
+                                             !!sym(paste0(var,".x.x")),
+                                             !!sym(paste0(var,".y.y"))))),
+              !!sym(var) := case_when(
+                NUM_LEGS == KNOWN_LEGS ~ !!sym(paste0(var,".x"))/2 + 
+                                          !!sym(paste0(var,".y"))/2 + 
+                                          !!sym(paste0(var,".x.x"))/2 + 
+                                          !!sym(paste0(var,".y.y"))/2,
+                (NUM_LEGS-KNOWN_LEGS) == 1L ~ !!sym(paste0(var,".x"))/2 + 
+                                              !!sym(paste0(var,".y"))/2 + 
+                                              !!sym(paste0(var,".x.x"))/2 + 
+                                              !!sym(paste0(var,".y.y"))/2 +
+                                              (!!sym(paste0(var,".x"))/2 + 
+                                              !!sym(paste0(var,".y"))/2 + 
+                                              !!sym(paste0(var,".x.x"))/2 + 
+                                              !!sym(paste0(var,".y.y"))/2) /
+                                              KNOWN_LEGS * 1,
+                (NUM_LEGS-KNOWN_LEGS) == 2L ~ !!sym(paste0(var,".x"))/2 + 
+                                              !!sym(paste0(var,".y"))/2 + 
+                                              !!sym(paste0(var,".x.x"))/2 + 
+                                              !!sym(paste0(var,".y.y"))/2 +
+                                              (!!sym(paste0(var,".x"))/2 + 
+                                                 !!sym(paste0(var,".y"))/2 + 
+                                                 !!sym(paste0(var,".x.x"))/2 + 
+                                                 !!sym(paste0(var,".y.y"))/2) /
+                                              KNOWN_LEGS * 2,
+                (NUM_LEGS-KNOWN_LEGS) == 3L ~ !!sym(paste0(var,".x"))/2 + 
+                                              !!sym(paste0(var,".y"))/2 + 
+                                              !!sym(paste0(var,".x.x"))/2 + 
+                                              !!sym(paste0(var,".y.y"))/2 +
+                                              (!!sym(paste0(var,".x"))/2 + 
+                                                 !!sym(paste0(var,".y"))/2 + 
+                                                 !!sym(paste0(var,".x.x"))/2 + 
+                                                 !!sym(paste0(var,".y.y"))/2) /
+                                              KNOWN_LEGS * 3,
+                (NUM_LEGS-KNOWN_LEGS) == 4L ~ !!sym(paste0(var,".x"))/2 + 
+                                              !!sym(paste0(var,".y"))/2 + 
+                                              !!sym(paste0(var,".x.x"))/2 + 
+                                              !!sym(paste0(var,".y.y"))/2 +
+                                              (!!sym(paste0(var,".x"))/2 + 
+                                                 !!sym(paste0(var,".y"))/2 + 
+                                                 !!sym(paste0(var,".x.x"))/2 + 
+                                                 !!sym(paste0(var,".y.y"))/2) /
+                                              KNOWN_LEGS * 4
+              )
+            )
+        } else{
+          int <- int %>%
+            rowwise() %>%
+            mutate(
+              KNOWN_LEGS := 4L - sum(is.na(c(!!sym(paste0(var,".x")),
+                                             !!sym(paste0(var,".y")),
+                                             !!sym(paste0(var,".x.x")),
+                                             !!sym(paste0(var,".y.y"))))),
+              !!sym(var) := case_when(
+                NUM_LEGS == KNOWN_LEGS ~ mean(c(!!sym(paste0(var,".x")),
+                                                !!sym(paste0(var,".y")),
+                                                !!sym(paste0(var,".x.x")),
+                                                !!sym(paste0(var,".y.y"))), 
+                                              na.rm = TRUE),
+                (NUM_LEGS-KNOWN_LEGS) == 1L ~ (!!sym(paste0(var,".x")) + 
+                                              !!sym(paste0(var,".y")) + 
+                                              !!sym(paste0(var,".x.x")) + 
+                                              !!sym(paste0(var,".y.y")) +
+                                              mean(c(!!sym(paste0(var,".x")),
+                                                     !!sym(paste0(var,".y")),
+                                                     !!sym(paste0(var,".x.x")),
+                                                     !!sym(paste0(var,".y.y"))), 
+                                                   na.rm = TRUE) * 1) / NUM_LEGS,
+                (NUM_LEGS-KNOWN_LEGS) == 2L ~ (!!sym(paste0(var,".x")) + 
+                                              !!sym(paste0(var,".y")) + 
+                                              !!sym(paste0(var,".x.x")) + 
+                                              !!sym(paste0(var,".y.y")) +
+                                              mean(c(!!sym(paste0(var,".x")),
+                                                     !!sym(paste0(var,".y")),
+                                                     !!sym(paste0(var,".x.x")),
+                                                     !!sym(paste0(var,".y.y"))), 
+                                                   na.rm = TRUE) * 2) / NUM_LEGS,
+                (NUM_LEGS-KNOWN_LEGS) == 3L ~ (!!sym(paste0(var,".x")) + 
+                                              !!sym(paste0(var,".y")) + 
+                                              !!sym(paste0(var,".x.x")) + 
+                                              !!sym(paste0(var,".y.y")) +
+                                              mean(c(!!sym(paste0(var,".x")),
+                                                     !!sym(paste0(var,".y")),
+                                                     !!sym(paste0(var,".x.x")),
+                                                     !!sym(paste0(var,".y.y"))), 
+                                                   na.rm = TRUE) * 3) / NUM_LEGS,
+                (NUM_LEGS-KNOWN_LEGS) == 4L ~ (!!sym(paste0(var,".x")) + 
+                                             !!sym(paste0(var,".y")) + 
+                                             !!sym(paste0(var,".x.x")) + 
+                                             !!sym(paste0(var,".y.y")) +
+                                             mean(c(!!sym(paste0(var,".x")),
+                                                    !!sym(paste0(var,".y")),
+                                                    !!sym(paste0(var,".x.x")),
+                                                    !!sym(paste0(var,".y.y"))), 
+                                                  na.rm = TRUE) * 4) / NUM_LEGS
+              )
+            )
+        }
+      }
     }
   }
   # remove att_rw info and return segments
-  int <- int %>% select(-contains("att_rw"), -contains(".x"), -contains(".y"))
+  int <- int %>% ungroup %>% select(-contains("att_rw"), -contains(".x"), -contains(".y"))
   return(int)
 }
 

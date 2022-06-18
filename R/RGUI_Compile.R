@@ -170,22 +170,20 @@ IC <- add_int_att(IC, urban) %>%
   rename(URBAN_CODE = MAX_URBAN_CODE)
 IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
-
-IC <- add_int_att(IC, aadt) %>%
-  select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
-         -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
-         -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK"))
-  
-
+IC <- add_int_att(IC, aadt, TRUE)
+  # select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
+  #        -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
+  #        -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK"))
 IC <- add_int_att(IC, lane) %>%
   select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
 
 # Add years to intersection shell
-yrs <- crash_int %>% select(crash_year) %>% unique()
-IC <- IC %>%
-  group_by(Int_ID) %>%
-  slice(rep(row_number(), times = nrow(yrs))) %>%
-  mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
+# yrs <- crash_int %>% select(crash_year) %>% unique()
+# IC <- IC %>%
+#   group_by(Int_ID) %>%
+#   slice(rep(row_number(), times = nrow(yrs))) %>%
+#   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
+IC <- pivot_aadt(IC) %<% rename(ENT_VEH = AADT)
 
 # Add Intersection Crash Attributes
 IC <- add_crash_attribute_int("crash_severity_id", IC, crash_int)
@@ -239,6 +237,7 @@ IC <- IC %>%
 ## Write to output
 ###
 
-output <- paste0("data/output/",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
-write_csv(RC, file = paste0("CAMS",output))
-write_csv(IC, file = paste0("ISAM",output))
+CAMSoutput <- paste0("data/output/CAMS_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
+write_csv(RC, file = CAMSoutput)
+ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
+write_csv(IC, file = ISAMoutput)

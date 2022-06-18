@@ -171,11 +171,10 @@ IC <- add_int_att(IC, urban) %>%
 IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
 
-IC <- add_int_att(IC, aadt)  
-IC <- IC %>%
+IC <- add_int_att(IC, aadt) %>%
   select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
          -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
-         -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK")) %>%
+         -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK"))
   
 
 IC <- add_int_att(IC, lane) %>%

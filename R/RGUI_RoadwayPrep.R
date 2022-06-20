@@ -208,3 +208,126 @@ RC <- pivot_aadt(RC)
 # RC$AADT <- as.numeric(RC$AADT)
 # RC$SUTRK <- as.numeric(RC$SUTRK)
 # RC$CUTRK <- as.numeric(RC$CUTRK)
+
+
+
+
+###
+## Create Intersection Roadway data shell
+###
+
+# Create shell for intersection file
+IC <- intersection %>% 
+  rowwise() %>%
+  mutate(
+    MP = BEG_MP,
+    MAX_SPEED_LIMIT = max(c_across(INT_RT_1_SL:INT_RT_4_SL), na.rm = TRUE),
+    MIN_SPEED_LIMIT = min(c_across(INT_RT_1_SL:INT_RT_4_SL), na.rm = TRUE)
+  ) %>%
+  select(ROUTE, MP, Int_ID, everything()) %>%
+  select(-BEG_MP, -END_MP, -contains("_SL"), -contains("_FA"))
+
+# append "PM" or "NM" to routes
+for(i in 1:nrow(IC)){
+  id <- IC[["Int_ID"]][i]
+  for(j in 1:4){
+    rt <- IC[[paste0("INT_RT_",j)]][i]
+    if(rt %in% substr(main.routes,1,4)){
+      if(rt == substr(IC$ROUTE[i],0,4)){
+        IC[[paste0("INT_RT_",j)]][i] <- IC$ROUTE[i]
+      } else{
+        IC[[paste0("INT_RT_",j)]][i] <- paste0(rt,"PM")   # assuming if direction not specified it is positive
+      }
+    }
+  }
+}
+
+# Create a Num_Legs column
+IC <- IC %>%
+  mutate(
+    NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
+  ) %>%
+  mutate(
+    NUM_LEGS = case_when(
+      INT_TYPE == "DDI" |
+        INT_TYPE == "CFI CENTRAL" |
+        INT_TYPE == "ROUNDABOUT" |
+        INT_TYPE == "CFI CENTRAL" |
+        INT_TYPE == "SPUI" |
+        INT_TYPE == "THRU TURN CENTRAL" |
+        Int_ID == "0173P-7.167-0173" |
+        Int_ID == "0173P-7.369-0173" |
+        Int_ID == "0265P-0.65-0265" |
+        Int_ID == "0265P-0.823-0256" |
+        Int_ID == "0071P-5.207-0071" |
+        Int_ID == "0126P-1.803-0126"
+      ~ 4L,
+      Int_ID == "0154P-5.602-None" |
+        Int_ID == "0154P-5.884-0154" |
+        Int_ID == "0154P-14.756-None" |
+        Int_ID == "0154P-15.072-0154" |
+        Int_ID == "0154P-15.801-None" |
+        Int_ID == "0154P-16.822-None" |
+        Int_ID == "0154P-17.054-0154" |
+        Int_ID == "0154P-17.817-None" |
+        Int_ID == "0154P-18.062-0154" |
+        Int_ID == "0154P-19.024-0154" |
+        Int_ID == "0154P-19.31-None" |
+        Int_ID == "0154P-19.6-0154" |
+        Int_ID == "0232P-0.39-None" |
+        Int_ID == "0266P-7.665-None" |
+        Int_ID == "0126P-1.61-0126"
+      ~ 3L,
+      Int_ID == "0172P-0.456-None" |
+        Int_ID == "0172P-2.775-None" |
+        Int_ID == "0289P-0.458-None" |
+        Int_ID == "0089P-366.513-None" |
+        Int_ID == "0089P-380.099-None" |
+        Int_ID == "0089P-362.667-None" |
+        Int_ID == "0126P-1.797-None" |
+        Int_ID == "0154P-18.863-None"
+      ~ 2L,
+      TRUE ~ NUM_LEGS
+    )
+  )
+
+# Add spatial data
+IC <- IC %>%
+  st_as_sf(
+    coords = c("BEG_LONG", "BEG_LAT"), 
+    crs = 4326,
+    remove = F) %>%
+  st_transform(crs = 26912)
+# load UTA stops shapefile
+UTA_stops <- read_sf("data/shapefile/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(UTA_StopID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# load schools (not college) shapefile
+schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(SchoolID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# modify intersections to include bus stops and schools nearby (also removes spatial)
+IC <- mod_intersections(IC,UTA_Stops,schools)
+
+# Add roadway data
+IC <- add_int_att(IC, urban) %>% 
+  select(-(MIN_URBAN_CODE:URBAN_CODE_4)) %>%
+  rename(URBAN_CODE = MAX_URBAN_CODE)
+IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
+  select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
+IC <- add_int_att(IC, aadt, TRUE)
+# select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
+#        -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
+#        -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK"))
+IC <- add_int_att(IC, lane) %>%
+  select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
+
+# Add years to intersection shell
+# yrs <- crash_int %>% select(crash_year) %>% unique()
+# IC <- IC %>%
+#   group_by(Int_ID) %>%
+#   slice(rep(row_number(), times = nrow(yrs))) %>%
+#   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
+IC <- pivot_aadt(IC) %>% rename(ENT_VEH = AADT)

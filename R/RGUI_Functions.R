@@ -796,6 +796,22 @@ substrMinusRight <- function(x, n){
   substr(x, 1, nchar(x)-n)
 }
 
+# Modify intersections to include bus stops and schools near intersections
+mod_intersections <- function(intersections,UTA_Stops,schools){
+  intersections <- st_join(intersections, schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID)
+  
+  intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+    select(-UTA_StopID)
+  
+  intersections <- unique(intersections)
+  st_drop_geometry(intersections)
+}
+
 
 
 

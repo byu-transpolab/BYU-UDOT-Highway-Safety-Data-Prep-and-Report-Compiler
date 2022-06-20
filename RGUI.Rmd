@@ -18,7 +18,7 @@ source("R/RGUI_Functions.R")
 source("R/RGUI_ReadIn.R")
 ```
 
-```{r code, include=FALSE}
+```{r code, warning=FALSE, include=FALSE}
 
 source("R/RGUI_CrashPrep.R")
 source("R/RGUI_RoadwayPrep.R")

@@ -301,15 +301,19 @@ IC <- IC %>%
 # load UTA stops shapefile
 UTA_stops <- read_sf("data/shapefile/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
   st_transform(crs = 26912) %>%
-  select(UTA_StopID) %>%
+  select(UTA_StopID, Mode) %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
 # load schools (not college) shapefile
 schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
   st_transform(crs = 26912) %>%
-  select(SchoolID) %>%
+  select(SchoolID, SchoolLeve, OnlineScho, SchoolType, TotalK12) %>%
+  filter(is.na(OnlineScho), SchoolType == "Vocational" | SchoolType == "Special Education" | SchoolType == "Residential Treatment" | SchoolType == "Regular Education" | SchoolType == "Alternative") %>%
+  select(-OnlineScho, -SchoolType, -TotalK12) %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
-# modify intersections to include bus stops and schools nearby (also removes spatial)
+# modify intersections to include bus stops and schools nearby
 IC <- mod_intersections(IC,UTA_Stops,schools)
+# remove spatial info
+st_drop_geometry(IC)
 
 # Add roadway data
 IC <- add_int_att(IC, urban) %>% 

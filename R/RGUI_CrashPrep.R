@@ -12,8 +12,8 @@ library(dplyr)
 # Join Crash Files
 crash <- left_join(location,rollups,by='crash_id')
 
-# Join Crash Vehicle File
-fullcrash <- left_join(crash,vehicle,by='crash_id')
+# # Join Crash Vehicle File
+# fullcrash <- left_join(crash,vehicle,by='crash_id')
 
 # Filter out Ramps
 crash <- crash %>% filter(is.na(ramp_id) | ramp_id == 0)
@@ -30,6 +30,12 @@ crash$route <- paste(substr(crash$route, 1, 6), "M", sep = "")
 crash$route <- paste0("000", crash$route)
 crash$route <- substr(crash$route, nchar(crash$route)-6+1, nchar(crash$route))
 crash <- crash %>% filter(route %in% substr(main.routes, 1, 6))
+
+# Add number of vehicles column
+vehicle <- vehicle %>%
+  group_by(crash_id) %>%
+  mutate(num_veh = n())
+crash <- left_join(crash, vehicle %>% select(crash_id,num_veh), by = "crash_id")
 
 # Create functional area reference table
 FA_ref <- tibble(
@@ -250,3 +256,4 @@ for(i in 1:nrow(crash)){
 # Filter "Intersection Related" crashes
 crash_seg <- crash %>% filter(is.na(int_id)) %>% select(-int_related,-int_id)
 crash_int <- crash %>% filter(!is.na(int_id)) %>% select(-int_related)
+

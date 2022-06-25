@@ -313,7 +313,7 @@ schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
 # modify intersections to include bus stops and schools nearby
 IC <- mod_intersections(IC,UTA_Stops,schools)
 # remove spatial info
-st_drop_geometry(IC)
+IC <- st_drop_geometry(IC)
 
 # Add roadway data
 IC <- add_int_att(IC, urban) %>% 
@@ -334,4 +334,5 @@ IC <- add_int_att(IC, lane) %>%
 #   group_by(Int_ID) %>%
 #   slice(rep(row_number(), times = nrow(yrs))) %>%
 #   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
-IC <- pivot_aadt(IC) %>% rename(ENT_VEH = AADT)
+IC <- pivot_aadt(IC) 
+IC <- IC %>% rename(ENT_VEH = AADT)

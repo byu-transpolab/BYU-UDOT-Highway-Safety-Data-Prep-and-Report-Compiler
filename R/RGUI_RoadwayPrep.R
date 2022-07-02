@@ -39,6 +39,8 @@ RC <- c(list(shell), joined_populated) %>%
 # Compressing by combining rows identical except for identifying information 
 
 RC <- compress_seg_alt(RC)
+RC <- RC %>% unique()
+RC <- compress_seg_ovr(RC)
 
 
 ###
@@ -85,6 +87,28 @@ for(i in 1:nrow(RC)){
 }
 
 RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
+
+# Compressing segments by length
+test <- compress_seg_len(RC, 0.1)
+
+for(i in 2:nrow(test)){
+  if(test$BEG_MP[i] > test$END_MP[i-1] &
+     test$ROUTE[i] == test$ROUTE[i-1]){
+    chk <- 0
+    for(j in 1:nrow(gaps)){
+      if(test$ROUTE[i] == gaps$ROUTE[j] &
+         round(test$BEG_MP[i],2) == round(gaps$END_GAP[j],2)){
+        chk <- 1
+      }
+    }
+    if(chk == 0){
+      print(paste("unwanted gap at",test$ROUTE[i],test$BEG_MP[i]))
+    }
+  }
+  if(test$BEG_MP[i] < test$END_MP[i-1]){
+    print(paste("overlap at",test$ROUTE[i],test$BEG_MP[i]))
+  }
+}
 
 
 ###
@@ -185,7 +209,7 @@ for (i in 1:nrow(RC)){
 # record time
 end.time <- Sys.time()
 time.taken <- end.time - start.time
-print(paste("Time taken for code to run:", time.taken))
+print(paste("Time taken to add shoulders data to segments:", time.taken))
 
 # Add segment id column
 RC <- RC %>% rowid_to_column("SEG_ID")
@@ -193,7 +217,7 @@ RC <- RC %>% rowid_to_column("SEG_ID")
 # Save a copy for future use
 RC_byseg <- RC
 
-# Pivot AADT
+# Pivot AADT (add years)
 RC <- pivot_aadt(RC)
 
 # Fixed this with the values_fn parameter of pivot_wider()

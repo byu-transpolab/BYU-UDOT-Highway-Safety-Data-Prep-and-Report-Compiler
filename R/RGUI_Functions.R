@@ -89,7 +89,7 @@ compress_seg <- function(df, col, variables) {
   # record time
   end.time <- Sys.time()
   time.taken <- end.time - start.time
-  print(paste("Time taken for code to run:", time.taken))
+  print(paste("Time taken for compress segments to run:", time.taken))
   # return df
   return(df)
 } 
@@ -108,7 +108,7 @@ compress_seg_alt <- function(df) {
   count <- 0
   for (i in 1:(nrow(df) - 1)) {
     if (identical(df[i, -c(2, 3)], df[i + 1, -c(2, 3)]) &   # check for identical rows except for milepoints
-        df$END_MP[i] == df$BEG_MP[i+1]) {                   # and check that there is no gap between segments
+        df$END_MP[i] >= df$BEG_MP[i+1]) {                   # and check that there is no gap between segments
       df$dropflag[i] <- TRUE
       df[i + 1, 2] <- df[i, 2]    # change beg_mp to match previous
       count <- count + 1
@@ -125,7 +125,114 @@ compress_seg_alt <- function(df) {
   # record time
   end.time <- Sys.time()
   time.taken <- end.time - start.time
-  print(paste("Time taken for code to run:", time.taken))
+  print(paste("Time taken for compress segments to run:", time.taken))
+  # return df
+  return(df)
+}
+
+# Function to compress overlapping segments
+compress_seg_ovr <- function(df) {
+  # start timer
+  start.time <- Sys.time()
+  # sort and filter
+  df <- df %>% 
+    filter(BEG_MP < END_MP) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+    arrange(ROUTE, BEG_MP)
+  # Adjust road segment boundaries and flag duplicate rows for deletion.
+  df$dropflag <- FALSE
+  count <- 0
+  for (i in 1:(nrow(df) - 1)) {
+    if (df$END_MP[i] > df$BEG_MP[i+1]) {        # check for overlaps
+      df$dropflag[i] <- TRUE
+      df[i + 1, 2] <- df[i, 2]    # change beg_mp to match previous
+      count <- count + 1
+    }
+  }
+  # Remove flagged rows
+  df <- df %>%
+    filter(dropflag == FALSE) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    select(-dropflag) %>%
+    arrange(ROUTE, BEG_MP)
+  # report the number of combined rows
+  print(paste("combined", count, "rows"))
+  # record time
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(paste("Time taken for compress segments to run:", time.taken))
+  # return df
+  return(df)
+}
+
+# Function to compress segments by segment length
+compress_seg_len <- function(df, len) {
+  # start timer
+  start.time <- Sys.time()
+  # check that length is reasonable
+  if(len >= 1){stop("this length may be too long and may damage the data. ending function")}
+  # sort and filter
+  df <- df %>% 
+    filter(BEG_MP < END_MP) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>% 
+    arrange(ROUTE, BEG_MP)
+  # Adjust road segment boundaries and flag duplicate rows for deletion.
+  df$dropflag <- FALSE
+  count <- 0
+  for (i in 1:(nrow(df) - 1)) {
+    # check the segment length
+    if (df$END_MP[i] - df$BEG_MP[i] < len){     
+      df$dropflag[i] <- TRUE
+      # check that there is no gap after seg and the routes match
+      if(df$END_MP[i] == df$BEG_MP[i+1] &
+         df$ROUTE[i] == df$ROUTE[i+1]){   
+        # count number of columns that match
+        match <- 0
+        for(j in 1:ncol(df)){
+          # print(paste(df[i,j], df[i+1,j]))
+          this <- df[i,j]
+          that <- df[i+1,j]
+          if(is.na(this)){this = "N/A"}     # treat NA as unique string to avoid errors
+          if(is.na(that)){that = "N/A"}
+          if(this == that){
+            match <- match + 1
+          }
+        }
+        # determine percent matching (excluding first three columns since we know routes match and milepoints don't)
+        perc <- (match-1)/(ncol(df)-3) 
+        # if percent matching is at least 50% or the previous route doesn't match or the previous route was also too small
+        if(perc >= 0.5 | df$ROUTE[i] != df$ROUTE[i-1] | k > 1){                        
+          df[i + 1, 2] <- df[i, 2]    # change next beg_mp to match this beg_mp
+        } else{
+          df[i - k, 3] <- df[i, 3]    # change previous end_mp to match this end_mp
+        }
+      # if there is no gap before and routes don't change before
+      } else if(df$BEG_MP[i] == df$END_MP[i-k] &
+                df$ROUTE[i] == df$ROUTE[i-k]){                                  
+        df[i - k, 3] <- df[i, 3]      # change previous end_mp to match this end_mp
+      } else{
+        df$dropflag[i] <- FALSE
+        count <- count - 1
+        k <- 0
+      }
+      count <- count + 1              # count flagged rows
+      k <- k + 1                      # we need to keep track of adjacent small segments
+    } else{
+      k <- 1        
+    }
+  }
+  # Remove flagged rows
+  df <- df %>%
+    filter(dropflag == FALSE) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    select(-dropflag) %>%
+    arrange(ROUTE, BEG_MP)
+  # report the number of combined rows
+  print(paste("combined", count, "rows"))
+  # record time
+  end.time <- Sys.time()
+  time.taken <- end.time - start.time
+  print(paste("Time taken for compress segments to run:", time.taken))
   # return df
   return(df)
 }
@@ -267,7 +374,7 @@ aadt_neg <- function(aadt, rtes, divd){
   return(df)
 }
 
-# Fix last ending milepoints
+# Fix last ending milepoints (This is also a backchecker for the input files)
 fix_endpoints <- function(df, routes){  
   error_count <- 0
   error_count2 <- 0

@@ -143,10 +143,10 @@ RC$Left_Shoulder_Min <- 0
 # shoulder <- shoulder %>% arrange(ROUTE, MP)
 # RC <- RC %>% arrange(ROUTE, BEG_MP, END_MP)
 # row <- 1
+
+# start timer
+start.time <- Sys.time()
 for (i in 1:nrow(RC)){
-  # start timer
-  start.time <- Sys.time()
-  
   RCroute <- RC[["ROUTE"]][i]
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]

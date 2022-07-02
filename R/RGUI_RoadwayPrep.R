@@ -38,41 +38,18 @@ RC <- c(list(shell), joined_populated) %>%
 
 # Compressing by combining rows identical except for identifying information 
 
-RC <- compress_seg_alt(RC)
 RC <- RC %>% unique()
 RC <- compress_seg_ovr(RC)
-
+RC <- compress_seg_alt(RC)
 
 ###
 ## Fix Spatial Gaps
 ###
 
-# Use fc file to build a gaps dataset
-gaps <- read_csv_file(fc_fp, fc_col)
-names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-gaps <- gaps %>% filter(grepl("M", ROUTE))
-gaps <- gaps %>% filter(grepl("State", RouteType))
-
-gaps <- gaps %>%
-  select(ROUTE, BEG_MP, END_MP) %>% 
-  arrange(ROUTE, BEG_MP)
-
-gaps$BEG_GAP <- 0
-gaps$END_GAP <- 0
-for(i in 1:(nrow(gaps)-1)){
-  if(gaps$ROUTE[i] == gaps$ROUTE[i+1] & gaps$END_MP[i] < gaps$BEG_MP[i+1]){
-    gaps$BEG_GAP[i] <- gaps$END_MP[i]
-    gaps$END_GAP[i] <- gaps$BEG_MP[i+1]
-  }
-}
-
-gaps <- gaps %>%
-  select(ROUTE, BEG_GAP, END_GAP) %>%
-  filter(BEG_GAP != 0)
-
 # Delete segments which fall within gaps
 RC <- RC %>% mutate(MID_MP = BEG_MP + (END_MP - BEG_MP) / 2)
 
+count <- 0
 RC$flag <- 0
 for(i in 1:nrow(RC)){
   for(j in 1:nrow(gaps)){
@@ -82,15 +59,21 @@ for(i in 1:nrow(RC)){
        RC$END_MP[i] <= gaps$END_GAP[j] &
        RC$ROUTE[i] == gaps$ROUTE[j]){
       RC$flag[i] <- 1
+      count <- count + 1
     }
   }
 }
 
 RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
+print(paste("deleted",count,"segments within gaps"))
 
 # Compressing segments by length
-test <- compress_seg_len(RC, 0.1)
+RC <- compress_seg_len(RC, 0.1)
 
+# Check segments for issues
+test <- RC
+err1 <- 0
+err2 <- 0
 for(i in 2:nrow(test)){
   if(test$BEG_MP[i] > test$END_MP[i-1] &
      test$ROUTE[i] == test$ROUTE[i-1]){
@@ -103,12 +86,18 @@ for(i in 2:nrow(test)){
     }
     if(chk == 0){
       print(paste("unwanted gap at",test$ROUTE[i],test$BEG_MP[i]))
+      err1 <- err1 + 1
     }
   }
-  if(test$BEG_MP[i] < test$END_MP[i-1]){
+  if(test$BEG_MP[i] < test$END_MP[i-1] &
+     test$ROUTE[i] == test$ROUTE[i-1]){
     print(paste("overlap at",test$ROUTE[i],test$BEG_MP[i]))
+    err2 <- err2 + 1
   }
 }
+print(paste("there were",err1+err2,"errors in the segments."))
+print(paste("unwanted gaps:",err1))
+print(paste("overlaps:",err2))
 
 
 ###

@@ -530,3 +530,29 @@ drv_disc <- driveway %>%
 location <- read_csv_file(location_fp, location_col)
 rollups <- read_csv_file(rollups_fp, rollups_col)
 vehicle <- read_csv_file(vehicle_fp, vehicle_col)
+
+###
+## Use fc file to build a gaps dataset
+###
+
+gaps <- read_csv_file(fc_fp, fc_col)
+names(gaps)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+gaps <- gaps %>% filter(grepl("M", ROUTE))
+gaps <- gaps %>% filter(grepl("State", RouteType))
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_MP, END_MP) %>% 
+  arrange(ROUTE, BEG_MP)
+
+gaps$BEG_GAP <- 0
+gaps$END_GAP <- 0
+for(i in 1:(nrow(gaps)-1)){
+  if(gaps$ROUTE[i] == gaps$ROUTE[i+1] & gaps$END_MP[i] < gaps$BEG_MP[i+1]){
+    gaps$BEG_GAP[i] <- gaps$END_MP[i]
+    gaps$END_GAP[i] <- gaps$BEG_MP[i+1]
+  }
+}
+
+gaps <- gaps %>%
+  select(ROUTE, BEG_GAP, END_GAP) %>%
+  filter(BEG_GAP != 0)

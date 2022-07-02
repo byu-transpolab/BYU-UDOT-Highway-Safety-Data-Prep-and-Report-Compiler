@@ -143,7 +143,8 @@ compress_seg_ovr <- function(df) {
   df$dropflag <- FALSE
   count <- 0
   for (i in 1:(nrow(df) - 1)) {
-    if (df$END_MP[i] > df$BEG_MP[i+1]) {        # check for overlaps
+    if (df$END_MP[i] > df$BEG_MP[i+1] &
+        df$ROUTE[i] == df$ROUTE[i+1]) {        # check for overlaps
       df$dropflag[i] <- TRUE
       df[i + 1, 2] <- df[i, 2]    # change beg_mp to match previous
       count <- count + 1

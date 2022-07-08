@@ -35,7 +35,8 @@ crash <- crash %>% filter(route %in% substr(main.routes, 1, 6))
 vehicle <- vehicle %>%
   group_by(crash_id) %>%
   mutate(num_veh = n())
-crash <- left_join(crash, vehicle %>% select(crash_id,num_veh), by = "crash_id")
+crash <- left_join(crash, vehicle %>% select(crash_id,num_veh), by = "crash_id") %>%
+  unique()
 
 # Create functional area reference table
 FA_ref <- tibble(

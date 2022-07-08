@@ -37,9 +37,14 @@ for (i in 1:nrow(crash_seg)){
 #   RC[["TotalCrashes"]][i] <- length(crash_row)
 # }
 
-# Add Segment Crash Attributes
+# Add crash Severity
 RC <- add_crash_attribute("crash_severity_id", RC, crash_seg)
-RC <- add_crash_attribute("num_veh", RC, crash_seg)
+# Calculate total crashes
+RC <- RC %>% 
+  group_by(SEG_ID, YEAR) %>%
+  mutate(total_crashes = crash_severity_id_1 + crash_severity_id_2 + crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5)
+# Add Segment Crash Attributes
+RC <- add_crash_attribute("num_veh", RC, crash_seg, TRUE)
 RC <- add_crash_attribute("light_condition_id", RC, crash_seg)
 RC <- add_crash_attribute("weather_condition_id", RC, crash_seg)
 RC <- add_crash_attribute("manner_collision_id", RC, crash_seg)
@@ -124,19 +129,19 @@ RC <- add_crash_attribute("collision_with_fixed_object", RC, crash_seg) %>%
   select(-collision_with_fixed_object_N) %>%
   rename(collision_with_fixed_object_crashes = collision_with_fixed_object_Y)
 
-# Calculate total crashes
-RC <- RC %>% 
-  group_by(SEG_ID, YEAR) %>%
-  mutate(TotalCrashes = crash_severity_id_1 + crash_severity_id_2 + crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5)
-
 
 ###
 ## Compile Intersection Crash & Roadway Data
 ###
 
-# Add Intersection Crash Attributes
+# Add crash severity
 IC <- add_crash_attribute_int("crash_severity_id", IC, crash_int)
-IC <- add_crash_attribute_int("num_veh", IC, crash_int)
+# Calculate total crashes
+IC <- IC %>% 
+  group_by(Int_ID, YEAR) %>%
+  mutate(total_crashes = crash_severity_id_1 + crash_severity_id_2 + crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5)
+# Add Intersection Crash Attributes
+IC <- add_crash_attribute_int("num_veh", IC, crash_int, TRUE)
 IC <- add_crash_attribute_int("light_condition_id", IC, crash_int)
 IC <- add_crash_attribute_int("weather_condition_id", IC, crash_int)
 IC <- add_crash_attribute_int("manner_collision_id", IC, crash_int)
@@ -221,11 +226,6 @@ IC <- add_crash_attribute_int("collision_with_fixed_object", IC, crash_int) %>%
   select(-collision_with_fixed_object_N) %>%
   rename(collision_with_fixed_object_crashes = collision_with_fixed_object_Y)
 
-# Calculate total crashes
-IC <- IC %>% 
-  group_by(Int_ID, YEAR) %>%
-  mutate(TotalCrashes = crash_severity_id_1 + crash_severity_id_2 + crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5)
-
 
 ###
 ## Write to output
@@ -235,3 +235,8 @@ CAMSoutput <- paste0("data/output/CAMS_",format(Sys.time(),"%d%b%y_%H_%M"),".csv
 write_csv(RC, file = CAMSoutput)
 ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(IC, file = ISAMoutput)
+
+
+# # reset RC and IC
+# RC <- RC %>% select(SEG_ID:CUTRK)
+# IC <- IC %>% select(ROUTE:CUTRK)

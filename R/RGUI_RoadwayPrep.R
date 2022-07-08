@@ -240,6 +240,13 @@ IC <- intersection %>%
   select(ROUTE, MP, Int_ID, everything()) %>%
   select(-BEG_MP, -END_MP, -contains("_SL"), -contains("_FA"))
 
+# Remove infinity values
+IC <- IC %>%
+  mutate(
+    MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT),
+    MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT)
+  )
+
 # append "PM" or "NM" to routes
 for(i in 1:nrow(IC)){
   id <- IC[["Int_ID"]][i]
@@ -258,6 +265,7 @@ for(i in 1:nrow(IC)){
 # Create a Num_Legs column
 IC <- IC %>%
   mutate(
+    # take numeric. coerces to NA if there is no number, but not a problem
     NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
   ) %>%
   mutate(
@@ -328,7 +336,7 @@ IC <- mod_intersections(IC,UTA_Stops,schools)
 # remove spatial info
 IC <- st_drop_geometry(IC)
 
-# Add roadway data
+# Add roadway data (disclaimer. Make sure column names don't have a "." in them)
 IC <- add_int_att(IC, urban) %>% 
   select(-(MIN_URBAN_CODE:URBAN_CODE_4)) %>%
   rename(URBAN_CODE = MAX_URBAN_CODE)

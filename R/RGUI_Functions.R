@@ -645,50 +645,93 @@ shell_join <- function(sdtm) {
 
 
 # Add Crash Attributes Function
-add_crash_attribute <- function(att_name, segs, csh){
+add_crash_attribute <- function(att_name, segs, csh, return_max_min){
+  # optional arguments
+  if(missing(return_max_min)){return_max_min <- FALSE}
   # set up dataframe for joining
   csh <- csh %>% select(seg_id, crash_year, !!att_name)
   att_name <- sym(att_name)
-  # pivot wider
-  csh <- csh %>%
-    group_by(seg_id, crash_year, !!att_name) %>% 
-    mutate(n = n()) %>% 
-    pivot_wider(id_cols = c(seg_id, crash_year),
-                names_from = !!att_name,
-                names_prefix = paste0(att_name,"_"),
-                values_from = n,
-                values_fill = 0,
-                values_fn = first) %>%
-    ungroup()
+  # This function will work differently if we want to just return max,min,avg
+  if(return_max_min == FALSE){
+    # pivot wider
+    csh <- csh %>%
+      group_by(seg_id, crash_year, !!att_name) %>% 
+      mutate(n = n()) %>% 
+      ungroup() %>%
+      pivot_wider(id_cols = c(seg_id, crash_year),
+                  names_from = !!att_name,
+                  names_prefix = paste0(att_name,"_"),
+                  values_from = n,
+                  values_fill = 0,
+                  values_fn = first)
+  } else{
+    # mutate to get max, min, avg
+    csh <- csh %>%
+      group_by(seg_id, crash_year) %>% 
+      mutate(
+        !!sym(paste0("max_",att_name)) := max(!!att_name, na.rm = TRUE),
+        !!sym(paste0("min_",att_name)) := min(!!att_name, na.rm = TRUE),
+        !!sym(paste0("avg_",att_name)) := mean(!!att_name, na.rm = TRUE)
+      ) %>%
+      ungroup() %>%
+      mutate(
+        !!sym(paste0("max_",att_name)) := ifelse(is.infinite(!!sym(paste0("max_",att_name))), NA, !!sym(paste0("max_",att_name))),
+        !!sym(paste0("min_",att_name)) := ifelse(is.infinite(!!sym(paste0("min_",att_name))), NA, !!sym(paste0("min_",att_name))),
+        !!sym(paste0("avg_",att_name)) := ifelse(is.infinite(!!sym(paste0("avg_",att_name))), NA, !!sym(paste0("avg_",att_name)))
+      ) %>%
+      select(-!!att_name) %>%
+      unique()
+  }
   # join to segments
-  segs <- left_join(segs, csh, by = c("SEG_ID"="seg_id", "YEAR"="crash_year"))
-  # mutate(across(contains("crash_severity_id"), ~ replace(is.na(.x), 0), .names = "{col}"))
+  df <- left_join_fill(segs, csh, by = c("SEG_ID"="seg_id", "YEAR"="crash_year"), fill = 0L)
   # return segments
-  return(segs)
+  return(df)
 }
 
 # Add Crash Attributes Function for Intersections
-add_crash_attribute_int <- function(att_name, ints, csh){
+add_crash_attribute_int <- function(att_name, ints, csh, return_max_min){
+  # optional arguments
+  if(missing(return_max_min)){return_max_min <- FALSE}
   # set up dataframe for joining
   csh <- csh %>% select(int_id, crash_year, !!att_name)
   att_name <- sym(att_name)
-  # pivot wider
-  csh <- csh %>%
-    group_by(int_id, crash_year, !!att_name) %>% 
-    mutate(n = n()) %>% 
-    pivot_wider(id_cols = c(int_id, crash_year),
-                names_from = !!att_name,
-                names_prefix = paste0(att_name,"_"),
-                values_from = n,
-                values_fill = 0,
-                values_fn = first) %>%
-    ungroup()
+  # This function will work differently if we want to just return max,min,avg
+  if(return_max_min == FALSE){
+    # pivot wider
+    csh <- csh %>%
+      group_by(int_id, crash_year, !!att_name) %>% 
+      mutate(n = n()) %>% 
+      ungroup() %>%
+      pivot_wider(id_cols = c(int_id, crash_year),
+                  names_from = !!att_name,
+                  names_prefix = paste0(att_name,"_"),
+                  values_from = n,
+                  values_fill = 0,
+                  values_fn = first)
+  } else{
+    # mutate to get max, min, avg
+    csh <- csh %>%
+      group_by(int_id, crash_year) %>%
+      mutate(
+        !!sym(paste0("max_",att_name)) := max(!!att_name, na.rm = TRUE),
+        !!sym(paste0("min_",att_name)) := min(!!att_name, na.rm = TRUE),
+        !!sym(paste0("avg_",att_name)) := mean(!!att_name, na.rm = TRUE)
+      ) %>%
+      ungroup() %>%
+      mutate(
+        !!sym(paste0("max_",att_name)) := ifelse(is.infinite(!!sym(paste0("max_",att_name))), NA, !!sym(paste0("max_",att_name))),
+        !!sym(paste0("min_",att_name)) := ifelse(is.infinite(!!sym(paste0("min_",att_name))), NA, !!sym(paste0("min_",att_name))),
+        !!sym(paste0("avg_",att_name)) := ifelse(is.infinite(!!sym(paste0("avg_",att_name))), NA, !!sym(paste0("avg_",att_name)))
+      ) %>%
+      select(-!!att_name) %>%
+      unique()
+  }
   # join to segments
-  ints <- left_join(ints, csh, by = c("Int_ID"="int_id", "YEAR"="crash_year"))
-  # mutate(across(contains("crash_severity_id"), ~ replace(is.na(.x), 0), .names = "{col}"))
+  ints <- left_join_fill(ints, csh, by = c("Int_ID"="int_id", "YEAR"="crash_year"), fill = 0L)
   # return segments
   return(ints)
 }
+
 
 # Add roadway attributes to intersections function
 add_int_att <- function(int, att, is_aadt){
@@ -777,6 +820,12 @@ add_int_att <- function(int, att, is_aadt){
             !!sym(paste0(var,"_2")) := !!sym(paste0(var,".b")),
             !!sym(paste0(var,"_3")) := !!sym(paste0(var,".c")),
             !!sym(paste0(var,"_4")) := !!sym(paste0(var,".d"))
+          ) %>%
+          # convert infinities to NA
+          mutate(
+            !!sym(paste0("MAX_",var)) := ifelse(is.infinite(!!sym(paste0("MAX_",var))), NA, !!sym(paste0("MAX_",var))),
+            !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
+            !!sym(paste0("AVG_",var)) := ifelse(is.infinite(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
           )
       }
     }
@@ -906,7 +955,7 @@ add_int_att <- function(int, att, is_aadt){
       }
     }
   }
-  # remove att_rw info and return segments
+  # remove att_rw info, and return segments
   int <- int %>% ungroup %>% select(-contains("att_rw"), -contains("."))
   return(int)
 }
@@ -917,6 +966,13 @@ substrRight <- function(x, n){
 }
 substrMinusRight <- function(x, n){
   substr(x, 1, nchar(x)-n)
+}
+
+left_join_fill <- function(x, y, by, fill = 0L, ...){
+  z <- left_join(x, y, by, ...)
+  new_cols <- setdiff(names(z), names(x))
+  z <- replace_na(z, setNames(as.list(rep(fill, length(new_cols))), new_cols))
+  return(z)
 }
 
 # Modify intersections to include bus stops and schools near intersections

@@ -128,7 +128,7 @@ for (i in 1:nrow(RC)){
                      median$MP < RCend)
   med_type <- max(median[["MEDIAN_TYP"]][med_row])
   RC[["Median_Freq"]][i] <- length(med_row)
-  RC[["Median_Type"]][i] <- if_else(RC[["Median_Freq"]][i] == 0,"NA", med_type)
+  RC[["Median_Type"]][i] <- if_else(RC[["Median_Freq"]][i] == 0, NA, med_type)
 }
 
 # Add Shoulders
@@ -151,32 +151,6 @@ for (i in 1:nrow(RC)){
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
   
-  # r_sho_row <- NA
-  # l_sho_row <- NA
-  # r_idx <- 1
-  # l_idx <- 1
-  # repeat{
-  #   if(shoulder[["ROUTE"]][row] == RCroute & 
-  #      shoulder[["MP"]][row] >= RCbeg  & 
-  #      shoulder[["MP"]][row] <= RCend){
-  #     if(shoulder[["UTPOSITION"]][row] == "RIGHT"){
-  #       r_sho_row[r_idx] <- row
-  #       r_idx <- r_idx + 1
-  #     } else if(shoulder[["UTPOSITION"]][row] =="LEFT"){
-  #       l_sho_row[l_idx] <- row
-  #       l_idx <- l_idx + 1
-  #     }
-  #   } else{
-  #     if(shoulder[["MP"]][row] > ){
-  #       row <- row + 1
-  #       print(paste("Route",shoulder[["ROUTE"]][row],"at MP",shoulder[["MP"]][row],"not on RC"))
-  #     }
-  #     break #exit the loop once we are no longer on the segment
-  #   }
-  #   row <- row + 1 #increment row
-  # }
-  # print(paste(row,RCroute,shoulder[["ROUTE"]][row],RCbeg,RCend,shoulder[["MP"]][row]))
-  
   r_sho_row <- which(shoulder$ROUTE == RCroute &
                        shoulder$MP >= RCbeg  &
                        shoulder$MP <= RCend &
@@ -188,10 +162,10 @@ for (i in 1:nrow(RC)){
   
   RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
   RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
-  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
-  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
-  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(max(shoulder[["SHLDR_WDTH"]][l_sho_row])))
-  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, "NA", as.character(min(shoulder[["SHLDR_WDTH"]][l_sho_row])))
+  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, NA, as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, NA, as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
+  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, NA, as.character(max(shoulder[["SHLDR_WDTH"]][l_sho_row])))
+  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, NA, as.character(min(shoulder[["SHLDR_WDTH"]][l_sho_row])))
   # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
   # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
 }
@@ -202,6 +176,14 @@ print(paste("Time taken to add shoulders data to segments:", time.taken))
 
 # Add segment id column
 RC <- RC %>% rowid_to_column("SEG_ID")
+
+# Determine segment length
+RC <- RC %>% 
+  mutate(
+    LENGTH_MILES = END_MP - BEG_MP,
+    LENGTH_FEET = LENGTH_MILES * 5280
+  ) %>%
+  select(SEG_ID:END_MP, LENGTH_MILES, LENGTH_FEET, everything())
 
 # Save a copy for future use
 RC_byseg <- RC
@@ -356,4 +338,4 @@ IC <- add_int_att(IC, lane) %>%
 #   slice(rep(row_number(), times = nrow(yrs))) %>%
 #   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
 IC <- pivot_aadt(IC) 
-IC <- IC %>% rename(ENT_VEH = AADT)
+IC <- IC %>% rename(DAILY_ENT_VEH = AADT)

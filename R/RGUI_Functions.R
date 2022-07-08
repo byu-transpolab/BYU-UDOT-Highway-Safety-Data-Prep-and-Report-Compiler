@@ -266,7 +266,11 @@ pivot_aadt <- function(aadt){
       names_from = count_type,
       values_from = count,
       values_fn = first
-    )
+    ) %>%
+    mutate(
+      NUM_TRUCKS = (SUTRK + CUTRK) * AADT
+    ) %>%
+    select(-SUTRK,-CUTRK)
   return(aadt)
 }
 

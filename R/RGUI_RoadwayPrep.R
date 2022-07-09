@@ -70,34 +70,34 @@ print(paste("deleted",count,"segments within gaps"))
 # Compressing segments by length
 RC <- compress_seg_len(RC, 0.1)
 
-# Check segments for issues
-test <- RC
-err1 <- 0
-err2 <- 0
-for(i in 2:nrow(test)){
-  if(test$BEG_MP[i] > test$END_MP[i-1] &
-     test$ROUTE[i] == test$ROUTE[i-1]){
-    chk <- 0
-    for(j in 1:nrow(gaps)){
-      if(test$ROUTE[i] == gaps$ROUTE[j] &
-         round(test$BEG_MP[i],2) == round(gaps$END_GAP[j],2)){
-        chk <- 1
-      }
-    }
-    if(chk == 0){
-      print(paste("unwanted gap at",test$ROUTE[i],test$BEG_MP[i]))
-      err1 <- err1 + 1
-    }
-  }
-  if(test$BEG_MP[i] < test$END_MP[i-1] &
-     test$ROUTE[i] == test$ROUTE[i-1]){
-    print(paste("overlap at",test$ROUTE[i],test$BEG_MP[i]))
-    err2 <- err2 + 1
-  }
-}
-print(paste("there were",err1+err2,"errors in the segments."))
-print(paste("unwanted gaps:",err1))
-print(paste("overlaps:",err2))
+# # Check segments for issues
+# test <- RC
+# err1 <- 0
+# err2 <- 0
+# for(i in 2:nrow(test)){
+#   if(test$BEG_MP[i] > test$END_MP[i-1] &
+#      test$ROUTE[i] == test$ROUTE[i-1]){
+#     chk <- 0
+#     for(j in 1:nrow(gaps)){
+#       if(test$ROUTE[i] == gaps$ROUTE[j] &
+#          round(test$BEG_MP[i],2) == round(gaps$END_GAP[j],2)){
+#         chk <- 1
+#       }
+#     }
+#     if(chk == 0){
+#       print(paste("unwanted gap at",test$ROUTE[i],test$BEG_MP[i]))
+#       err1 <- err1 + 1
+#     }
+#   }
+#   if(test$BEG_MP[i] < test$END_MP[i-1] &
+#      test$ROUTE[i] == test$ROUTE[i-1]){
+#     print(paste("overlap at",test$ROUTE[i],test$BEG_MP[i]))
+#     err2 <- err2 + 1
+#   }
+# }
+# print(paste("there were",err1+err2,"errors in the segments."))
+# print(paste("unwanted gaps:",err1))
+# print(paste("overlaps:",err2))
 
 
 ###
@@ -157,43 +157,94 @@ for (i in 1:nrow(RC)){
   RC[["Median_Type"]][i] <- ifelse(med_freq == 0L, NA, med_type[med_row])
 }
 
-# Add Shoulders
-RC$Right_Shoulder_Freq <- 0
-RC$Left_Shoulder_Freq <- 0
-RC$Right_Shoulder_Max <- 0
-RC$Right_Shoulder_Min <- 0
-RC$Left_Shoulder_Max <- 0
-RC$Left_Shoulder_Min <- 0
-# RC$Right_Shoulder_Avg <- 0
-# RC$Left_Shoulder_Avg <- 0
-# shoulder <- shoulder %>% arrange(ROUTE, MP)
-# RC <- RC %>% arrange(ROUTE, BEG_MP, END_MP)
-# row <- 1
-
 # start timer
 start.time <- Sys.time()
+# Add Shoulders
+RC$Right_Shoulder <- NA
+RC$Right_Shoulder_Max <- NA
+RC$Right_Shoulder_Min <- NA
+RC$Right_Shoulder_Avg <- NA
+RC$Left_Shoulder <- NA
+RC$Left_Shoulder_Max <- NA
+RC$Left_Shoulder_Min <- NA
+RC$Left_Shoulder_Avg <- NA
 for (i in 1:nrow(RC)){
   RCroute <- RC[["ROUTE"]][i]
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
-  
   r_sho_row <- which(shoulder$ROUTE == RCroute &
-                       shoulder$MP >= RCbeg  &
-                       shoulder$MP <= RCend &
+                       shoulder$END_MP > RCbeg  &
+                       shoulder$BEG_MP < RCend &
                        shoulder$UTPOSITION== "RIGHT")
   l_sho_row <- which(shoulder$ROUTE == RCroute &
-                       shoulder$MP >= RCbeg  &
-                       shoulder$MP <= RCend &
+                       shoulder$END_MP > RCbeg  &
+                       shoulder$BEG_MP < RCend &
                        shoulder$UTPOSITION =="LEFT")
-  
-  RC[["Right_Shoulder_Freq"]][i] <- length(r_sho_row)
-  RC[["Left_Shoulder_Freq"]][i] <- length(l_sho_row)
-  RC[["Right_Shoulder_Max"]][i] <- if_else(length(r_sho_row) == 0, NA, as.character(max(shoulder[["SHLDR_WDTH"]][r_sho_row])))
-  RC[["Right_Shoulder_Min"]][i] <- if_else(length(r_sho_row) == 0, NA, as.character(min(shoulder[["SHLDR_WDTH"]][r_sho_row])))
-  RC[["Left_Shoulder_Max"]][i] <- if_else(length(l_sho_row) == 0, NA, as.character(max(shoulder[["SHLDR_WDTH"]][l_sho_row])))
-  RC[["Left_Shoulder_Min"]][i] <- if_else(length(l_sho_row) == 0, NA, as.character(min(shoulder[["SHLDR_WDTH"]][l_sho_row])))
-  # RC[["Right_Shoulder_Avg"]][i] <- shoulder[["SHLDR_WDTH"]][r_sho_row]
-  # RC[["Left_Shoulder_Avg"]][i] <- ((shoulder[["SHLDR_WDTH"]][l_sho_row]*shoulder[["Length"]][l_sho_row])/(RC[["END_MP"]][i]-RC[["BEG_MP"]][i]))
+  # get the shoulder widths and milepoints on this segment
+  r_sho_freq <- length(r_sho_row)
+  r_sho_wid <- shoulder[["SHLDR_WDTH"]][r_sho_row]
+  r_sho_beg <- shoulder[["BEG_MP"]][r_sho_row]
+  r_sho_end <- shoulder[["END_MP"]][r_sho_row]
+  r_sho_len <- shoulder[["Length"]][r_sho_row]
+  l_sho_freq <- length(l_sho_row)
+  l_sho_wid <- shoulder[["SHLDR_WDTH"]][l_sho_row]
+  l_sho_beg <- shoulder[["BEG_MP"]][l_sho_row]
+  l_sho_end <- shoulder[["END_MP"]][l_sho_row]
+  l_sho_len <- shoulder[["Length"]][l_sho_row]
+  if(r_sho_freq > 0){
+    # determine internal length of each shoulder
+    for(j in 1:length(r_sho_row)){
+      if(r_sho_beg[j] < RCbeg){r_sho_beg[j] <- RCbeg}
+      if(r_sho_end[j] > RCend){r_sho_end[j] <- RCend}
+      r_sho_len[j] <- r_sho_end[j] - r_sho_beg[j]
+    }
+    # determine the length weighted average width
+    r_sho_avg <- weighted.mean(r_sho_wid, r_sho_len, na.rm = TRUE)
+    # accumulate shoulders of the same width
+    if(r_sho_freq > 1 & j < r_sho_freq){
+      for(j in 1:length(r_sho_row)){
+        for(k in (j+1):length(r_sho_row)){
+          if(r_sho_wid[j] == r_sho_wid[k]){
+            r_sho_len[j] <- r_sho_len[j] + r_sho_len[k]
+            r_sho_wid[k] <- paste0("~",k)  #give the width a unique string so it won't be accumulated again
+          }
+        }
+      }
+    }
+    # return the shoulder width by max shoulder length
+    r_sho_row <- which.max(r_sho_len)
+  }
+  if(l_sho_freq > 0){
+    # determine internal length of each shoulder
+    for(j in 1:length(l_sho_row)){
+      if(l_sho_beg[j] < RCbeg){l_sho_beg[j] <- RCbeg}
+      if(l_sho_end[j] > RCend){l_sho_end[j] <- RCend}
+      l_sho_len[j] <- l_sho_end[j] - l_sho_beg[j]
+    }
+    # determine the length weighted average width
+    l_sho_avg <- weighted.mean(l_sho_wid, l_sho_len, na.rm = TRUE)
+    # accumulate shoulders of the same width
+    if(l_sho_freq > 1 & j < l_sho_freq){
+      for(j in 1:length(l_sho_row)){
+        for(k in (j+1):length(l_sho_row)){
+          if(l_sho_wid[j] == l_sho_wid[k]){
+            l_sho_len[j] <- l_sho_len[j] + l_sho_len[k]
+            l_sho_wid[k] <- paste0("~",k)  #give the width a unique string so it won't be accumulated again
+          }
+        }
+      }
+    }
+    # return the shoulder width by max shoulder length
+    l_sho_row <- which.max(l_sho_len)
+  }
+  RC[["Right_Shoulder"]][i] <- ifelse(r_sho_freq == 0, NA, r_sho_wid[r_sho_row])
+  RC[["Right_Shoulder_Max"]][i] <- ifelse(r_sho_freq == 0, NA, max(r_sho_wid))
+  RC[["Right_Shoulder_Min"]][i] <- ifelse(r_sho_freq == 0, NA, min(r_sho_wid))
+  RC[["Right_Shoulder_Avg"]][i] <- ifelse(r_sho_freq == 0, NA, r_sho_avg)
+  RC[["Left_Shoulder"]][i] <- ifelse(l_sho_freq == 0, NA, l_sho_wid[l_sho_row])
+  RC[["Left_Shoulder_Max"]][i] <- ifelse(l_sho_freq == 0, NA, max(l_sho_wid))
+  RC[["Left_Shoulder_Min"]][i] <- ifelse(l_sho_freq == 0, NA, min(l_sho_wid))
+  RC[["Left_Shoulder_Avg"]][i] <- ifelse(l_sho_freq == 0, NA, l_sho_avg)
 }
 # record time
 end.time <- Sys.time()

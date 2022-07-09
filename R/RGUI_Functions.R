@@ -274,6 +274,26 @@ pivot_aadt <- function(aadt){
   return(aadt)
 }
 
+# Pivot AADT longer modified for intersections
+pivot_aadt_int <- function(aadt){
+  aadt <- aadt %>%
+    pivot_longer(
+      cols = contains("AADT") | contains("SUTRK") | contains("CUTRK"),
+      names_to = "count_type",
+      values_to = "count"
+    ) %>%
+    mutate(
+      YEAR = as.integer(gsub(".*?([0-9]+).*", "\\1", count_type)),   # extract numeric characters
+      count_type = gsub("[0-9]+", "", count_type)     # extract everything else
+    ) %>%
+    pivot_wider(
+      names_from = count_type,
+      values_from = count,
+      values_fn = first
+    )
+  return(aadt)
+}
+
 # Function to fix missing negative direction AADT values (can be optimized more)
 aadt_neg <- function(aadt, rtes, divd){
   # isolate negative routes
@@ -798,40 +818,38 @@ add_int_att <- function(int, att, is_aadt){
   int <- left_join(int, att, by = c("att_rw_3"="att_rw"))
   int <- left_join(int, att, by = c("att_rw_4"="att_rw"), suffix = c(".c", ".d"))
   # determine max, min, etc...
-  if(is_aadt == FALSE){
-    for(i in colnames(int)){
-      if(substrRight(i,2) == ".d"){
-        var <- substrMinusRight(i,2)
-        int <- int %>%
-          rowwise() %>%
-          mutate(
-            !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".a")),
-                                               !!sym(paste0(var,".b")),
-                                               !!sym(paste0(var,".c")),
-                                               !!sym(paste0(var,".d"))), 
-                                             na.rm = TRUE),
-            !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".a")),
-                                               !!sym(paste0(var,".b")),
-                                               !!sym(paste0(var,".c")),
-                                               !!sym(paste0(var,".d"))), 
-                                             na.rm = TRUE),
-            !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
-                                                !!sym(paste0(var,".b")),
-                                                !!sym(paste0(var,".c")),
-                                                !!sym(paste0(var,".d"))), 
-                                              na.rm = TRUE),
-            !!sym(paste0(var,"_1")) := !!sym(paste0(var,".a")),
-            !!sym(paste0(var,"_2")) := !!sym(paste0(var,".b")),
-            !!sym(paste0(var,"_3")) := !!sym(paste0(var,".c")),
-            !!sym(paste0(var,"_4")) := !!sym(paste0(var,".d"))
-          ) %>%
-          # convert infinities to NA
-          mutate(
-            !!sym(paste0("MAX_",var)) := ifelse(is.infinite(!!sym(paste0("MAX_",var))), NA, !!sym(paste0("MAX_",var))),
-            !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
-            !!sym(paste0("AVG_",var)) := ifelse(is.infinite(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
-          )
-      }
+  for(i in colnames(int)){
+    if(substrRight(i,2) == ".d"){
+      var <- substrMinusRight(i,2)
+      int <- int %>%
+        rowwise() %>%
+        mutate(
+          !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".a")),
+                                             !!sym(paste0(var,".b")),
+                                             !!sym(paste0(var,".c")),
+                                             !!sym(paste0(var,".d"))), 
+                                           na.rm = TRUE),
+          !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".a")),
+                                             !!sym(paste0(var,".b")),
+                                             !!sym(paste0(var,".c")),
+                                             !!sym(paste0(var,".d"))), 
+                                           na.rm = TRUE),
+          !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
+                                              !!sym(paste0(var,".b")),
+                                              !!sym(paste0(var,".c")),
+                                              !!sym(paste0(var,".d"))), 
+                                            na.rm = TRUE),
+          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".a")),
+          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".b")),
+          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".c")),
+          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".d"))
+        ) %>%
+        # convert infinities to NA
+        mutate(
+          !!sym(paste0("MAX_",var)) := ifelse(is.infinite(!!sym(paste0("MAX_",var))), NA, !!sym(paste0("MAX_",var))),
+          !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
+          !!sym(paste0("AVG_",var)) := ifelse(is.nan(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
+        )
     }
   }
   # aadt specific

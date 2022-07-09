@@ -245,6 +245,6 @@ ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv
 write_csv(IC, file = ISAMoutput)
 
 
-# # reset RC and IC
-RC <- RC %>% select(SEG_ID:CUTRK)
-IC <- IC %>% select(ROUTE:CUTRK)
+# # # reset RC and IC
+# RC <- RC %>% select(SEG_ID:CUTRK)
+# IC <- IC %>% select(ROUTE:CUTRK)

@@ -401,18 +401,23 @@ IC <- add_int_att(IC, urban) %>%
   rename(URBAN_CODE = MAX_URBAN_CODE)
 IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
-IC <- add_int_att(IC, aadt, TRUE)
-# select(-contains("MAX_AADT"),-contains("MIN_AADT"),-contains("AVG_AADT"),
-#        -contains("MAX_SUTRK"),-contains("MIN_SUTRK"),-contains("AVG_SUTRK"),
-#        -contains("MAX_CUTRK"),-contains("MIN_CUTRK"),-contains("AVG_CUTRK"))
+IC <- add_int_att(IC, aadt, TRUE) %>% 
+  select(-matches("[0-9]{4,}_[0-9]+"))
 IC <- add_int_att(IC, lane) %>%
   select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
 
-# Add years to intersection shell
+# Add years to intersection shell and pivot aadt
 # yrs <- crash_int %>% select(crash_year) %>% unique()
 # IC <- IC %>%
 #   group_by(Int_ID) %>%
 #   slice(rep(row_number(), times = nrow(yrs))) %>%
 #   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
-IC <- pivot_aadt(IC) 
-IC <- IC %>% rename(DAILY_ENT_VEH = AADT)
+IC <- pivot_aadt_int(IC) %>% 
+  mutate(
+    NUM_ENT_TRUCKS = (SUTRK + CUTRK) * AADT,
+    MAX_NUM_TRUCKS = (MAX_SUTRK + MAX_CUTRK) * MAX_AADT,
+    MIN_NUM_TRUCKS = (MIN_SUTRK + MIN_CUTRK) * MIN_AADT,
+    AVG_NUM_TRUCKS = (AVG_SUTRK + AVG_CUTRK) * AVG_AADT
+  ) %>%
+  select(-contains("SUTRK"),-contains("CUTRK")) %>% 
+  rename(DAILY_ENT_VEH = AADT)

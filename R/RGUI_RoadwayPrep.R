@@ -117,18 +117,44 @@ for (i in 1:nrow(RC)){
 }
 
 # Add Medians
-RC$Median_Freq <- 0
-RC$Median_Type <- 0
+RC$Median_Type <- NA
 for (i in 1:nrow(RC)){
   RCroute <- RC[["ROUTE"]][i]
   RCbeg <- RC[["BEG_MP"]][i]
   RCend <- RC[["END_MP"]][i]
   med_row <- which(median$ROUTE == RCroute & 
-                     median$MP > RCbeg  & 
-                     median$MP < RCend)
-  med_type <- max(median[["MEDIAN_TYP"]][med_row])
-  RC[["Median_Freq"]][i] <- length(med_row)
-  RC[["Median_Type"]][i] <- if_else(RC[["Median_Freq"]][i] == 0, NA, med_type)
+                     median$BEG_MP < RCend  & 
+                     median$END_MP > RCbeg)
+  # get the median types and milepoints on this segment
+  med_freq <- length(med_row)
+  med_type <- median[["MEDIAN_TYP"]][med_row]
+  med_beg <- median[["BEG_MP"]][med_row]
+  med_end <- median[["END_MP"]][med_row]
+  med_len <- median[["Length"]][med_row]
+  if(med_freq > 0){
+    # determine internal length of each median
+    for(j in 1:length(med_row)){
+      if(med_beg[j] < RCbeg){med_beg[j] <- RCbeg}
+      if(med_end[j] > RCend){med_end[j] <- RCend}
+      med_len[j] <- med_end[j] - med_beg[j]
+    }
+    # accumulate medians of the same type
+    if(med_freq > 1 & j < med_freq){
+      for(j in 1:length(med_row)){
+        for(k in (j+1):length(med_row)){
+          if(med_type[j] == med_type[k]){
+            med_len[j] <- med_len[j] + med_len[k]
+            med_type[k] <- k  #give it a unique name so it won't be accumulated again
+          }
+        }
+      }
+    }
+    # return the median by max median length
+    med_row <- which.max(med_len)
+  }
+  # print(med_freq)
+  # print(med_type[med_row])
+  RC[["Median_Type"]][i] <- ifelse(med_freq == 0L, NA, med_type[med_row])
 }
 
 # Add Shoulders

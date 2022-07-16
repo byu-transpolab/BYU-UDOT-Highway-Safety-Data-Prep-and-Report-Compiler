@@ -294,18 +294,19 @@ RC <- pivot_aadt(RC)
 IC <- intersection %>% 
   rowwise() %>%
   mutate(
-    MP = BEG_MP,
-    MAX_SPEED_LIMIT = max(c_across(INT_RT_1_SL:INT_RT_4_SL), na.rm = TRUE),
-    MIN_SPEED_LIMIT = min(c_across(INT_RT_1_SL:INT_RT_4_SL), na.rm = TRUE)
+    MAX_SPEED_LIMIT = max(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
+    MIN_SPEED_LIMIT = min(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
+    AVG_SPEED_LIMIT = mean(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
   ) %>%
-  select(ROUTE, MP, Int_ID, everything()) %>%
-  select(-BEG_MP, -END_MP, -contains("_SL"), -contains("_FA"))
+  select(Int_ID, everything()) %>%
+  select(-contains("_SL"), -contains("_FA"))
 
 # Remove infinity values
 IC <- IC %>%
   mutate(
     MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT),
-    MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT)
+    MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT),
+    AVG_SPEED_LIMIT = ifelse(is.nan(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT)
   )
 
 # append "PM" or "NM" to routes
@@ -313,9 +314,9 @@ for(i in 1:nrow(IC)){
   id <- IC[["Int_ID"]][i]
   for(j in 1:4){
     rt <- IC[[paste0("INT_RT_",j)]][i]
-    if(rt %in% substr(main.routes,1,4)){
-      if(rt == substr(IC$ROUTE[i],0,4)){
-        IC[[paste0("INT_RT_",j)]][i] <- IC$ROUTE[i]
+    if(!is.na(rt) & tolower(rt) != "local"){    # old condition: rt %in% substr(main.routes,1,4)
+      if(rt == substr(IC$INT_RT_0[i],0,4)){
+        IC[[paste0("INT_RT_",j)]][i] <- IC$INT_RT_0[i]
       } else{
         IC[[paste0("INT_RT_",j)]][i] <- paste0(rt,"PM")   # assuming if direction not specified it is positive
       }
@@ -323,7 +324,7 @@ for(i in 1:nrow(IC)){
   }
 }
 
-# Create a Num_Legs column
+# Create a Num_Legs column  (Probably not necessary anymore)
 IC <- IC %>%
   mutate(
     # take numeric. coerces to NA if there is no number, but not a problem
@@ -398,14 +399,22 @@ IC <- mod_intersections(IC,UTA_Stops,schools)
 IC <- st_drop_geometry(IC)
 
 # Add roadway data (disclaimer. Make sure column names don't have a "." in them)
-IC <- add_int_att(IC, urban) %>% 
-  select(-(MIN_URBAN_CODE:URBAN_CODE_4)) %>%
-  rename(URBAN_CODE = MAX_URBAN_CODE)
-IC <- add_int_att(IC, fc %>% select(-RouteDir,-RouteType)) %>% 
+IC <- add_int_att(IC, urban_full) %>% 
+  select(-(URBAN_CODE_0:URBAN_CODE_4), -MAX_URBAN_CODE, -AVG_URBAN_CODE) %>%
+  rename(URBAN_CODE = MIN_URBAN_CODE)
+
+# NOTE: We need to create code that finds the min and max fc based on the following ranking
+fc_rank <- tibble(
+  fc = c("Interstate", "Other Freeways and Expressways",
+         "Other Principal Arterial", "Minor Arterial",
+         "Major Collector", "Minor Collector", ), 
+  rank = c(1,2,3,4,5,6,7)
+)
+IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType)) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
-IC <- add_int_att(IC, aadt, TRUE) %>% 
+IC <- add_int_att(IC, aadt_full, TRUE) %>% 
   select(-matches("[0-9]{4,}_[0-9]+"))
-IC <- add_int_att(IC, lane) %>%
+IC <- add_int_att(IC, lane_full) %>%
   select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
 
 # Add years to intersection shell and pivot aadt

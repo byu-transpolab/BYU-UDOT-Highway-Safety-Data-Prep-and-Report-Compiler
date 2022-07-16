@@ -512,7 +512,7 @@ fill_missing_aadt <- function(df, colns){
               c2 <- NA
               c3 <- NA
               # fill top row
-              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & i-1>0){
                 if(j-1 >= 1){
                   a1 <- df[[cur_colns[j-1]]][i-1]
                 }
@@ -530,7 +530,7 @@ fill_missing_aadt <- function(df, colns){
                 b3 <- df[[cur_colns[j+1]]][i]
               }
               # fill bottom row
-              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1] & i+1<nrow(df)){
                 if(j-1 >= 1){
                   c1 <- df[[cur_colns[j-1]]][i+1]
                 }
@@ -847,19 +847,22 @@ add_medians <- function(RC, median, min_portion){
 
 
 # Add roadway attributes to intersections function
-add_int_att <- function(int, att, is_aadt){
+add_int_att <- function(int, att, is_aadt, is_fc){
   # optional arguments
   if(missing(is_aadt)){is_aadt <- FALSE} else if(is_aadt == TRUE){
     int <- int %>% select(-contains("AADT"), -contains("SUTRK"), -contains("CUTRK"))
   }
+  if(missing(is_fc)){is_fc <- FALSE}
   # create row id column for attribute data
   att <- att %>% rownames_to_column("att_rw")
   att$att_rw <- as.integer(att$att_rw)
   # identify attribute segments on intersection file
-  for(k in 1:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
+  for(k in 0:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
     int[[paste0("att_rw_",k)]] <- NA
   }
   for (i in 1:nrow(int)){
+    rt0 <- int$INT_RT_0[i]
+    mp0 <- int$INT_RT_0_M[i]
     rt1 <- int$INT_RT_1[i]
     mp1 <- int$INT_RT_1_M[i]
     rt2 <- int$INT_RT_2[i]
@@ -868,6 +871,9 @@ add_int_att <- function(int, att, is_aadt){
     mp3 <- int$INT_RT_3_M[i]
     rt4 <- int$INT_RT_4[i]
     mp4 <- int$INT_RT_4_M[i]
+    rw0 <- which(att$ROUTE == rt0 & 
+                   att$BEG_MP < mp0 & 
+                   att$END_MP > mp0)
     rw1 <- which(att$ROUTE == rt1 & 
                    att$BEG_MP < mp1 & 
                    att$END_MP > mp1)
@@ -880,6 +886,9 @@ add_int_att <- function(int, att, is_aadt){
     rw4 <- which(att$ROUTE == rt4 & 
                    att$BEG_MP < mp4 & 
                    att$END_MP > mp4)
+    if(length(rw0) > 0){
+      int$att_rw_0[i] <- att$att_rw[rw0]
+    }
     if(length(rw1) > 0){
       int$att_rw_1[i] <- att$att_rw[rw1]
     }
@@ -902,13 +911,16 @@ add_int_att <- function(int, att, is_aadt){
   # remove basic info from att to avoid redundancy
   att <- att %>% select(-ROUTE, -BEG_MP, -END_MP)
   # join to segments
-  int <- left_join(int, att, by = c("att_rw_1"="att_rw"))
-  int <- left_join(int, att, by = c("att_rw_2"="att_rw"), suffix = c(".a", ".b"))
-  int <- left_join(int, att, by = c("att_rw_3"="att_rw"))
-  int <- left_join(int, att, by = c("att_rw_4"="att_rw"), suffix = c(".c", ".d"))
+  int <- left_join(int, att, by = c("att_rw_0"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_1"="att_rw"), suffix = c(".a", ".b"))
+  int <- left_join(int, att, by = c("att_rw_2"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_3"="att_rw"), suffix = c(".c", ".d"))
+  int <- left_join(int, att, by = c("att_rw_4"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_4"="att_rw"), suffix = c(".e", ".remove"))
+  int <- int %>% select(-contains(".remove"))
   # determine max, min, etc...
   for(i in colnames(int)){
-    if(substrRight(i,2) == ".d"){
+    if(substrRight(i,2) == ".e"){
       var <- substrMinusRight(i,2)
       int <- int %>%
         rowwise() %>%
@@ -916,22 +928,26 @@ add_int_att <- function(int, att, is_aadt){
           !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))), 
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))), 
                                            na.rm = TRUE),
           !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))), 
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))), 
                                            na.rm = TRUE),
           !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
                                               !!sym(paste0(var,".b")),
                                               !!sym(paste0(var,".c")),
-                                              !!sym(paste0(var,".d"))), 
+                                              !!sym(paste0(var,".d")),
+                                              !!sym(paste0(var,".e"))), 
                                             na.rm = TRUE),
-          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".a")),
-          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".b")),
-          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".c")),
-          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".d"))
+          !!sym(paste0(var,"_0")) := !!sym(paste0(var,".a")),
+          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".b")),
+          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".c")),
+          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".d")),
+          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".e"))
         ) %>%
         # convert infinities to NA
         mutate(

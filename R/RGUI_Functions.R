@@ -757,6 +757,95 @@ add_crash_attribute_int <- function(att_name, ints, csh, return_max_min){
 }
 
 
+add_medians <- function(RC, median, min_portion){
+  # optional arguments
+  if(missing(min_portion)){min_portion <- 0}
+  # set up dataframe for joining
+  med <- median %>% select(ROUTE, BEG_MP, END_MP, MEDIAN_TYP)
+  # identify segments for each median
+  med$SEG_ID <- NA
+  med$LENGTH <- NA
+  med$flagged <- NA
+  delete <- 0
+  add <- 0
+  for (i in 1:nrow(med)){
+    rt <- med$ROUTE[i]
+    med_beg <- med$BEG_MP[i]
+    med_end <- med$END_MP[i]
+    seg_row <- which(RC$ROUTE == rt & 
+                       RC$BEG_MP < med_end & 
+                       RC$END_MP > med_beg)
+    seg_freq <- length(seg_row)
+    seg_beg <- RC$BEG_MP[seg_row]
+    seg_end <- RC$END_MP[seg_row]
+    seg_id <- RC$SEG_ID[seg_row]
+    # attach segment ids and interior lengths to medians
+    if(seg_freq > 0){
+      # create new rows for split medians
+      if(seg_freq > 1){
+        for(j in 2:seg_freq){
+          next_row <- nrow(med) + 1
+          med[next_row, 4] <- med$MEDIAN_TYP[i]
+          med[next_row, 5] <- seg_id[j]
+          if(med_beg < seg_beg[j]){beg <- seg_beg[j]}else{beg <- med_beg}
+          if(med_end > seg_end[j]){end <- seg_end[j]}else{end <- med_end}
+          med[next_row, 6] <- end - beg
+          seg_len <- seg_end[j] - seg_beg[j]
+          # delete row if the median a small portion of segment
+          if(med[next_row, 6]/seg_len < min_portion){
+            med$flagged[next_row] <- 1
+            delete <- delete + 1
+          } else{add <- add + 1}
+        }
+      }
+      med$SEG_ID[i] <- seg_id[1]
+      if(med_beg < seg_beg[1]){beg <- seg_beg[1]}else{beg <- med_beg}
+      if(med_end > seg_end[1]){end <- seg_end[1]}else{end <- med_end}
+      med$LENGTH[i] <- end - beg
+      seg_len <- seg_end[1] - seg_beg[1]
+      # delete row if the median a small portion of segment
+      if(med$LENGTH[i]/seg_len < min_portion & seg_freq > 1){
+        med$flagged[i] <- 1
+        delete <- delete + 1
+      }
+    }
+  }
+  # organize median data
+  med <- med %>% 
+    filter(is.na(flagged), !is.na(SEG_ID)) %>%
+    select(SEG_ID,MEDIAN_TYP) %>%
+    arrange(SEG_ID)
+  # check for deleted segments
+  # print(paste("deleted",delete,"rows"))
+  # print(paste("added",add,"new rows"))
+  missing <- 0
+  for(i in 2:nrow(med)){
+    id <- med$SEG_ID[i]
+    prev_id <- med$SEG_ID[i-1]
+    if((id-prev_id) > 1){
+      missing <- missing + 1
+    }
+  }
+  missing <- missing + (RC$SEG_ID[nrow(RC)] - med$SEG_ID[nrow(med)])
+  print(paste("missing",missing,"segments"))
+  # pivot wider
+  med <- med %>%
+    group_by(SEG_ID, MEDIAN_TYP) %>% 
+    mutate(n = n(),
+           n = ifelse(n>1,1,n)) %>% 
+    ungroup() %>%
+    pivot_wider(id_cols = c(SEG_ID),
+                names_from = MEDIAN_TYP,
+                names_prefix = "MEDIAN_TYP_",
+                values_from = n,
+                values_fill = 0,
+                values_fn = first)
+  # join to segments
+  df <- left_join_fill(RC, med, by = c("SEG_ID"="SEG_ID"), fill = 0L)
+  return(df)
+}
+
+
 # Add roadway attributes to intersections function
 add_int_att <- function(int, att, is_aadt){
   # optional arguments

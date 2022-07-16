@@ -70,6 +70,9 @@ print(paste("deleted",count,"segments within gaps"))
 # Compressing segments by length
 RC <- compress_seg_len(RC, 0.1)
 
+# Add segment id column
+RC <- RC %>% rowid_to_column("SEG_ID")
+
 # # Check segments for issues
 # test <- RC
 # err1 <- 0
@@ -156,6 +159,8 @@ for (i in 1:nrow(RC)){
   # print(med_type[med_row])
   RC[["Median_Type"]][i] <- ifelse(med_freq == 0L, NA, med_type[med_row])
 }
+
+RC <- add_medians(RC, median, 0.001)
 
 # start timer
 start.time <- Sys.time()
@@ -250,9 +255,6 @@ for (i in 1:nrow(RC)){
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Time taken to add shoulders data to segments:", time.taken))
-
-# Add segment id column
-RC <- RC %>% rowid_to_column("SEG_ID")
 
 # Determine segment length
 RC <- RC %>% 

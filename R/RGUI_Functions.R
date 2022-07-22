@@ -399,6 +399,111 @@ aadt_neg <- function(aadt, rtes, divd){
   return(df)
 }
 
+# Merge divided negative routes into positive routes for the full dataset only.
+neg_to_pos_routes <- function(df, rtes, divd){
+  # isolate negative routes
+  rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
+  # isolate positive att entries
+  att_p <- att %>% filter(grepl("P",ROUTE)) %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(-ROUTE)
+  # isolate negative att entries
+  att_n <- att %>% filter(grepl("N",ROUTE))
+  # join negative routes with negative att (there may be a more efficient way to do this)
+  df <- full_join(att_n, rtes_n, by = "ROUTE") %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    filter(is.na(BEG_MP))
+  # join missing negative routes with positive segments on the same route
+  df <- left_join(df, att_p, by = "label") %>%
+    select(-label, -contains(".x"))
+  # remove suffixes 
+  col_new <- gsub('.y','',colnames(df))
+  colnames(df) <- col_new
+  # filter out excess negative segments
+  divd_n <- divd %>% filter(grepl("N", ROUTE))
+  divd_p <- divd %>% filter(grepl("P", ROUTE))
+  df$flag <- FALSE
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    # print(rt_row)
+    # this if statement helps to deal with routes that have multiple divided segments
+    if(length(rt_row) == 0L){
+      rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)
+    } 
+    beg_rt <- divd_p[["BEG_MP"]][rt_row]
+    end_rt <- divd_p[["END_MP"]][rt_row]
+    # correct routes
+    if(length(beg_rt) == 0L){        # check if the route is on divd_p
+      df[["flag"]][i] <- TRUE
+      next
+    }
+    if(beg_att > end_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(end_att > end_rt[1]){        # correct end mp if it's greater than route
+      df[["END_MP"]][i] <- end_rt[1]
+    }
+    if(end_att < beg_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(beg_att < beg_rt[1]){        # correct beg mp if it's less than route
+      df[["BEG_MP"]][i] <- beg_rt[1]
+    }
+  }
+  # filter out flagged rows
+  df <- df %>% filter(flag == FALSE) %>% select(-flag)
+  # convert positive milepoints to negative milepoints
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    # find segments on divd tables
+    prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_n$END_MP & end_att > divd_n$BEG_MP)
+    prt_start_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)[1]
+    # find beginning and ending milepoints for each route
+    beg_prt <- divd_p[["BEG_MP"]][prt_row]
+    end_prt <- divd_p[["END_MP"]][prt_row]
+    beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
+    end_nrt <- divd_n[["END_MP"]][nrt_row]
+    # get start of first segment
+    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
+    # calculate conversion factor 
+    # (converts positive milepoints to negative milepoints)
+    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
+    # convert milepoints (and offset to zero using prt_start)
+    df[["BEG_MP"]][i] <- (beg_att - prt_start) * c 
+    df[["END_MP"]][i] <- (end_att - prt_start) * c 
+    # fix segment breaks (treat gaps as zero)
+    # I had to specify route 89 because there are routes with non-zero gaps which
+    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
+    # up with a more robust solution that would be great.
+    if(i-1>0){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
+        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
+        end_att <- df[["END_MP"]][i]
+        df[["END_MP"]][i] <- end_att - offset
+        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
+      }
+    }
+  }
+  # rbind df to att
+  df <- rbind(att, df) %>%
+    arrange(ROUTE, BEG_MP)
+  # return df
+  return(df)
+}
+
 # Fix last ending milepoints (This is also a backchecker for the input files)
 fix_endpoints <- function(df, routes){  
   error_count <- 0
@@ -512,7 +617,7 @@ fill_missing_aadt <- function(df, colns){
               c2 <- NA
               c3 <- NA
               # fill top row
-              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1]){
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & i-1>0){
                 if(j-1 >= 1){
                   a1 <- df[[cur_colns[j-1]]][i-1]
                 }
@@ -530,7 +635,7 @@ fill_missing_aadt <- function(df, colns){
                 b3 <- df[[cur_colns[j+1]]][i]
               }
               # fill bottom row
-              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1]){
+              if(df[["ROUTE"]][i] == df[["ROUTE"]][i+1] & i+1<nrow(df)){
                 if(j-1 >= 1){
                   c1 <- df[[cur_colns[j-1]]][i+1]
                 }
@@ -847,19 +952,22 @@ add_medians <- function(RC, median, min_portion){
 
 
 # Add roadway attributes to intersections function
-add_int_att <- function(int, att, is_aadt){
+add_int_att <- function(int, att, is_aadt, is_fc){
   # optional arguments
   if(missing(is_aadt)){is_aadt <- FALSE} else if(is_aadt == TRUE){
     int <- int %>% select(-contains("AADT"), -contains("SUTRK"), -contains("CUTRK"))
   }
+  if(missing(is_fc)){is_fc <- FALSE}
   # create row id column for attribute data
   att <- att %>% rownames_to_column("att_rw")
   att$att_rw <- as.integer(att$att_rw)
   # identify attribute segments on intersection file
-  for(k in 1:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
+  for(k in 0:4){               # since we can expect intersections to have overlapping attributes, we need to identify all of these
     int[[paste0("att_rw_",k)]] <- NA
   }
   for (i in 1:nrow(int)){
+    rt0 <- int$INT_RT_0[i]
+    mp0 <- int$INT_RT_0_M[i]
     rt1 <- int$INT_RT_1[i]
     mp1 <- int$INT_RT_1_M[i]
     rt2 <- int$INT_RT_2[i]
@@ -868,6 +976,9 @@ add_int_att <- function(int, att, is_aadt){
     mp3 <- int$INT_RT_3_M[i]
     rt4 <- int$INT_RT_4[i]
     mp4 <- int$INT_RT_4_M[i]
+    rw0 <- which(att$ROUTE == rt0 & 
+                   att$BEG_MP < mp0 & 
+                   att$END_MP > mp0)
     rw1 <- which(att$ROUTE == rt1 & 
                    att$BEG_MP < mp1 & 
                    att$END_MP > mp1)
@@ -880,6 +991,9 @@ add_int_att <- function(int, att, is_aadt){
     rw4 <- which(att$ROUTE == rt4 & 
                    att$BEG_MP < mp4 & 
                    att$END_MP > mp4)
+    if(length(rw0) > 0){
+      int$att_rw_0[i] <- att$att_rw[rw0]
+    }
     if(length(rw1) > 0){
       int$att_rw_1[i] <- att$att_rw[rw1]
     }
@@ -902,13 +1016,16 @@ add_int_att <- function(int, att, is_aadt){
   # remove basic info from att to avoid redundancy
   att <- att %>% select(-ROUTE, -BEG_MP, -END_MP)
   # join to segments
-  int <- left_join(int, att, by = c("att_rw_1"="att_rw"))
-  int <- left_join(int, att, by = c("att_rw_2"="att_rw"), suffix = c(".a", ".b"))
-  int <- left_join(int, att, by = c("att_rw_3"="att_rw"))
-  int <- left_join(int, att, by = c("att_rw_4"="att_rw"), suffix = c(".c", ".d"))
+  int <- left_join(int, att, by = c("att_rw_0"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_1"="att_rw"), suffix = c(".a", ".b"))
+  int <- left_join(int, att, by = c("att_rw_2"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_3"="att_rw"), suffix = c(".c", ".d"))
+  int <- left_join(int, att, by = c("att_rw_4"="att_rw"))
+  int <- left_join(int, att, by = c("att_rw_4"="att_rw"), suffix = c(".e", ".remove"))
+  int <- int %>% select(-contains(".remove"))
   # determine max, min, etc...
   for(i in colnames(int)){
-    if(substrRight(i,2) == ".d"){
+    if(substrRight(i,2) == ".a"){
       var <- substrMinusRight(i,2)
       int <- int %>%
         rowwise() %>%
@@ -916,22 +1033,26 @@ add_int_att <- function(int, att, is_aadt){
           !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))), 
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))), 
                                            na.rm = TRUE),
           !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))), 
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))), 
                                            na.rm = TRUE),
           !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
                                               !!sym(paste0(var,".b")),
                                               !!sym(paste0(var,".c")),
-                                              !!sym(paste0(var,".d"))), 
+                                              !!sym(paste0(var,".d")),
+                                              !!sym(paste0(var,".e"))), 
                                             na.rm = TRUE),
-          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".a")),
-          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".b")),
-          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".c")),
-          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".d"))
+          !!sym(paste0(var,"_0")) := !!sym(paste0(var,".a")),
+          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".b")),
+          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".c")),
+          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".d")),
+          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".e"))
         ) %>%
         # convert infinities to NA
         mutate(
@@ -939,137 +1060,152 @@ add_int_att <- function(int, att, is_aadt){
           !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
           !!sym(paste0("AVG_",var)) := ifelse(is.nan(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
         )
+      # add local functional classes if functional class
+      if(is_fc == TRUE){
+        int <- int %>%
+          rowwise() %>%
+          mutate(
+            !!sym(paste0(var,"_0")) := case_when(tolower(INT_RT_0) == "local" ~ "Local",
+                                                 TRUE ~ !!sym(paste0(var,".a"))),
+            !!sym(paste0(var,"_1")) := case_when(tolower(INT_RT_1) == "local" ~ "Local",
+                                                 TRUE ~ !!sym(paste0(var,".b"))),
+            !!sym(paste0(var,"_2")) := case_when(tolower(INT_RT_2) == "local" ~ "Local",
+                                                 TRUE ~ !!sym(paste0(var,".c"))),
+            !!sym(paste0(var,"_3")) := case_when(tolower(INT_RT_3) == "local" ~ "Local",
+                                                 TRUE ~ !!sym(paste0(var,".d"))),
+            !!sym(paste0(var,"_4")) := case_when(tolower(INT_RT_4) == "local" ~ "Local",
+                                                 TRUE ~ !!sym(paste0(var,".e")))
+          )
+      }
     }
   }
   # aadt specific
   if(is_aadt == TRUE){
     for(i in colnames(int)){
-      if(substrRight(i,2) == ".d"){
+      if(substrRight(i,2) == ".a"){
         var <- substrMinusRight(i,2)
         if(substr(var,1,4) == "AADT"){
           int <- int %>%
             rowwise() %>%
             mutate(
-              KNOWN_LEGS := 4L - sum(is.na(c(!!sym(paste0(var,".a")),
+              NUM_LEGS := 5L - sum(is.na(c(INT_RT_0,
+                                           INT_RT_1,
+                                           INT_RT_2,
+                                           INT_RT_3,
+                                           INT_RT_4))),
+              KNOWN_LEGS := 5L - sum(is.na(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))))),
-              !!sym(var) := case_when(
-                as.integer(NUM_LEGS) == as.integer(KNOWN_LEGS) ~ 
-                  sum(c(!!sym(paste0(var,".a"))/2, 
-                        !!sym(paste0(var,".b"))/2, 
-                        !!sym(paste0(var,".c"))/2, 
-                        !!sym(paste0(var,".d"))/2), na.rm = TRUE),
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 1L ~ 
-                  sum(c(!!sym(paste0(var,".a"))/2, 
-                        !!sym(paste0(var,".b"))/2, 
-                        !!sym(paste0(var,".c"))/2, 
-                        !!sym(paste0(var,".d"))/2,
-                      mean(c(!!sym(paste0(var,".a"))/2, 
-                             !!sym(paste0(var,".b"))/2,
-                             !!sym(paste0(var,".c"))/2, 
-                             !!sym(paste0(var,".d"))/2), na.rm = TRUE) * 1), na.rm = TRUE),
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 2L ~ 
-                  sum(c(!!sym(paste0(var,".a"))/2, 
-                        !!sym(paste0(var,".b"))/2, 
-                        !!sym(paste0(var,".c"))/2, 
-                        !!sym(paste0(var,".d"))/2,
-                      mean(c(!!sym(paste0(var,".a"))/2, 
-                             !!sym(paste0(var,".b"))/2,
-                             !!sym(paste0(var,".c"))/2, 
-                             !!sym(paste0(var,".d"))/2), na.rm = TRUE) * 2), na.rm = TRUE),
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 3L ~ 
-                  sum(c(!!sym(paste0(var,".a"))/2, 
-                        !!sym(paste0(var,".b"))/2, 
-                        !!sym(paste0(var,".c"))/2, 
-                        !!sym(paste0(var,".d"))/2,
-                      mean(c(!!sym(paste0(var,".a"))/2, 
-                             !!sym(paste0(var,".b"))/2,
-                             !!sym(paste0(var,".c"))/2, 
-                             !!sym(paste0(var,".d"))/2), na.rm = TRUE) * 3), na.rm = TRUE),
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 4L ~ 
-                  sum(c(!!sym(paste0(var,".a"))/2, 
-                        !!sym(paste0(var,".b"))/2, 
-                        !!sym(paste0(var,".c"))/2, 
-                        !!sym(paste0(var,".d"))/2,
-                      mean(c(!!sym(paste0(var,".a"))/2, 
-                             !!sym(paste0(var,".b"))/2,
-                             !!sym(paste0(var,".c"))/2, 
-                             !!sym(paste0(var,".d"))/2), na.rm = TRUE) * 4), na.rm = TRUE)
-              )
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))))),
+              num_local = sum(tolower(c(INT_RT_0,
+                                        INT_RT_1,
+                                        INT_RT_2,
+                                        INT_RT_3,
+                                        INT_RT_4)) == "local", na.rm = TRUE),
+              local_add = case_when(TRAFFIC_CO == "SIGNAL" ~ num_local * 1000,
+                                    TRUE ~ num_local * 500),
+              num_missing = (NUM_LEGS - KNOWN_LEGS) - num_local,
+              # We could take average for routes still missing, but just adding 1000 or 500 is probably better.
+              # missing_add = mean(c(!!sym(paste0(var,".a"))/2, 
+              #                      !!sym(paste0(var,".b"))/2,
+              #                      !!sym(paste0(var,".c"))/2, 
+              #                      !!sym(paste0(var,".d"))/2,
+              #                      !!sym(paste0(var,".e"))/2), 
+              #                    na.rm = TRUE) * num_missing,
+              missing_add = case_when(TRAFFIC_CO == "SIGNAL" ~ num_missing * 1000,
+                                      TRUE ~ num_missing * 500),
+              !!sym(var) := as.integer(sum(c(!!sym(paste0(var,".a"))/2, 
+                                            !!sym(paste0(var,".b"))/2, 
+                                            !!sym(paste0(var,".c"))/2, 
+                                            !!sym(paste0(var,".d"))/2,
+                                            !!sym(paste0(var,".e"))/2,
+                                            local_add,
+                                            missing_add), na.rm = TRUE))
             )
         } else{
+          aadt_var <- paste0("AADT",substrRight(var,4))
           int <- int %>%
             rowwise() %>%
             mutate(
-              KNOWN_LEGS := 4L - sum(is.na(c(!!sym(paste0(var,".a")),
+              NUM_LEGS := 5L - sum(is.na(c(INT_RT_0,
+                                           INT_RT_1,
+                                           INT_RT_2,
+                                           INT_RT_3,
+                                           INT_RT_4))),
+              KNOWN_LEGS := 5L - sum(is.na(c(!!sym(paste0(var,".a")),
                                              !!sym(paste0(var,".b")),
                                              !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d"))))),
-              !!sym(var) := case_when(
-                as.integer(NUM_LEGS) == as.integer(KNOWN_LEGS) ~ 
-                  mean(c(!!sym(paste0(var,".a")),
-                          !!sym(paste0(var,".b")),
-                          !!sym(paste0(var,".c")),
-                          !!sym(paste0(var,".d"))), na.rm = TRUE),
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 1L ~ 
-                  sum(c(!!sym(paste0(var,".a")), 
-                        !!sym(paste0(var,".b")),
-                        !!sym(paste0(var,".c")), 
-                        !!sym(paste0(var,".d")),
-                      mean(c(!!sym(paste0(var,".a")),
-                             !!sym(paste0(var,".b")),
-                             !!sym(paste0(var,".c")),
-                             !!sym(paste0(var,".d"))), 
-                           na.rm = TRUE) * 1), na.rm = TRUE) / NUM_LEGS,
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 2L ~ 
-                  sum(c(!!sym(paste0(var,".a")), 
-                        !!sym(paste0(var,".b")),
-                        !!sym(paste0(var,".c")), 
-                        !!sym(paste0(var,".d")),
-                      mean(c(!!sym(paste0(var,".a")),
-                             !!sym(paste0(var,".b")),
-                             !!sym(paste0(var,".c")),
-                             !!sym(paste0(var,".d"))), 
-                           na.rm = TRUE) * 2), na.rm = TRUE) / NUM_LEGS,
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 3L ~ 
-                  sum(c(!!sym(paste0(var,".a")), 
-                        !!sym(paste0(var,".b")),
-                        !!sym(paste0(var,".c")), 
-                        !!sym(paste0(var,".d")),
-                      mean(c(!!sym(paste0(var,".a")),
-                             !!sym(paste0(var,".b")),
-                             !!sym(paste0(var,".c")),
-                             !!sym(paste0(var,".d"))), 
-                           na.rm = TRUE) * 3), na.rm = TRUE) / NUM_LEGS,
-                
-                as.integer(NUM_LEGS)-as.integer(KNOWN_LEGS) == 4L ~ 
-                  sum(c(!!sym(paste0(var,".a")), 
-                        !!sym(paste0(var,".b")),
-                        !!sym(paste0(var,".c")), 
-                        !!sym(paste0(var,".d")),
-                      mean(c(!!sym(paste0(var,".a")),
-                             !!sym(paste0(var,".b")),
-                             !!sym(paste0(var,".c")),
-                             !!sym(paste0(var,".d"))), 
-                           na.rm = TRUE) * 4), na.rm = TRUE) / NUM_LEGS
-              )
+                                             !!sym(paste0(var,".d")),
+                                             !!sym(paste0(var,".e"))))),
+              num_local = sum(tolower(c(INT_RT_0,
+                                        INT_RT_1,
+                                        INT_RT_2,
+                                        INT_RT_3,
+                                        INT_RT_4)) == "local", na.rm = TRUE),
+              # local_add = case_when(TRAFFIC_CO == "SIGNAL" ~ (num_local*0)/num_local,   # will cause infinities. fix this
+              #                       TRUE ~ (num_local*0)/num_local),
+              local_add = 0 * num_local,
+              num_missing = (NUM_LEGS - KNOWN_LEGS) - num_local,
+              # missing_add = mean(c(!!sym(paste0(var,".a"))*!!sym(paste0(aadt_var,".a"))/2, 
+              #                      !!sym(paste0(var,".b"))*!!sym(paste0(aadt_var,".b"))/2,
+              #                      !!sym(paste0(var,".c"))*!!sym(paste0(aadt_var,".c"))/2, 
+              #                      !!sym(paste0(var,".d"))*!!sym(paste0(aadt_var,".d"))/2,
+              #                      !!sym(paste0(var,".e"))*!!sym(paste0(aadt_var,".e"))/2), 
+              #                    na.rm = TRUE) * num_missing,
+              missing_add = 0 * num_missing,
+              !!sym(var) := sum(c(!!sym(paste0(var,".a"))*!!sym(paste0(aadt_var,".a"))/2, 
+                                  !!sym(paste0(var,".b"))*!!sym(paste0(aadt_var,".b"))/2,
+                                  !!sym(paste0(var,".c"))*!!sym(paste0(aadt_var,".c"))/2, 
+                                  !!sym(paste0(var,".d"))*!!sym(paste0(aadt_var,".d"))/2,
+                                  !!sym(paste0(var,".e"))*!!sym(paste0(aadt_var,".e"))/2,
+                                  local_add,
+                                  missing_add), na.rm = TRUE)
             )
-        }
+        } # what did the rabbit say to the jackrabbit? At least you're not on four legs.
       }
     }
+    int <- int %>% select(-num_local,-local_add,-num_missing,-missing_add)
   }
   # remove att_rw info, and return segments
   int <- int %>% ungroup %>% select(-contains("att_rw"), -contains("."))
   return(int)
 }
+
+
+expand_int_att <- function(IC, att){
+  # extract attribute data
+  df <- IC %>% 
+    select(Int_ID, contains(att))
+  # pivot longer
+  df <- df %>%
+    pivot_longer(cols = c(!!sym(paste0(att,"_0")),
+                          !!sym(paste0(att,"_1")),
+                          !!sym(paste0(att,"_2")),
+                          !!sym(paste0(att,"_3")),
+                          !!sym(paste0(att,"_4"))),
+                 names_to = "delete",
+                 values_to = att) %>%
+    select(-delete) %>%
+    filter(!is.na(!!sym(att)))
+  # pivot wider
+  df <- df %>%
+    group_by(Int_ID, !!sym(att)) %>% 
+    mutate(n = n(),
+           n = ifelse(n>1,1,n)) %>% 
+    ungroup() %>%
+    pivot_wider(id_cols = c(Int_ID),
+                names_from = !!sym(att),
+                names_prefix = paste0(att,"_"),
+                values_from = n,
+                values_fill = 0,
+                values_fn = max)
+  # join to segments
+  df <- left_join_fill(IC, df, by = c("Int_ID"="Int_ID"), fill = 0L) %>%
+    select(-(!!sym(paste0(att,"_0")):!!sym(paste0(att,"_4"))))
+  return(df)
+}
+
 
 # Simple computational functions
 substrRight <- function(x, n){

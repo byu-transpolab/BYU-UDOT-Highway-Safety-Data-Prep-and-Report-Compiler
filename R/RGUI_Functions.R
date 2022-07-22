@@ -399,6 +399,111 @@ aadt_neg <- function(aadt, rtes, divd){
   return(df)
 }
 
+# Merge divided negative routes into positive routes for the full dataset only.
+neg_to_pos_routes <- function(df, rtes, divd){
+  # isolate negative routes
+  rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
+  # isolate positive att entries
+  att_p <- att %>% filter(grepl("P",ROUTE)) %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(-ROUTE)
+  # isolate negative att entries
+  att_n <- att %>% filter(grepl("N",ROUTE))
+  # join negative routes with negative att (there may be a more efficient way to do this)
+  df <- full_join(att_n, rtes_n, by = "ROUTE") %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    filter(is.na(BEG_MP))
+  # join missing negative routes with positive segments on the same route
+  df <- left_join(df, att_p, by = "label") %>%
+    select(-label, -contains(".x"))
+  # remove suffixes 
+  col_new <- gsub('.y','',colnames(df))
+  colnames(df) <- col_new
+  # filter out excess negative segments
+  divd_n <- divd %>% filter(grepl("N", ROUTE))
+  divd_p <- divd %>% filter(grepl("P", ROUTE))
+  df$flag <- FALSE
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    # print(rt_row)
+    # this if statement helps to deal with routes that have multiple divided segments
+    if(length(rt_row) == 0L){
+      rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)
+    } 
+    beg_rt <- divd_p[["BEG_MP"]][rt_row]
+    end_rt <- divd_p[["END_MP"]][rt_row]
+    # correct routes
+    if(length(beg_rt) == 0L){        # check if the route is on divd_p
+      df[["flag"]][i] <- TRUE
+      next
+    }
+    if(beg_att > end_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(end_att > end_rt[1]){        # correct end mp if it's greater than route
+      df[["END_MP"]][i] <- end_rt[1]
+    }
+    if(end_att < beg_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(beg_att < beg_rt[1]){        # correct beg mp if it's less than route
+      df[["BEG_MP"]][i] <- beg_rt[1]
+    }
+  }
+  # filter out flagged rows
+  df <- df %>% filter(flag == FALSE) %>% select(-flag)
+  # convert positive milepoints to negative milepoints
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    # find segments on divd tables
+    prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_n$END_MP & end_att > divd_n$BEG_MP)
+    prt_start_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)[1]
+    # find beginning and ending milepoints for each route
+    beg_prt <- divd_p[["BEG_MP"]][prt_row]
+    end_prt <- divd_p[["END_MP"]][prt_row]
+    beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
+    end_nrt <- divd_n[["END_MP"]][nrt_row]
+    # get start of first segment
+    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
+    # calculate conversion factor 
+    # (converts positive milepoints to negative milepoints)
+    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
+    # convert milepoints (and offset to zero using prt_start)
+    df[["BEG_MP"]][i] <- (beg_att - prt_start) * c 
+    df[["END_MP"]][i] <- (end_att - prt_start) * c 
+    # fix segment breaks (treat gaps as zero)
+    # I had to specify route 89 because there are routes with non-zero gaps which
+    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
+    # up with a more robust solution that would be great.
+    if(i-1>0){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
+        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
+        end_att <- df[["END_MP"]][i]
+        df[["END_MP"]][i] <- end_att - offset
+        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
+      }
+    }
+  }
+  # rbind df to att
+  df <- rbind(att, df) %>%
+    arrange(ROUTE, BEG_MP)
+  # return df
+  return(df)
+}
+
 # Fix last ending milepoints (This is also a backchecker for the input files)
 fix_endpoints <- function(df, routes){  
   error_count <- 0

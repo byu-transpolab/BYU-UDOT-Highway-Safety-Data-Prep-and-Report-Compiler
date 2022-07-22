@@ -249,6 +249,12 @@ fc <- read_csv_file(fc_fp, fc_col)
 # Standardize Column Names
 names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Compress fc
+fc <- compress_seg(fc)
+
+# Create full fc file (including fed routes) for merging with intersections
+fc_full <- fc
+
 # Select only Main Routes
 fc <- fc %>% filter(grepl("M", ROUTE))
 
@@ -256,15 +262,9 @@ fc <- fc %>% filter(grepl("M", ROUTE))
 fed <- fc %>% filter(grepl("Fed Aid", RouteType))
 fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
 
-# Compress fc
-fc <- compress_seg(fc)
-
 # # Create routes dataframe
 # routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
 # routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
-
-# Create full fc file (including fed routes) for merging with intersections
-fc_full <- fc
 
 # Select only State Routes
 fc <- fc %>% filter(grepl("State", RouteType))
@@ -288,6 +288,18 @@ aadt <- read_csv_file(aadt_fp, aadt_col)
 # Standardize Column Names
 names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Convert aadt to numeric
+aadt <- aadt_numeric(aadt, aadt_col)
+
+# Compress aadt
+aadt <- compress_seg(aadt)
+
+# fill in missing data
+aadt <- fill_missing_aadt(aadt, aadt_col)
+
+# Create full aadt file (including fed routes) for merging with intersections
+aadt_full <- aadt
+
 # Get only main routes and remove invalid rows (don't know why this would happen)
 aadt <- aadt %>% 
   filter(grepl("M", ROUTE)) %>%
@@ -296,23 +308,11 @@ aadt <- aadt %>%
 # Find Number of Unique Routes in aadt file
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
-# Convert aadt to numeric
-aadt <- aadt_numeric(aadt, aadt_col)
-
-# Compress aadt
-aadt <- compress_seg(aadt)
-
 # fix negative aadt values
 aadt <- aadt_neg(aadt, routes, div_routes)
 
 # fix ending endpoints
 aadt <- fix_endpoints(aadt, routes)
-
-# fill in missing data
-aadt <- fill_missing_aadt(aadt, aadt_col)
-
-# Create full aadt file (including fed routes) for merging with intersections
-aadt_full <- aadt
 
 # Get Only State Routes
 aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6))
@@ -328,6 +328,12 @@ speed <- read_csv_file(speed_fp, speed_col)
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Compress speed
+speed <- compress_seg(speed)
+
+# Create full speed file (including fed routes) for merging with intersections
+speed_full <- speed
+
 # Get only main routes and remove invalid rows (don't know why this would happen)
 speed <- speed %>% 
   filter(grepl("M", ROUTE)) %>%
@@ -335,12 +341,6 @@ speed <- speed %>%
 
 # Find Number of Unique Routes in speed file
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress speed
-speed <- compress_seg(speed)
-
-# Create full speed file (including fed routes) for merging with intersections
-speed_full <- speed
 
 # Getting Only State Routes
 speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6))
@@ -359,24 +359,24 @@ lane <- read_csv_file(lane_fp, lane_col)
 # Standardize Column Names
 names(lane)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Compress lanes
+lane <- compress_seg(lane)
+
 # Add M to Route Column to Standardize Route Format
 lane$ROUTE <- paste(substr(lane$ROUTE, 1, 6), "M", sep = "")
 
+# Create full lane file (including fed routes) for merging with intersections
+lane_full <- lane
+
 # Get only main routes and remove invalid rows (don't know why this would happen)
 lane <- lane %>% 
-  filter(!grepl("R", ROUTE),
-         !grepl("X", ROUTE),
-         !grepl("C", ROUTE)) %>%
+  # filter(!grepl("R", ROUTE),
+  #        !grepl("X", ROUTE),
+  #        !grepl("C", ROUTE)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in lane file
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress lanes
-lane <- compress_seg(lane)     # note: the alt function is much slower for lanes
-
-# Create full lane file (including fed routes) for merging with intersections
-lane_full <- lane
 
 # Get Only State Routes
 lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6))
@@ -395,6 +395,12 @@ urban <- read_csv_file(urban_fp, urban_col)
 # Standardize Column Names
 names(urban)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
+# Compress urban code
+urban <- compress_seg(urban)
+
+# Create full urban code file (including fed routes) for merging with intersections
+urban_full <- urban
+
 # Get only main routes and remove invalid rows (don't know why this would happen)
 urban <- urban %>% filter(grepl("M", ROUTE)) %>%
   filter(BEG_MP < END_MP)
@@ -405,12 +411,6 @@ urban <- urban %>%
 
 # Find Number of Unique Routes in urban code file
 num.urban.routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
-
-# Compress urban code
-urban <- compress_seg(urban) 
-
-# Create full urban code file (including fed routes) for merging with intersections
-urban_full <- urban
 
 # Get Only State Routes
 urban <- urban %>% filter(ROUTE %in% substr(main.routes, 1, 6))

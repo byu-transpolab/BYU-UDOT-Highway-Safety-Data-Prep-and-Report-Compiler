@@ -802,3 +802,20 @@ for(i in 1:(nrow(gaps)-1)){
 gaps <- gaps %>%
   select(ROUTE, BEG_GAP, END_GAP) %>%
   filter(BEG_GAP != 0)
+
+###
+## Load school and UTA files
+###
+
+# load UTA stops shapefile
+UTA_stops <- read_sf("data/shapefile/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(UTA_StopID, Mode) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# load schools (not college) shapefile
+schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(SchoolID, SchoolLeve, OnlineScho, SchoolType, TotalK12) %>%
+  filter(is.na(OnlineScho), SchoolType == "Vocational" | SchoolType == "Special Education" | SchoolType == "Residential Treatment" | SchoolType == "Regular Education" | SchoolType == "Alternative") %>%
+  select(-OnlineScho, -SchoolType, -TotalK12) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)

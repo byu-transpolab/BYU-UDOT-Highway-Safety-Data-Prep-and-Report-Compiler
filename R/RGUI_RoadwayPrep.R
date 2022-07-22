@@ -324,55 +324,55 @@ for(i in 1:nrow(IC)){
   }
 }
 
-# Create a Num_Legs column  (Probably not necessary anymore)
-IC <- IC %>%
-  mutate(
-    # take numeric. coerces to NA if there is no number, but not a problem
-    NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
-  ) %>%
-  mutate(
-    NUM_LEGS = case_when(
-      INT_TYPE == "DDI" |
-        INT_TYPE == "CFI CENTRAL" |
-        INT_TYPE == "ROUNDABOUT" |
-        INT_TYPE == "CFI CENTRAL" |
-        INT_TYPE == "SPUI" |
-        INT_TYPE == "THRU TURN CENTRAL" |
-        Int_ID == "0173P-7.167-0173" |
-        Int_ID == "0173P-7.369-0173" |
-        Int_ID == "0265P-0.65-0265" |
-        Int_ID == "0265P-0.823-0256" |
-        Int_ID == "0071P-5.207-0071" |
-        Int_ID == "0126P-1.803-0126"
-      ~ 4L,
-      Int_ID == "0154P-5.602-None" |
-        Int_ID == "0154P-5.884-0154" |
-        Int_ID == "0154P-14.756-None" |
-        Int_ID == "0154P-15.072-0154" |
-        Int_ID == "0154P-15.801-None" |
-        Int_ID == "0154P-16.822-None" |
-        Int_ID == "0154P-17.054-0154" |
-        Int_ID == "0154P-17.817-None" |
-        Int_ID == "0154P-18.062-0154" |
-        Int_ID == "0154P-19.024-0154" |
-        Int_ID == "0154P-19.31-None" |
-        Int_ID == "0154P-19.6-0154" |
-        Int_ID == "0232P-0.39-None" |
-        Int_ID == "0266P-7.665-None" |
-        Int_ID == "0126P-1.61-0126"
-      ~ 3L,
-      Int_ID == "0172P-0.456-None" |
-        Int_ID == "0172P-2.775-None" |
-        Int_ID == "0289P-0.458-None" |
-        Int_ID == "0089P-366.513-None" |
-        Int_ID == "0089P-380.099-None" |
-        Int_ID == "0089P-362.667-None" |
-        Int_ID == "0126P-1.797-None" |
-        Int_ID == "0154P-18.863-None"
-      ~ 2L,
-      TRUE ~ NUM_LEGS
-    )
-  )
+# # Create a Num_Legs column  (Probably not necessary anymore)
+# IC <- IC %>%
+#   mutate(
+#     # take numeric. coerces to NA if there is no number, but not a problem
+#     NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
+#   ) %>%
+#   mutate(
+#     NUM_LEGS = case_when(
+#       INT_TYPE == "DDI" |
+#         INT_TYPE == "CFI CENTRAL" |
+#         INT_TYPE == "ROUNDABOUT" |
+#         INT_TYPE == "CFI CENTRAL" |
+#         INT_TYPE == "SPUI" |
+#         INT_TYPE == "THRU TURN CENTRAL" |
+#         Int_ID == "0173P-7.167-0173" |
+#         Int_ID == "0173P-7.369-0173" |
+#         Int_ID == "0265P-0.65-0265" |
+#         Int_ID == "0265P-0.823-0256" |
+#         Int_ID == "0071P-5.207-0071" |
+#         Int_ID == "0126P-1.803-0126"
+#       ~ 4L,
+#       Int_ID == "0154P-5.602-None" |
+#         Int_ID == "0154P-5.884-0154" |
+#         Int_ID == "0154P-14.756-None" |
+#         Int_ID == "0154P-15.072-0154" |
+#         Int_ID == "0154P-15.801-None" |
+#         Int_ID == "0154P-16.822-None" |
+#         Int_ID == "0154P-17.054-0154" |
+#         Int_ID == "0154P-17.817-None" |
+#         Int_ID == "0154P-18.062-0154" |
+#         Int_ID == "0154P-19.024-0154" |
+#         Int_ID == "0154P-19.31-None" |
+#         Int_ID == "0154P-19.6-0154" |
+#         Int_ID == "0232P-0.39-None" |
+#         Int_ID == "0266P-7.665-None" |
+#         Int_ID == "0126P-1.61-0126"
+#       ~ 3L,
+#       Int_ID == "0172P-0.456-None" |
+#         Int_ID == "0172P-2.775-None" |
+#         Int_ID == "0289P-0.458-None" |
+#         Int_ID == "0089P-366.513-None" |
+#         Int_ID == "0089P-380.099-None" |
+#         Int_ID == "0089P-362.667-None" |
+#         Int_ID == "0126P-1.797-None" |
+#         Int_ID == "0154P-18.863-None"
+#       ~ 2L,
+#       TRUE ~ NUM_LEGS
+#     )
+#   )
 
 # Add spatial data
 IC <- IC %>%
@@ -381,41 +381,36 @@ IC <- IC %>%
     crs = 4326,
     remove = F) %>%
   st_transform(crs = 26912)
-# load UTA stops shapefile
-UTA_stops <- read_sf("data/shapefile/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
-  st_transform(crs = 26912) %>%
-  select(UTA_StopID, Mode) %>%
-  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
-# load schools (not college) shapefile
-schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
-  st_transform(crs = 26912) %>%
-  select(SchoolID, SchoolLeve, OnlineScho, SchoolType, TotalK12) %>%
-  filter(is.na(OnlineScho), SchoolType == "Vocational" | SchoolType == "Special Education" | SchoolType == "Residential Treatment" | SchoolType == "Regular Education" | SchoolType == "Alternative") %>%
-  select(-OnlineScho, -SchoolType, -TotalK12) %>%
-  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
 # modify intersections to include bus stops and schools nearby
 IC <- mod_intersections(IC,UTA_Stops,schools)
 # remove spatial info
 IC <- st_drop_geometry(IC)
 
 # Add roadway data (disclaimer. Make sure column names don't have a "." in them)
+# Note: There will be some warnings, but these are resolved within the function so don't mind them.
 IC <- add_int_att(IC, urban_full) %>% 
-  select(-(URBAN_CODE_0:URBAN_CODE_4), -MAX_URBAN_CODE, -AVG_URBAN_CODE) %>%
-  rename(URBAN_CODE = MIN_URBAN_CODE)
+  select(-MAX_URBAN_CODE, -AVG_URBAN_CODE)
+IC <- expand_int_att(IC, "URBAN_CODE") #%>%
+  #rename(URBAN_CODE = MIN_URBAN_CODE)
 
-# NOTE: We need to create code that finds the min and max fc based on the following ranking
-fc_rank <- tibble(
-  fc = c("Interstate", "Other Freeways and Expressways",
-         "Other Principal Arterial", "Minor Arterial",
-         "Major Collector", "Minor Collector", ), 
-  rank = c(1,2,3,4,5,6,7)
-)
-IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType)) %>% 
+# # NOTE: We need to create code that finds the min and max fc based on the following ranking
+# fc_rank <- tibble(
+#   fc = c("Interstate", "Other Freeways and Expressways",
+#          "Other Principal Arterial", "Minor Arterial",
+#          "Major Collector", "Minor Collector", ), 
+#   rank = c(1,2,3,4,5,6,7)
+# )
+IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
-IC <- add_int_att(IC, aadt_full, TRUE) %>% 
-  select(-matches("[0-9]{4,}_[0-9]+"))
+IC <- expand_int_att(IC, "FUNCTIONAL_CLASS")
+
+IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>% 
+  select(-matches("[0-9]{4,}_[0-9]+"))  # this is called a regex expression. 
+                                        # It helps me find strings that follow certain patterns. 
+                                        # In this case, a number followed by an underscore, then another number
+
 IC <- add_int_att(IC, lane_full) %>%
-  select(-(AVG_THRU_CNT:THRU_CNT_4),-(AVG_THRU_WDTH:THRU_WDTH_4))
+  select(-(THRU_CNT_0:THRU_CNT_4),-(THRU_WDTH_0:THRU_WDTH_4))
 
 # Add years to intersection shell and pivot aadt
 # yrs <- crash_int %>% select(crash_year) %>% unique()
@@ -425,7 +420,7 @@ IC <- add_int_att(IC, lane_full) %>%
 #   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
 IC <- pivot_aadt_int(IC) %>% 
   mutate(
-    NUM_ENT_TRUCKS = (SUTRK + CUTRK) * AADT,
+    NUM_ENT_TRUCKS = (SUTRK + CUTRK),
     MAX_NUM_TRUCKS = (MAX_SUTRK + MAX_CUTRK) * MAX_AADT,
     MIN_NUM_TRUCKS = (MIN_SUTRK + MIN_CUTRK) * MIN_AADT,
     AVG_NUM_TRUCKS = (AVG_SUTRK + AVG_CUTRK) * AVG_AADT

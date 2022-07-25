@@ -11,6 +11,7 @@ library(sf)
 ###
 
 # Read in Function
+## Refers to the filepath and columns list for each and every data set that we have and ensures that only the selected columns are read in
 read_csv_file <- function(filepath, columns) {
   if (str_detect(filepath, ".csv")) {
     print("reading csv")
@@ -23,6 +24,7 @@ read_csv_file <- function(filepath, columns) {
 }
 
 # Compress Segments Function
+## If adjacent segments in a data set have the same attributes from selected columns they are combined into one segment.
 compress_seg <- function(df, col, variables) {
   # start timer
   start.time <- Sys.time()
@@ -167,6 +169,8 @@ compress_seg_ovr <- function(df) {
 }
 
 # Function to compress segments by segment length
+## Ensuring that segment lengths are not less than 0.1 of a mile. 
+## If segment is less than 0.1 than check for adjacent segments are combine to segment that is most similar.
 compress_seg_len <- function(df, len) {
   # start timer
   start.time <- Sys.time()
@@ -239,6 +243,7 @@ compress_seg_len <- function(df, len) {
 }
 
 # Convert AADT to Numeric Function
+## Ensuring AADT is a number not a string.
 aadt_numeric <- function(aadt, aadt.columns){
   # coerce aadt to numeric
   for(i in 1:length(aadt.columns)){
@@ -251,6 +256,7 @@ aadt_numeric <- function(aadt, aadt.columns){
 }
 
 # Pivot AADT longer Function
+## Creating a different row for every year the segment exists.
 pivot_aadt <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
@@ -275,6 +281,7 @@ pivot_aadt <- function(aadt){
 }
 
 # Pivot AADT longer modified for intersections
+## Creating a different row for every year the intersection exists.
 pivot_aadt_int <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
@@ -294,7 +301,8 @@ pivot_aadt_int <- function(aadt){
   return(aadt)
 }
 
-# Function to fix missing negative direction AADT values (can be optimized more)
+# Missing Negative AADT
+## Fixes missing negative direction AADT values (can be optimized more)
 aadt_neg <- function(aadt, rtes, divd){
   # isolate negative routes
   rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
@@ -399,7 +407,8 @@ aadt_neg <- function(aadt, rtes, divd){
   return(df)
 }
 
-# Merge divided negative routes into positive routes for the full dataset only.
+# Negative to Positive
+## Merge divided negative routes into positive routes for the full data set only.
 neg_to_pos_routes <- function(df, rtes, divd){
   # isolate negative routes
   rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
@@ -504,7 +513,8 @@ neg_to_pos_routes <- function(df, rtes, divd){
   return(df)
 }
 
-# Fix last ending milepoints (This is also a backchecker for the input files)
+# Fix Endpoints
+## Fix last ending milepoints (This is also a backchecker for the input files)
 fix_endpoints <- function(df, routes){  
   error_count <- 0
   error_count2 <- 0
@@ -566,7 +576,8 @@ fix_endpoints <- function(df, routes){
   return(df)
 }
 
-# Function to fill in missing aadt and truck data
+# Fill Missing AADT
+## Function to fill in missing aadt and truck data
 fill_missing_aadt <- function(df, colns){
   # ignore first 3 columns
   colns <- tail(colns, -3)
@@ -686,7 +697,8 @@ fill_missing_aadt <- function(df, colns){
   return(df)
 }
 
-# Get all measurements where a road segment stops or starts
+# Segment Breaks
+## Get all measurements where a road segment stops or starts
 segment_breaks <- function(sdtm) {
   breaks_df <- sdtm %>% 
     group_by(ROUTE) %>% 

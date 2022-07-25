@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-# INSTALL AND LOAD PACKAGES ################################
+# Install and Load Packages
 
 # Install pacman ("package manager") if needed
 if (!require("pacman")) install.packages("pacman")

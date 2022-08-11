@@ -132,7 +132,8 @@ compress_seg_alt <- function(df) {
   return(df)
 }
 
-# Function to compress overlapping segments
+# Compress Overlapping Segments Function
+## Ensures no milepoints of unique segments overlap
 compress_seg_ovr <- function(df) {
   # start timer
   start.time <- Sys.time()
@@ -168,7 +169,7 @@ compress_seg_ovr <- function(df) {
   return(df)
 }
 
-# Function to compress segments by segment length
+# Segment Length Compress Function
 ## Ensuring that segment lengths are not less than 0.1 of a mile. 
 ## If segment is less than 0.1 than check for adjacent segments are combine to segment that is most similar.
 compress_seg_len <- function(df, len) {
@@ -1184,7 +1185,7 @@ add_int_att <- function(int, att, is_aadt, is_fc){
   return(int)
 }
 
-
+# Expand Intersection Attribute Function
 expand_int_att <- function(IC, att){
   # extract attribute data
   df <- IC %>% 

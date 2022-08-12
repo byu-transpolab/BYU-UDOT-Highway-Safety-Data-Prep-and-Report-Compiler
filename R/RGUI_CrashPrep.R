@@ -29,7 +29,7 @@ crash$route <- paste(substr(crash$route, 1, 5), crash$route_direction, sep = "")
 crash$route <- paste(substr(crash$route, 1, 6), "M", sep = "")
 crash$route <- paste0("000", crash$route)
 crash$route <- substr(crash$route, nchar(crash$route)-6+1, nchar(crash$route))
-crash <- crash %>% filter(route %in% substr(main.routes, 1, 6))
+crash <- crash %>% filter(route %in% substr(state.routes, 1, 6))
 
 # Add Number of Vehicles Column
 vehicle <- vehicle %>%

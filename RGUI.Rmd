@@ -5,7 +5,8 @@ date: "10/14/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, warning=FALSE, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 # Install and Load Packages
 
 # Install pacman ("package manager") if needed
@@ -18,7 +19,7 @@ source("R/RGUI_Functions.R")
 source("R/RGUI_ReadIn.R")
 ```
 
-```{r code, warning=FALSE, include=FALSE}
+```{r code, message=FALSE, warning=FALSE, include=FALSE}
 
 source("R/RGUI_CrashPrep.R")
 source("R/RGUI_RoadwayPrep.R")

@@ -5,6 +5,7 @@
 library(tidyverse)
 library(dplyr)
 
+
 ###
 ## Set Filepath and Column Names for each Dataset
 ###
@@ -190,7 +191,6 @@ rollups_col <- c("crash_id",
                  "transit_vehicle_involved",	
                  "collision_with_fixed_object")
 
-
 vehicle_fp <- "data/csv/Vehicle_Data_14-20.csv"
 vehicle_col <-  c("crash_id", 
                   "vehicle_num", 
@@ -202,16 +202,7 @@ vehicle_col <-  c("crash_id",
                   "most_harmful_event_id", 
                   "vehicle_maneuver_id")
 
-read_csv_file <- function(filepath, columns) {
-  if (str_detect(filepath, ".csv")) {
-    print("reading csv")
-    read_csv(filepath) %>% select(all_of(columns))
-  }
-  else {
-    print("Error reading in:")
-    print(filepath)
-  }
-}
+
 ###
 ## Routes Data Prep
 ###
@@ -222,22 +213,23 @@ routes <- read_csv_file(routes_fp, routes_col)
 # Standardize Column Names
 names(routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-# Select only Main Routes
+# Select Only Main Routes
 routes <- routes %>% filter(grepl("M", ROUTE))
 
-# Round milepoints to 6 decimal places
+# Round Milepoints to 6 Decimal Places
 routes <- routes %>% 
   mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
 
 # Find Number of Unique Routes in the routes File
 num.routes.routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
 
-# load divided routes data
+# Load divided routes Data
 div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
 names(div_routes)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 div_routes <- div_routes %>%
   mutate(LENGTH = END_MP - BEG_MP) %>%
   arrange(ROUTE, BEG_MP)
+
 
 ###
 ## Functional Class Data Prep
@@ -252,29 +244,24 @@ names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Compress fc
 fc <- compress_seg(fc)
 
-# Create full fc file (including fed routes) for merging with intersections
+# Create Full fc File (Including Fed Routes) For Merging with Intersections
 fc_full <- fc
 
-# Select only Main Routes
+# Select Only Main Routes
 fc <- fc %>% filter(grepl("M", ROUTE))
 
-# Create fed routes list
+# Create fed routes List
 fed <- fc %>% filter(grepl("Fed Aid", RouteType))
 fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
-
-# # Create routes dataframe
-# routes <- fc %>% select(ROUTE, BEG_MP, END_MP)
-# routes <- compress_seg(fc, c("ROUTE", "BEG_MP", "END_MP"), c("ROUTE"))
 
 # Select only State Routes
 fc <- fc %>% filter(grepl("State", RouteType))
 
 # Find Number of Unique Routes in the fc File
 num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
-main.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())  
-#"main.routes" is really just state routes. consider renaming all instances of this...
+state.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())  
 
-# fix ending endpoints
+# Fix Endpoints
 fc <- fix_endpoints(fc, routes)
 
 
@@ -288,19 +275,19 @@ aadt <- read_csv_file(aadt_fp, aadt_col)
 # Standardize Column Names
 names(aadt)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-# Convert aadt to numeric
+# Convert aadt to Numeric
 aadt <- aadt_numeric(aadt, aadt_col)
 
 # Compress aadt
 aadt <- compress_seg(aadt)
 
-# fill in missing data
+# Fill in Missing aadt
 aadt <- fill_missing_aadt(aadt, aadt_col)
 
-# Create full aadt file (including fed routes) for merging with intersections
+# Create Full aadt File (Including Fed Routes) For Merging with Intersections
 aadt_full <- aadt
 
-# Get only main routes and remove invalid rows (don't know why this would happen)
+# Select Only Main Routes
 aadt <- aadt %>% 
   filter(grepl("M", ROUTE)) %>%
   filter(BEG_MP < END_MP)
@@ -308,14 +295,14 @@ aadt <- aadt %>%
 # Find Number of Unique Routes in aadt file
 num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
-# fix negative aadt values
+# Fix Negative aadt Values
 aadt <- aadt_neg(aadt, routes, div_routes)
 
-# fix ending endpoints
+# Fix Endpoints
 aadt <- fix_endpoints(aadt, routes)
 
 # Get Only State Routes
-aadt <- aadt %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+aadt <- aadt %>% filter(ROUTE %in% substr(state.routes, 1, 6))
 
 
 ###
@@ -331,21 +318,21 @@ names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Compress speed
 speed <- compress_seg(speed)
 
-# Create full speed file (including fed routes) for merging with intersections
+# Create Full speed File (Including Fed Routes) For Merging with Intersections
 speed_full <- speed
 
-# Get only main routes and remove invalid rows (don't know why this would happen)
+# Select Only Main Routes
 speed <- speed %>% 
   filter(grepl("M", ROUTE)) %>%
   filter(BEG_MP < END_MP)
 
-# Find Number of Unique Routes in speed file
+# Find Number of Unique Routes in speed File
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
-# Getting Only State Routes
-speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+# Get Only State Routes
+speed <- speed %>% filter(ROUTE %in% substr(state.routes, 1, 6))
 
-# fix ending endpoints
+# Fix Endpoints
 speed <- fix_endpoints(speed, routes)
 
 
@@ -353,7 +340,7 @@ speed <- fix_endpoints(speed, routes)
 ## Lanes Data Prep
 ###
 
-# Read in lane file
+# Read in lane File
 lane <- read_csv_file(lane_fp, lane_col)
 
 # Standardize Column Names
@@ -365,23 +352,20 @@ lane <- compress_seg(lane)
 # Add M to Route Column to Standardize Route Format
 lane$ROUTE <- paste(substr(lane$ROUTE, 1, 6), "M", sep = "")
 
-# Create full lane file (including fed routes) for merging with intersections
+# Create Full lane File (Including Fed Routes) For Merging with Intersections
 lane_full <- lane
 
-# Get only main routes and remove invalid rows (don't know why this would happen)
-lane <- lane %>% 
-  # filter(!grepl("R", ROUTE),
-  #        !grepl("X", ROUTE),
-  #        !grepl("C", ROUTE)) %>%
+# Select Only Main Routes
+lane <- lane %>%
   filter(BEG_MP < END_MP)
 
-# Find Number of Unique Routes in lane file
+# Find Number of Unique Routes in lanes File
 num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Get Only State Routes
-lane <- lane %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+lane <- lane %>% filter(ROUTE %in% substr(state.routes, 1, 6))
 
-# fix ending endpoints
+# Fix Endpoints
 lane <- fix_endpoints(lane, routes)
 
 
@@ -389,7 +373,7 @@ lane <- fix_endpoints(lane, routes)
 ## Urban Code Data Prep
 ###
 
-# Read in urban code file
+# Read in urban code File
 urban <- read_csv_file(urban_fp, urban_col)
 
 # Standardize Column Names
@@ -398,34 +382,34 @@ names(urban)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Compress urban code
 urban <- compress_seg(urban)
 
-# Create full urban code file (including fed routes) for merging with intersections
+# Create Full urban code File (Including Fed Routes) For Merging with Intersections
 urban_full <- urban
 
-# Get only main routes and remove invalid rows (don't know why this would happen)
+# Select Only Main Routes
 urban <- urban %>% filter(grepl("M", ROUTE)) %>%
   filter(BEG_MP < END_MP)
 
-# Round milepoints to 6 decimal places
+# Round Milepoints to 6 Decimal Places
 urban <- urban %>% 
   mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
 
-# Find Number of Unique Routes in urban code file
+# Find Number of Unique Routes in urban code File
 num.urban.routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
 
 # Get Only State Routes
-urban <- urban %>% filter(ROUTE %in% substr(main.routes, 1, 6))
+urban <- urban %>% filter(ROUTE %in% substr(state.routes, 1, 6))
 
-# fix ending endpoints
+# Fix Endpoints
 urban <- fix_endpoints(urban, routes)
-
 
 
 ###
 ## Intersection Data Prep
 ###
-#Intersections are labeled at a point, not a segment
 
-# Read in intersection file
+# Intersections are labeled at a point, not a segment
+
+# Read in intersection File
 intersection <- read_csv_file(intersection_fp, intersection_col)
 
 # Standardize Column Names
@@ -437,17 +421,17 @@ intersection <- intersection %>% select(Int_ID:BEG_ELEV, everything())
 # Add M to Primary Route Column to Standardize Route Format
 intersection$INT_RT_0 <- paste(substr(intersection$INT_RT_0, 1, 5), "M", sep = "")
 
-# Getting only state routes  
+# Get Only State Routes  
 intersection <- intersection %>% 
   filter(
-    INT_RT_0 %in% substr(main.routes, 1,4) |
-    INT_RT_1 %in% substr(main.routes, 1,4) |
-    INT_RT_2 %in% substr(main.routes, 1,4) |
-    INT_RT_3 %in% substr(main.routes, 1,4) |
-    INT_RT_4 %in% substr(main.routes, 1,4) 
+    INT_RT_0 %in% substr(state.routes, 1,4) |
+    INT_RT_1 %in% substr(state.routes, 1,4) |
+    INT_RT_2 %in% substr(state.routes, 1,4) |
+    INT_RT_3 %in% substr(state.routes, 1,4) |
+    INT_RT_4 %in% substr(state.routes, 1,4) 
   )
 
-# Find Number of Unique primary Routes in intersection file
+# Find Number of Unique primary Routes in intersections File
 num.intersection.routes <- intersection %>% pull(INT_RT_0) %>% unique() %>% length()
 
 # Filter SR_SR, Fed_Aid, and Signalized
@@ -462,7 +446,7 @@ intersection <- intersection %>%
     INT_RT_4 %in% substr(fed.routes,1,4)
   )
 
-# Make sure Intersection IDs are unique
+# Ensure Intersection IDs are Unique
 intersection <- intersection %>% arrange(Int_ID)
 n <- 1
 for(i in 2:nrow(intersection)){
@@ -477,7 +461,7 @@ for(i in 2:nrow(intersection)){
 # Sort intersections
 intersection <- intersection %>% arrange(INT_RT_0, INT_RT_0_M)
 
-# Create functional area reference table
+# Create Functional Area Reference Table
 FA_ref <- tibble(
   speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
   d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275,275), 
@@ -488,7 +472,7 @@ FA_ref <- tibble(
     total = d1 + d2 + d3
   )
 
-# Add speed limit for each intersection approach on intersections file
+# Add Speed Limits for Each Intersection Approach on intersections File
 intersection$INT_RT_0_SL <- NA
 intersection$INT_RT_1_SL <- NA
 intersection$INT_RT_2_SL <- NA
@@ -510,9 +494,9 @@ for (i in 1:nrow(intersection)){
   speed_row2 <- NA
   speed_row3 <- NA
   speed_row4 <- NA
-  # get route direction
+  # Get Route Direction
   suffix = substr(intersection$INT_RT_0[i],5,6)
-  # find rows in speed limit file
+  # Find Rows in speed File
   if(!is.na(int_route0) & tolower(int_route0) != "local"){
     speed_row0 <- which(speed_full$ROUTE == int_route0 & 
                           speed_full$BEG_MP <= int_mp_0 & 
@@ -523,7 +507,8 @@ for (i in 1:nrow(intersection)){
     # print(paste(speed_row1, "at", int_route1, int_mp_1))
   }
   if(!is.na(int_route1) & tolower(int_route1) != "local"){
-    # determine the direction. assume same as primary route if same route number and "PM" otherwise.
+    # Determine the Direction
+    # Assume Same as Primary Route if Same Route Number and "PM" Otherwise
     if(int_route1 == substr(int_route0,1,4)){
       int_route1 <- paste0(int_route1, suffix)
     } else{int_route1 <- paste0(int_route1, "PM")}
@@ -575,13 +560,13 @@ for (i in 1:nrow(intersection)){
   intersection[["INT_RT_4_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row4]
 }
 
-# Add Functional Area for each approach
+# Add Functional Area for Each Approach
 intersection$INT_RT_0_FA <- NA
 intersection$INT_RT_1_FA <- NA
 intersection$INT_RT_2_FA <- NA
 intersection$INT_RT_3_FA <- NA
 intersection$INT_RT_4_FA <- NA
-stopbar <- 60    # we may be able to use pavement messages instead to get stopbar distance
+stopbar <- 60
 for(i in 1:nrow(intersection)){
   route0 <- intersection[["INT_RT_0"]][i]
   route1 <- intersection[["INT_RT_1"]][i]
@@ -603,7 +588,7 @@ for(i in 1:nrow(intersection)){
       FA_row0 <- which(FA_ref$speed == route0_sl)
       dist0 <- FA_ref$total[FA_row0]
     } else{
-      dist0 <- 250   # this is the default if there is no speed limit
+      dist0 <- 250   # This is the default if there is no Speed Limit
     }
     intersection[["INT_RT_0_FA"]][i] <- dist0 + stopbar
   }
@@ -612,7 +597,7 @@ for(i in 1:nrow(intersection)){
       FA_row1 <- which(FA_ref$speed == route1_sl)
       dist1 <- FA_ref$total[FA_row1]
     } else{
-      dist1 <- 250   # this is the default if there is no speed limit
+      dist1 <- 250   # This is the default if there is no Speed Limit
     }
     intersection[["INT_RT_1_FA"]][i] <- dist1 + stopbar
   }
@@ -621,7 +606,7 @@ for(i in 1:nrow(intersection)){
       FA_row2 <- which(FA_ref$speed == route2_sl)
       dist2 <- FA_ref$total[FA_row2]
     } else{
-      dist2 <- 250   # this is the default if there is no speed limit
+      dist2 <- 250   # This is the default if there is no Speed Limit
     }
     intersection[["INT_RT_2_FA"]][i] <- dist2 + stopbar
   }
@@ -630,7 +615,7 @@ for(i in 1:nrow(intersection)){
       FA_row3 <- which(FA_ref$speed == route3_sl)
       dist3 <- FA_ref$total[FA_row3]
     } else{
-      dist3 <- 250   # this is the default if there is no speed limit
+      dist3 <- 250   # This is the default if there is no Speed Limit
     }
     intersection[["INT_RT_3_FA"]][i] <- dist3 + stopbar
   }
@@ -639,13 +624,13 @@ for(i in 1:nrow(intersection)){
       FA_row4 <- which(FA_ref$speed == route4_sl)
       dist4 <- FA_ref$total[FA_row4]
     } else{
-      dist4 <- 250   # this is the default if there is no speed limit
+      dist4 <- 250   # This is the default if there is no Speed Limit
     }
     intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
   }
 }
 
-# Create FA file which has FA's for each route
+# Create FA File which has FA for Each Route
 ROUTE <- NA
 BEG_MP <- NA
 END_MP <- NA
@@ -658,7 +643,7 @@ for(i in 1:nrow(intersection)){
     rt <- intersection[[paste0("INT_RT_",j)]][i]
     mp <- intersection[[paste0("INT_RT_",j,"_M")]][i]
     fa <- intersection[[paste0("INT_RT_",j,"_FA")]][i]
-    if(!is.na(rt) & tolower(rt) != "local"){   #old condition:  rt %in% substr(main.routes,1,4)
+    if(!is.na(rt) & tolower(rt) != "local"){   #old condition:  rt %in% substr(state.routes,1,4)
       row <- row + 1
       if(substr(rt,0,4) == substr(intersection$INT_RT_0[i],0,4)){
         ROUTE[row] <- intersection$INT_RT_0[i]
@@ -672,9 +657,9 @@ for(i in 1:nrow(intersection)){
     }
   }
 }
+
+# Create Functional Area Table
 FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID) %>% unique()
-
-
 
 
 ###
@@ -694,7 +679,7 @@ shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 shoulder$ROUTE <- paste(substr(shoulder$ROUTE, 1, 6), "M", sep = "")
 
 # Getting only state routes
-shoulder <- shoulder %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+shoulder <- shoulder %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in shoulder file
@@ -712,6 +697,7 @@ shd_disc <- shoulder %>%
   filter(should_be_one > 1) %>%
   arrange(ROUTE, BEG_MP)
 
+
 ###
 ## Median Data Prep
 ###
@@ -722,14 +708,14 @@ median <- read_csv_file(median_fp, median_col)
 # Standardize Column Names
 names(median)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-#Getting rid of ramps
+# Remove Ramps
 median <- median %>% filter(nchar(ROUTE) == 5)
 
 # Add M to Route Column to Standardize Route Format
 median$ROUTE <- paste(substr(median$ROUTE, 1, 6), "M", sep = "")
 
 # Getting only state routes
-median <- median %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
+median <- median %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in median file
@@ -742,6 +728,7 @@ median <- compress_seg(median, variables = c("MEDIAN_TYP", "TRFISL_TYP", "MDN_PR
 median <- median %>% 
   mutate(MP = (BEG_MP+END_MP)/2) %>% 
   mutate(Length = (END_MP-BEG_MP))
+
 
 ###
 ## Driveway Data Prep
@@ -759,26 +746,28 @@ driveway$ROUTE <- paste(substr(driveway$ROUTE, 1, 6), "M", sep = "")
 # Create Point to Reference Driveways
 driveway <- driveway %>% mutate(MP = (BEG_MP+END_MP)/2)
 
-# compress points
+# Compress Points
 driveway <- driveway %>% unique()
 
-#filter out seemingly duplicated driveways for observation
+# Filter Out Duplicated Driveways for Observation
 drv_disc <- driveway %>%
   group_by(ROUTE, BEG_MP) %>%
   mutate(should_be_one = n()) %>%
   filter(should_be_one > 1) %>%
   arrange(ROUTE, BEG_MP)
 
+
 ###
-## Read in crash Files
+## Read in Crash Files
 ###
 
 location <- read_csv_file(location_fp, location_col)
 rollups <- read_csv_file(rollups_fp, rollups_col)
 vehicle <- read_csv_file(vehicle_fp, vehicle_col)
 
+
 ###
-## Use fc file to build a gaps dataset
+## Build Gaps Dataset
 ###
 
 gaps <- read_csv_file(fc_fp, fc_col)
@@ -803,16 +792,17 @@ gaps <- gaps %>%
   select(ROUTE, BEG_GAP, END_GAP) %>%
   filter(BEG_GAP != 0)
 
+
 ###
 ## Load school and UTA files
 ###
 
-# load UTA stops shapefile
+# Load UTA Stops shapefile
 UTA_stops <- read_sf("data/shapefile/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
   st_transform(crs = 26912) %>%
   select(UTA_StopID, Mode) %>%
   st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
-# load schools (not college) shapefile
+# Load Schools (K-12) shapefile
 schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
   st_transform(crs = 26912) %>%
   select(SchoolID, SchoolLeve, OnlineScho, SchoolType, TotalK12) %>%

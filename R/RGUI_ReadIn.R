@@ -666,23 +666,23 @@ FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID) %>% unique()
 ## Shoulder Data Prep
 ###
 
-# Read in shoulder file
+# Read in shoulder File
 shoulder <- read_csv_file(shoulder_fp, shoulder_col)
 
 # Standardize Column Names
 names(shoulder)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 
-# Getting rid of ramps
+# Remove Ramps
 shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 
 # Add M to Route Column to Standardize Route Format
 shoulder$ROUTE <- paste(substr(shoulder$ROUTE, 1, 6), "M", sep = "")
 
-# Getting only state routes
+# Get Only State Routes
 shoulder <- shoulder %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
-# Find Number of Unique Routes in shoulder file
+# Find Number of Unique Routes in shoulder File
 num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 
 # Create Point to Reference Shoulders
@@ -690,7 +690,7 @@ shoulder <- shoulder %>%
   mutate(MP = (BEG_MP+END_MP)/2) %>% 
   mutate(Length = (END_MP-BEG_MP))
 
-# filter out seemingly duplicated shoulders for observation
+# Filter Out Duplicated Shoulders for Observation
 shd_disc <- shoulder %>%
   group_by(ROUTE, BEG_MP, UTPOSITION) %>%
   mutate(should_be_one = n()) %>%
@@ -702,7 +702,7 @@ shd_disc <- shoulder %>%
 ## Median Data Prep
 ###
 
-# Read in median file
+# Read in median File
 median <- read_csv_file(median_fp, median_col)
 
 # Standardize Column Names
@@ -714,11 +714,11 @@ median <- median %>% filter(nchar(ROUTE) == 5)
 # Add M to Route Column to Standardize Route Format
 median$ROUTE <- paste(substr(median$ROUTE, 1, 6), "M", sep = "")
 
-# Getting only state routes
+# Get Only State Routes
 median <- median %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
-# Find Number of Unique Routes in median file
+# Find Number of Unique Routes in median File
 num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress Medians
@@ -734,7 +734,7 @@ median <- median %>%
 ## Driveway Data Prep
 ###
 
-# Read in driveway file
+# Read in driveway File
 driveway <- read_csv_file(driveway_fp, driveway_col)
 
 # Standardize Column Names

@@ -5,6 +5,7 @@
 library(tidyverse)
 library(dplyr)
 
+
 ###
 ## Roadway Data Prep
 ###
@@ -20,8 +21,9 @@ shell <- shell_creator(sdtms)
 
 joined_populated <- lapply(sdtms, shell_join)
 
+
 ###
-## Merging joined and populated sdtms together; formatting
+## Merging Joined and Populated sdtms Together; Formatting
 ###
 
 RC <- c(list(shell), joined_populated) %>% 
@@ -31,6 +33,7 @@ RC <- c(list(shell), joined_populated) %>%
   select(-startpoints, -endpoints) %>% 
   select(ROUTE, BEG_MP, END_MP, everything()) %>% 
   arrange(ROUTE, BEG_MP)
+
 
 ###
 ## Final Data Compilation
@@ -42,11 +45,12 @@ RC <- RC %>% unique()
 RC <- compress_seg_ovr(RC)
 RC <- compress_seg_alt(RC)
 
+
 ###
 ## Fix Spatial Gaps
 ###
 
-# Delete segments which fall within gaps
+# Delete Segments Which Fall Within Gaps
 RC <- RC %>% mutate(MID_MP = BEG_MP + (END_MP - BEG_MP) / 2)
 
 count <- 0
@@ -67,40 +71,11 @@ for(i in 1:nrow(RC)){
 RC <- RC %>% filter(flag == 0) %>% select(-flag, -MID_MP)
 print(paste("deleted",count,"segments within gaps"))
 
-# Compressing segments by length
+# Compressing Segments by Length
 RC <- compress_seg_len(RC, 0.1)
 
-# Add segment id column
+# Add Segment ID Column
 RC <- RC %>% rowid_to_column("SEG_ID")
-
-# # Check segments for issues
-# test <- RC
-# err1 <- 0
-# err2 <- 0
-# for(i in 2:nrow(test)){
-#   if(test$BEG_MP[i] > test$END_MP[i-1] &
-#      test$ROUTE[i] == test$ROUTE[i-1]){
-#     chk <- 0
-#     for(j in 1:nrow(gaps)){
-#       if(test$ROUTE[i] == gaps$ROUTE[j] &
-#          round(test$BEG_MP[i],2) == round(gaps$END_GAP[j],2)){
-#         chk <- 1
-#       }
-#     }
-#     if(chk == 0){
-#       print(paste("unwanted gap at",test$ROUTE[i],test$BEG_MP[i]))
-#       err1 <- err1 + 1
-#     }
-#   }
-#   if(test$BEG_MP[i] < test$END_MP[i-1] &
-#      test$ROUTE[i] == test$ROUTE[i-1]){
-#     print(paste("overlap at",test$ROUTE[i],test$BEG_MP[i]))
-#     err2 <- err2 + 1
-#   }
-# }
-# print(paste("there were",err1+err2,"errors in the segments."))
-# print(paste("unwanted gaps:",err1))
-# print(paste("overlaps:",err2))
 
 
 ###
@@ -128,41 +103,39 @@ for (i in 1:nrow(RC)){
   med_row <- which(median$ROUTE == RCroute & 
                      median$BEG_MP < RCend  & 
                      median$END_MP > RCbeg)
-  # get the median types and milepoints on this segment
+  # Get the Median Types and Milepoints on This Segment
   med_freq <- length(med_row)
   med_type <- median[["MEDIAN_TYP"]][med_row]
   med_beg <- median[["BEG_MP"]][med_row]
   med_end <- median[["END_MP"]][med_row]
   med_len <- median[["Length"]][med_row]
   if(med_freq > 0){
-    # determine internal length of each median
+    # Determine internal length of each median
     for(j in 1:length(med_row)){
       if(med_beg[j] < RCbeg){med_beg[j] <- RCbeg}
       if(med_end[j] > RCend){med_end[j] <- RCend}
       med_len[j] <- med_end[j] - med_beg[j]
     }
-    # accumulate medians of the same type
+    # Accumulate medians of the same type
     if(med_freq > 1 & j < med_freq){
       for(j in 1:length(med_row)){
         for(k in (j+1):length(med_row)){
           if(med_type[j] == med_type[k]){
             med_len[j] <- med_len[j] + med_len[k]
-            med_type[k] <- k  #give it a unique name so it won't be accumulated again
+            med_type[k] <- k  # give it a unique name so it won't be accumulated again
           }
         }
       }
     }
-    # return the median by max median length
+    # Return the median by max median length
     med_row <- which.max(med_len)
   }
-  # print(med_freq)
-  # print(med_type[med_row])
   RC[["Median_Type"]][i] <- ifelse(med_freq == 0L, NA, med_type[med_row])
 }
 
 RC <- add_medians(RC, median, 0.001)
 
-# start timer
+# Start Timer
 start.time <- Sys.time()
 # Add Shoulders
 RC$Right_Shoulder <- NA
@@ -185,7 +158,7 @@ for (i in 1:nrow(RC)){
                        shoulder$END_MP > RCbeg  &
                        shoulder$BEG_MP < RCend &
                        shoulder$UTPOSITION =="LEFT")
-  # get the shoulder widths and milepoints on this segment
+  # Get the shoulder widths and milepoints on this segment
   r_sho_freq <- length(r_sho_row)
   r_sho_wid <- shoulder[["SHLDR_WDTH"]][r_sho_row]
   r_sho_beg <- shoulder[["BEG_MP"]][r_sho_row]
@@ -197,15 +170,15 @@ for (i in 1:nrow(RC)){
   l_sho_end <- shoulder[["END_MP"]][l_sho_row]
   l_sho_len <- shoulder[["Length"]][l_sho_row]
   if(r_sho_freq > 0){
-    # determine internal length of each shoulder
+    # Determine internal length of each shoulder
     for(j in 1:length(r_sho_row)){
       if(r_sho_beg[j] < RCbeg){r_sho_beg[j] <- RCbeg}
       if(r_sho_end[j] > RCend){r_sho_end[j] <- RCend}
       r_sho_len[j] <- r_sho_end[j] - r_sho_beg[j]
     }
-    # determine the length weighted average width
+    # Determine the length weighted average width
     r_sho_avg <- weighted.mean(r_sho_wid, r_sho_len, na.rm = TRUE)
-    # accumulate shoulders of the same width
+    # Accumulate shoulders of the same width
     if(r_sho_freq > 1 & j < r_sho_freq){
       for(j in 1:length(r_sho_row)){
         for(k in (j+1):length(r_sho_row)){
@@ -216,19 +189,19 @@ for (i in 1:nrow(RC)){
         }
       }
     }
-    # return the shoulder width by max shoulder length
+    # Return the shoulder width by max shoulder length
     r_sho_row <- which.max(r_sho_len)
   }
   if(l_sho_freq > 0){
-    # determine internal length of each shoulder
+    # Determine internal length of each shoulder
     for(j in 1:length(l_sho_row)){
       if(l_sho_beg[j] < RCbeg){l_sho_beg[j] <- RCbeg}
       if(l_sho_end[j] > RCend){l_sho_end[j] <- RCend}
       l_sho_len[j] <- l_sho_end[j] - l_sho_beg[j]
     }
-    # determine the length weighted average width
+    # Determine the length weighted average width
     l_sho_avg <- weighted.mean(l_sho_wid, l_sho_len, na.rm = TRUE)
-    # accumulate shoulders of the same width
+    # Accumulate shoulders of the same width
     if(l_sho_freq > 1 & j < l_sho_freq){
       for(j in 1:length(l_sho_row)){
         for(k in (j+1):length(l_sho_row)){
@@ -239,7 +212,7 @@ for (i in 1:nrow(RC)){
         }
       }
     }
-    # return the shoulder width by max shoulder length
+    # Return the shoulder width by max shoulder length
     l_sho_row <- which.max(l_sho_len)
   }
   RC[["Right_Shoulder"]][i] <- ifelse(r_sho_freq == 0, NA, r_sho_wid[r_sho_row])
@@ -251,12 +224,12 @@ for (i in 1:nrow(RC)){
   RC[["Left_Shoulder_Min"]][i] <- ifelse(l_sho_freq == 0, NA, min(l_sho_wid))
   RC[["Left_Shoulder_Avg"]][i] <- ifelse(l_sho_freq == 0, NA, l_sho_avg)
 }
-# record time
+# Record time
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 print(paste("Time taken to add shoulders data to segments:", time.taken))
 
-# Determine segment length
+# Determine Segment Length
 RC <- RC %>% 
   mutate(
     LENGTH_MILES = END_MP - BEG_MP,
@@ -270,27 +243,12 @@ RC_byseg <- RC
 # Pivot AADT (add years)
 RC <- pivot_aadt(RC)
 
-# Fixed this with the values_fn parameter of pivot_wider()
-# # Unlist AADT for output
-# for (i in 1:nrow(RC)){
-#   if(length(unlist(RC$AADT[i])) > 1 | length(unlist(RC$SUTRK[i])) > 1 | length(unlist(RC$CUTRK[i])) > 1){
-#     RC$AADT[i] <- unlist(RC$AADT[i])[1]
-#     RC$SUTRK[i] <- unlist(RC$SUTRK[i])[1]
-#     RC$CUTRK[i] <- unlist(RC$CUTRK[i])[1]
-#   }
-# }
-# RC$AADT <- as.numeric(RC$AADT)
-# RC$SUTRK <- as.numeric(RC$SUTRK)
-# RC$CUTRK <- as.numeric(RC$CUTRK)
-
-
-
 
 ###
 ## Create Intersection Roadway data shell
 ###
 
-# Create shell for intersection file
+# Create Shell for intersection File
 IC <- intersection %>% 
   rowwise() %>%
   mutate(
@@ -301,7 +259,7 @@ IC <- intersection %>%
   select(Int_ID, everything()) %>%
   select(-contains("_SL"), -contains("_FA"))
 
-# Remove infinity values
+# Remove Infinity Values
 IC <- IC %>%
   mutate(
     MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT),
@@ -324,56 +282,6 @@ for(i in 1:nrow(IC)){
   }
 }
 
-# # Create a Num_Legs column  (Probably not necessary anymore)
-# IC <- IC %>%
-#   mutate(
-#     # take numeric. coerces to NA if there is no number, but not a problem
-#     NUM_LEGS = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_TYPE))
-#   ) %>%
-#   mutate(
-#     NUM_LEGS = case_when(
-#       INT_TYPE == "DDI" |
-#         INT_TYPE == "CFI CENTRAL" |
-#         INT_TYPE == "ROUNDABOUT" |
-#         INT_TYPE == "CFI CENTRAL" |
-#         INT_TYPE == "SPUI" |
-#         INT_TYPE == "THRU TURN CENTRAL" |
-#         Int_ID == "0173P-7.167-0173" |
-#         Int_ID == "0173P-7.369-0173" |
-#         Int_ID == "0265P-0.65-0265" |
-#         Int_ID == "0265P-0.823-0256" |
-#         Int_ID == "0071P-5.207-0071" |
-#         Int_ID == "0126P-1.803-0126"
-#       ~ 4L,
-#       Int_ID == "0154P-5.602-None" |
-#         Int_ID == "0154P-5.884-0154" |
-#         Int_ID == "0154P-14.756-None" |
-#         Int_ID == "0154P-15.072-0154" |
-#         Int_ID == "0154P-15.801-None" |
-#         Int_ID == "0154P-16.822-None" |
-#         Int_ID == "0154P-17.054-0154" |
-#         Int_ID == "0154P-17.817-None" |
-#         Int_ID == "0154P-18.062-0154" |
-#         Int_ID == "0154P-19.024-0154" |
-#         Int_ID == "0154P-19.31-None" |
-#         Int_ID == "0154P-19.6-0154" |
-#         Int_ID == "0232P-0.39-None" |
-#         Int_ID == "0266P-7.665-None" |
-#         Int_ID == "0126P-1.61-0126"
-#       ~ 3L,
-#       Int_ID == "0172P-0.456-None" |
-#         Int_ID == "0172P-2.775-None" |
-#         Int_ID == "0289P-0.458-None" |
-#         Int_ID == "0089P-366.513-None" |
-#         Int_ID == "0089P-380.099-None" |
-#         Int_ID == "0089P-362.667-None" |
-#         Int_ID == "0126P-1.797-None" |
-#         Int_ID == "0154P-18.863-None"
-#       ~ 2L,
-#       TRUE ~ NUM_LEGS
-#     )
-#   )
-
 # Add spatial data
 IC <- IC %>%
   st_as_sf(
@@ -381,27 +289,23 @@ IC <- IC %>%
     crs = 4326,
     remove = F) %>%
   st_transform(crs = 26912)
-# modify intersections to include bus stops and schools nearby
+
+# Modify intersections to include bus stops and schools nearby
 IC <- mod_intersections(IC,UTA_Stops,schools)
-# remove spatial info
+
+# Remove spatial info
 IC <- st_drop_geometry(IC)
 
 # Add roadway data (disclaimer. Make sure column names don't have a "." in them)
 # Note: There will be some warnings, but these are resolved within the function so don't mind them.
 IC <- add_int_att(IC, urban_full) %>% 
   select(-MAX_URBAN_CODE, -AVG_URBAN_CODE)
-IC <- expand_int_att(IC, "URBAN_CODE") #%>%
-  #rename(URBAN_CODE = MIN_URBAN_CODE)
 
-# # NOTE: We need to create code that finds the min and max fc based on the following ranking
-# fc_rank <- tibble(
-#   fc = c("Interstate", "Other Freeways and Expressways",
-#          "Other Principal Arterial", "Minor Arterial",
-#          "Major Collector", "Minor Collector", ), 
-#   rank = c(1,2,3,4,5,6,7)
-# )
+IC <- expand_int_att(IC, "URBAN_CODE")
+
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
   select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
+
 IC <- expand_int_att(IC, "FUNCTIONAL_CLASS")
 
 IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>% 
@@ -412,12 +316,6 @@ IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>%
 IC <- add_int_att(IC, lane_full) %>%
   select(-(THRU_CNT_0:THRU_CNT_4),-(THRU_WDTH_0:THRU_WDTH_4))
 
-# Add years to intersection shell and pivot aadt
-# yrs <- crash_int %>% select(crash_year) %>% unique()
-# IC <- IC %>%
-#   group_by(Int_ID) %>%
-#   slice(rep(row_number(), times = nrow(yrs))) %>%
-#   mutate(YEAR = min(yrs$crash_year):max(yrs$crash_year))
 IC <- pivot_aadt_int(IC) %>% 
   mutate(
     NUM_ENT_TRUCKS = (SUTRK + CUTRK),

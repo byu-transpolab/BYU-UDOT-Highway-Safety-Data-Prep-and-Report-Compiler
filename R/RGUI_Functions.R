@@ -1,3 +1,5 @@
+###############################################################################
+
 ###
 ## Load in Libraries
 ###
@@ -6,12 +8,15 @@ library(tidyverse)
 library(dplyr)
 library(sf)
 
+###############################################################################
+
 ###
-## Functions
+## Initial Data Prep Functions
 ###
 
 # Read in Function
-## Refers to the filepath and columns list for each and every data set that we have and ensures that only the selected columns are read in
+## Refers to the filepath and columns list for each and every data set that we 
+## have and ensures that only the selected columns are read in
 read_csv_file <- function(filepath, columns) {
   if (str_detect(filepath, ".csv")) {
     print("reading csv")
@@ -23,8 +28,15 @@ read_csv_file <- function(filepath, columns) {
   }
 }
 
+###############################################################################
+
+###
+## Segment Cleaning Functions
+###
+
 # Compress Segments Function
-## If adjacent segments in a data set have the same attributes from selected columns they are combined into one segment.
+## If adjacent segments in a data set have the same attributes from selected 
+## columns they are combined into one segment.
 compress_seg <- function(df, col, variables) {
   # start timer
   start.time <- Sys.time()
@@ -97,6 +109,9 @@ compress_seg <- function(df, col, variables) {
 } 
 
 # Alternate Compress Segments Function (created by the stats team)
+## This does the exact same thing as the previous function, but uses a more
+## streamlined process. However, this function is generally more computationally
+## expensive so we typically use the other one.
 compress_seg_alt <- function(df) {
   # start timer
   start.time <- Sys.time()
@@ -133,7 +148,9 @@ compress_seg_alt <- function(df) {
 }
 
 # Compress Overlapping Segments Function
-## Ensures no milepoints of unique segments overlap
+## Ensures no milepoints of unique segments overlap. This needs to be done in 
+## order for the compress segments by length function and other functions to
+## work.
 compress_seg_ovr <- function(df) {
   # start timer
   start.time <- Sys.time()
@@ -170,8 +187,9 @@ compress_seg_ovr <- function(df) {
 }
 
 # Segment Length Compress Function
-## Ensuring that segment lengths are not less than 0.1 of a mile. 
-## If segment is less than 0.1 than check for adjacent segments are combine to segment that is most similar.
+## Ensuring that segment lengths are not less than 0.1 of a mile, (or other user
+## specified length). If segment is less than 0.1 then combine to the adjacent 
+## segment that is most similar.
 compress_seg_len <- function(df, len) {
   # start timer
   start.time <- Sys.time()
@@ -243,8 +261,14 @@ compress_seg_len <- function(df, len) {
   return(df)
 }
 
+###############################################################################
+
+###
+## AADT Functions
+###
+
 # Convert AADT to Numeric Function
-## Ensuring AADT is a number not a string.
+## Ensuring AADT data type is a number not a string.
 aadt_numeric <- function(aadt, aadt.columns){
   # coerce aadt to numeric
   for(i in 1:length(aadt.columns)){
@@ -257,7 +281,8 @@ aadt_numeric <- function(aadt, aadt.columns){
 }
 
 # Pivot AADT longer Function
-## Creating a different row for every year the segment exists.
+## Create a different row for every year the segment exists. This function 
+## makes good use of the tidyverse pivot functions to simplify the process.
 pivot_aadt <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
@@ -282,7 +307,10 @@ pivot_aadt <- function(aadt){
 }
 
 # Pivot AADT longer modified for intersections
-## Creating a different row for every year the intersection exists.
+## The major change from pivot_aadt is that we use "contains" instead of
+## "starts_with" This allows us to include the multitude of new aadt related 
+## columns created by the intersection data combining process. This function 
+## could easily replace the previous function if we want to just use one.
 pivot_aadt_int <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
@@ -303,7 +331,10 @@ pivot_aadt_int <- function(aadt){
 }
 
 # Missing Negative AADT
-## Fixes missing negative direction AADT values (can be optimized more)
+## Fixes missing negative direction AADT values. For some reason, the AADT data
+## does not contain negative route (divided route) data. It seems to assume
+## negative and positive routes have the same AADT. However, we need to add in
+## entries for negative routes so we can create segments along negative routes.
 aadt_neg <- function(aadt, rtes, divd){
   # isolate negative routes
   rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
@@ -408,177 +439,31 @@ aadt_neg <- function(aadt, rtes, divd){
   return(df)
 }
 
-# Negative to Positive
-## Merge divided negative routes into positive routes for the full data set only.
-neg_to_pos_routes <- function(df, rtes, divd){
-  # isolate negative routes
-  rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
-  # isolate positive att entries
-  att_p <- att %>% filter(grepl("P",ROUTE)) %>%
-    mutate(
-      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
-    ) %>%
-    select(-ROUTE)
-  # isolate negative att entries
-  att_n <- att %>% filter(grepl("N",ROUTE))
-  # join negative routes with negative att (there may be a more efficient way to do this)
-  df <- full_join(att_n, rtes_n, by = "ROUTE") %>%
-    mutate(
-      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
-    ) %>%
-    select(ROUTE, BEG_MP, END_MP, everything()) %>%
-    filter(is.na(BEG_MP))
-  # join missing negative routes with positive segments on the same route
-  df <- left_join(df, att_p, by = "label") %>%
-    select(-label, -contains(".x"))
-  # remove suffixes 
-  col_new <- gsub('.y','',colnames(df))
-  colnames(df) <- col_new
-  # filter out excess negative segments
-  divd_n <- divd %>% filter(grepl("N", ROUTE))
-  divd_p <- divd %>% filter(grepl("P", ROUTE))
-  df$flag <- FALSE
-  for(i in 1:nrow(df)){
-    rt <- df[["ROUTE"]][i]
-    rt <- substr(rt, start = 1, stop = 4)
-    beg_att <- df[["BEG_MP"]][i]
-    end_att <- df[["END_MP"]][i]
-    rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
-    # print(rt_row)
-    # this if statement helps to deal with routes that have multiple divided segments
-    if(length(rt_row) == 0L){
-      rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)
-    } 
-    beg_rt <- divd_p[["BEG_MP"]][rt_row]
-    end_rt <- divd_p[["END_MP"]][rt_row]
-    # correct routes
-    if(length(beg_rt) == 0L){        # check if the route is on divd_p
-      df[["flag"]][i] <- TRUE
-      next
-    }
-    if(beg_att > end_rt[1]){        # flag segments that fall outside route
-      df[["flag"]][i] <- TRUE
-    }
-    if(end_att > end_rt[1]){        # correct end mp if it's greater than route
-      df[["END_MP"]][i] <- end_rt[1]
-    }
-    if(end_att < beg_rt[1]){        # flag segments that fall outside route
-      df[["flag"]][i] <- TRUE
-    }
-    if(beg_att < beg_rt[1]){        # correct beg mp if it's less than route
-      df[["BEG_MP"]][i] <- beg_rt[1]
-    }
-  }
-  # filter out flagged rows
-  df <- df %>% filter(flag == FALSE) %>% select(-flag)
-  # convert positive milepoints to negative milepoints
-  for(i in 1:nrow(df)){
-    rt <- df[["ROUTE"]][i]
-    rt <- substr(rt, start = 1, stop = 4)
-    beg_att <- df[["BEG_MP"]][i]
-    end_att <- df[["END_MP"]][i]
-    # find segments on divd tables
-    prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
-    nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_n$END_MP & end_att > divd_n$BEG_MP)
-    prt_start_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)[1]
-    # find beginning and ending milepoints for each route
-    beg_prt <- divd_p[["BEG_MP"]][prt_row]
-    end_prt <- divd_p[["END_MP"]][prt_row]
-    beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
-    end_nrt <- divd_n[["END_MP"]][nrt_row]
-    # get start of first segment
-    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
-    # calculate conversion factor 
-    # (converts positive milepoints to negative milepoints)
-    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
-    # convert milepoints (and offset to zero using prt_start)
-    df[["BEG_MP"]][i] <- (beg_att - prt_start) * c 
-    df[["END_MP"]][i] <- (end_att - prt_start) * c 
-    # fix segment breaks (treat gaps as zero)
-    # I had to specify route 89 because there are routes with non-zero gaps which
-    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
-    # up with a more robust solution that would be great.
-    if(i-1>0){
-      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
-        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
-        end_att <- df[["END_MP"]][i]
-        df[["END_MP"]][i] <- end_att - offset
-        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
-      }
-    }
-  }
-  # rbind df to att
-  df <- rbind(att, df) %>%
-    arrange(ROUTE, BEG_MP)
-  # return df
-  return(df)
-}
-
-# Fix Endpoints
-## Fix last ending milepoints (This is also a backchecker for the input files)
-fix_endpoints <- function(df, routes){  
-  error_count <- 0
-  error_count2 <- 0
-  error_count3 <- 0
-  count <- 0
-  for(i in 1:nrow(df)){
-    end <- df[["END_MP"]][i]
-    nxt <- df[["END_MP"]][i+1]
-    # check if the next segment endpoint is less than the current
-    if(end > nxt | is.na(nxt)){
-      rt <- df[["ROUTE"]][i]
-      rt2 <- df[["ROUTE"]][i+1]
-      # check if the segments in question are on the same route. If they are, skip the iteration and count error
-      if(rt == rt2 & !is.na(rt2)){
-        error_count <- error_count + 1
-        print(paste("segments overlaps with next:", rt, "at", round(end,3)))
-        next
-      }
-      # assign endpoint value from the endpoint of the routes data
-      rt_row <- which(routes$ROUTE == rt)
-      end_rt <- routes[["END_MP"]][rt_row]
-      # if the endpoints are not the same, correct the endpoint
-      if(end_rt != end){
-        prev <- df[["END_MP"]][i-1]
-        prev_rt <- df[["ROUTE"]][i-1]
-        # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
-        if(i == 1){
-          # nothing
-        } else if(end_rt < prev & rt == prev_rt){
-          error_count2 <- error_count2 + 1
-          print(paste("segment not on LRS:", rt, "previous endpoint:", round(prev,3), "endpoint:", round(end,3), "route endpoint:", round(end_rt,3)))
-          df[["END_MP"]][i-1]
-          next
-        }
-        # check if the endpoint varies greatly from the LRS
-        if(abs(end_rt-end) > 0.5){
-          error_count3 <- error_count3 + 1
-          print(paste("route varies greatly from LRS:", rt, "by", round(end-end_rt,2), "miles."))
-          next
-        }
-        # assign new endpoint value to the segment
-        df[["END_MP"]][i] <- end_rt
-        count <- count + 1
-      }
-    }
-  }
-  # print number of iterations and any errors
-  print("")
-  print(paste("corrected", count, "endpoints"))
-  if(error_count > 0){
-    print(paste("WARNING, the segments overlap at", error_count, "places. Overlaps will be discarded in the segmentation code."))
-  }
-  if(error_count2 > 0){
-    print(paste("WARNING, at least", error_count2, "segment(s) appear to exist outside of the LRS. This may also be due to overlapping segments or a great variance from the LRS along with small segments."))
-  }
-  if(error_count3 > 0){
-    print(paste("WARNING,", error_count3, "route(s) vary from the LRS by 0.5 miles or more."))
-  }
-  return(df)
-}
-
 # Fill Missing AADT
-## Function to fill in missing aadt and truck data
+## Function to fill in missing aadt and truck data. This function uses a 
+## comprehensive method to estimate missing data. First, it determines whether
+## the missing data should be filled or not by looking for data in previous 
+## years. If there is no data for all previous years, we assume the segment did 
+## not exist at that time and do not fill in the missing data. Otherwise, we 
+## estimate the missing data by creating a grid from data in adjacent years 
+## and adjacent segments. The following is the grid with years on the x axis 
+## and segments on the y axis....
+##
+## [[a1 a2 a3]
+##  [b1 b2 b3]
+##  [c1 c2 c3]]
+##
+## We solve for b2 with the following equation....
+##
+## b2 <- mean(a2*mean(b1/a1,b3/a3),c2*mean(b1/c1,b3/c3))
+##
+## If this does not work we use the following one of the following....
+##
+## b2 <- mean(a2, c2)
+## b2 <- mean(b1, b3)
+##
+## This function is repeated several times to ensure all missing data is filled
+## in.
 fill_missing_aadt <- function(df, colns){
   # ignore first 3 columns
   colns <- tail(colns, -3)
@@ -698,8 +583,204 @@ fill_missing_aadt <- function(df, colns){
   return(df)
 }
 
+###############################################################################
+
+###
+## LRS Correction Functions
+###
+
+# Negative to Positive
+## Merge divided negative routes into positive routes for the full data set only.
+## This is still a work in progress. Right now it's just a copy of the aadt_neg
+## function because it will need to do the same thing in reverse essentially.
+## This may need to be done because it seems like we are only given positive 
+## routes in the intersection file. We are still waiting for more clarification
+## from UDOT.
+neg_to_pos_routes <- function(df, rtes, divd){
+  # isolate negative routes
+  rtes_n <- rtes %>% filter(grepl("N",ROUTE)) %>% select(-BEG_MP, -END_MP)
+  # isolate positive att entries
+  att_p <- att %>% filter(grepl("P",ROUTE)) %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(-ROUTE)
+  # isolate negative att entries
+  att_n <- att %>% filter(grepl("N",ROUTE))
+  # join negative routes with negative att (there may be a more efficient way to do this)
+  df <- full_join(att_n, rtes_n, by = "ROUTE") %>%
+    mutate(
+      label = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE))
+    ) %>%
+    select(ROUTE, BEG_MP, END_MP, everything()) %>%
+    filter(is.na(BEG_MP))
+  # join missing negative routes with positive segments on the same route
+  df <- left_join(df, att_p, by = "label") %>%
+    select(-label, -contains(".x"))
+  # remove suffixes 
+  col_new <- gsub('.y','',colnames(df))
+  colnames(df) <- col_new
+  # filter out excess negative segments
+  divd_n <- divd %>% filter(grepl("N", ROUTE))
+  divd_p <- divd %>% filter(grepl("P", ROUTE))
+  df$flag <- FALSE
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    # print(rt_row)
+    # this if statement helps to deal with routes that have multiple divided segments
+    if(length(rt_row) == 0L){
+      rt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)
+    } 
+    beg_rt <- divd_p[["BEG_MP"]][rt_row]
+    end_rt <- divd_p[["END_MP"]][rt_row]
+    # correct routes
+    if(length(beg_rt) == 0L){        # check if the route is on divd_p
+      df[["flag"]][i] <- TRUE
+      next
+    }
+    if(beg_att > end_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(end_att > end_rt[1]){        # correct end mp if it's greater than route
+      df[["END_MP"]][i] <- end_rt[1]
+    }
+    if(end_att < beg_rt[1]){        # flag segments that fall outside route
+      df[["flag"]][i] <- TRUE
+    }
+    if(beg_att < beg_rt[1]){        # correct beg mp if it's less than route
+      df[["BEG_MP"]][i] <- beg_rt[1]
+    }
+  }
+  # filter out flagged rows
+  df <- df %>% filter(flag == FALSE) %>% select(-flag)
+  # convert positive milepoints to negative milepoints
+  for(i in 1:nrow(df)){
+    rt <- df[["ROUTE"]][i]
+    rt <- substr(rt, start = 1, stop = 4)
+    beg_att <- df[["BEG_MP"]][i]
+    end_att <- df[["END_MP"]][i]
+    # find segments on divd tables
+    prt_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_p$END_MP & end_att > divd_p$BEG_MP)
+    nrt_row <- which(substr(divd_n$ROUTE, start = 1, stop = 4) == rt & beg_att < divd_n$END_MP & end_att > divd_n$BEG_MP)
+    prt_start_row <- which(substr(divd_p$ROUTE, start = 1, stop = 4) == rt)[1]
+    # find beginning and ending milepoints for each route
+    beg_prt <- divd_p[["BEG_MP"]][prt_row]
+    end_prt <- divd_p[["END_MP"]][prt_row]
+    beg_nrt <- divd_n[["BEG_MP"]][nrt_row]
+    end_nrt <- divd_n[["END_MP"]][nrt_row]
+    # get start of first segment
+    prt_start <- divd_p[["BEG_MP"]][prt_start_row]
+    # calculate conversion factor 
+    # (converts positive milepoints to negative milepoints)
+    c <- (end_nrt - beg_nrt) / (end_prt - beg_prt)
+    # convert milepoints (and offset to zero using prt_start)
+    df[["BEG_MP"]][i] <- (beg_att - prt_start) * c 
+    df[["END_MP"]][i] <- (end_att - prt_start) * c 
+    # fix segment breaks (treat gaps as zero)
+    # I had to specify route 89 because there are routes with non-zero gaps which
+    # need to be maintained. (mainly route 84 jumps from 42 to 81) If we can come 
+    # up with a more robust solution that would be great.
+    if(i-1>0){
+      if(df[["BEG_MP"]][i] != df[["END_MP"]][i-1] & df[["ROUTE"]][i] == df[["ROUTE"]][i-1] & rt == "0089"){
+        offset <- df[["BEG_MP"]][i] - df[["END_MP"]][i-1]
+        end_att <- df[["END_MP"]][i]
+        df[["END_MP"]][i] <- end_att - offset
+        df[["BEG_MP"]][i] <- df[["END_MP"]][i-1]
+      }
+    }
+  }
+  # rbind df to att
+  df <- rbind(att, df) %>%
+    arrange(ROUTE, BEG_MP)
+  # return df
+  return(df)
+}
+
+# Fix Endpoints
+## Fix last ending milepoints (This is also a backchecker for the input files).
+## Since our input datasets are apparently on different LRS's, the milepoints on
+## one file don't match up with another file for the same route. This function
+## does not convert the LRS, because that is not feasible to do without ArcGIS, 
+## but it does make sure at least the last milepoint of the route matches 
+## across all datasets to prevent the creation of nonexistent segments. 
+## Unfortunately, THIS DOES NOT FIX THE UNDERLYING PROBLEM, but it will still be 
+## useful when all input datasets are on the same LRS, because it will correct 
+## any slight differences that exist, perhaps due to rounding. In the meantime,
+## it is also useful for identifying routes where the LRS is significantly 
+## different so we can pay special attention to those routes.
+fix_endpoints <- function(df, routes){  
+  error_count <- 0
+  error_count2 <- 0
+  error_count3 <- 0
+  count <- 0
+  for(i in 1:nrow(df)){
+    end <- df[["END_MP"]][i]
+    nxt <- df[["END_MP"]][i+1]
+    # check if the next segment endpoint is less than the current
+    if(end > nxt | is.na(nxt)){
+      rt <- df[["ROUTE"]][i]
+      rt2 <- df[["ROUTE"]][i+1]
+      # check if the segments in question are on the same route. If they are, skip the iteration and count error
+      if(rt == rt2 & !is.na(rt2)){
+        error_count <- error_count + 1
+        print(paste("segments overlaps with next:", rt, "at", round(end,3)))
+        next
+      }
+      # assign endpoint value from the endpoint of the routes data
+      rt_row <- which(routes$ROUTE == rt)
+      end_rt <- routes[["END_MP"]][rt_row]
+      # if the endpoints are not the same, correct the endpoint
+      if(end_rt != end){
+        prev <- df[["END_MP"]][i-1]
+        prev_rt <- df[["ROUTE"]][i-1]
+        # check if the previous endpoint is greater that the current and assign error if it is and skip the iteration
+        if(i == 1){
+          # nothing
+        } else if(end_rt < prev & rt == prev_rt){
+          error_count2 <- error_count2 + 1
+          print(paste("segment not on LRS:", rt, "previous endpoint:", round(prev,3), "endpoint:", round(end,3), "route endpoint:", round(end_rt,3)))
+          df[["END_MP"]][i-1]
+          next
+        }
+        # check if the endpoint varies greatly from the LRS
+        if(abs(end_rt-end) > 0.5){
+          error_count3 <- error_count3 + 1
+          print(paste("route varies greatly from LRS:", rt, "by", round(end-end_rt,2), "miles."))
+          next
+        }
+        # assign new endpoint value to the segment
+        df[["END_MP"]][i] <- end_rt
+        count <- count + 1
+      }
+    }
+  }
+  # print number of iterations and any errors
+  print("")
+  print(paste("corrected", count, "endpoints"))
+  if(error_count > 0){
+    print(paste("WARNING, the segments overlap at", error_count, "places. Overlaps will be discarded in the segmentation code."))
+  }
+  if(error_count2 > 0){
+    print(paste("WARNING, at least", error_count2, "segment(s) appear to exist outside of the LRS. This may also be due to overlapping segments or a great variance from the LRS along with small segments."))
+  }
+  if(error_count3 > 0){
+    print(paste("WARNING,", error_count3, "route(s) vary from the LRS by 0.5 miles or more."))
+  }
+  return(df)
+}
+
+###############################################################################
+
+###
+## Segment Creation Functions (created by stats team)
+###
+
 # Segment Breaks
-## Get all measurements where a road segment stops or starts
+## Get all measurements where a road segment stops or starts 
 segment_breaks <- function(sdtm) {
   breaks_df <- sdtm %>% 
     group_by(ROUTE) %>% 
@@ -785,8 +866,17 @@ shell_join <- function(sdtm) {
   return(with_shell)
 }
 
+###############################################################################
+
+###
+## Combine Functions
+###
 
 # Add Crash Attributes Function
+## This function combines crash data to roadway segment data. There needs to be
+## a column for segment id in the crash file which we take care of in the 
+## "RGUI_Compile.R" script. Then, we pivot wider the point crash data so that it 
+## makes more sense in the context of segments.
 add_crash_attribute <- function(att_name, segs, csh, return_max_min){
   # optional arguments
   if(missing(return_max_min)){return_max_min <- FALSE}
@@ -831,6 +921,9 @@ add_crash_attribute <- function(att_name, segs, csh, return_max_min){
 }
 
 # Add Crash Attributes Function for Intersections
+## This is essentially the same as "add_crash_attribute" but uses intersection
+## variables instead. We could easily consolidate these into one function by 
+## adding additional parameters or conditions if we wanted to.
 add_crash_attribute_int <- function(att_name, ints, csh, return_max_min){
   # optional arguments
   if(missing(return_max_min)){return_max_min <- FALSE}
@@ -874,7 +967,15 @@ add_crash_attribute_int <- function(att_name, ints, csh, return_max_min){
   return(ints)
 }
 
-
+# Add Medians Data to Segments Function
+## Since medians are not a segmenting variable, but still need to be added to 
+## segment data, we needed a different process to add them in. This process 
+## could be adapted to work for shoulders and other non segmenting segment data
+## if we want to, but we already coded most of that into the 
+## "RGUI_RoadwayPrep.R" script. This function works by determining the most 
+## prevalent median type along the segment. It also creates a new column for 
+## each median type on the segments dataset and marks whether that median is 
+## present on the segment with a 1 or a 0.
 add_medians <- function(RC, median, min_portion){
   # optional arguments
   if(missing(min_portion)){min_portion <- 0}
@@ -963,8 +1064,30 @@ add_medians <- function(RC, median, min_portion){
   return(df)
 }
 
-
 # Add roadway attributes to intersections function
+## Since there is no segmenting process for intersections, all roadway variables
+## need to be added in afterwards from different datasets. We created different
+## datasets with the suffix "_full" to indicate that these contain all available 
+## data from various routes, including non-state routes. We need this because 
+## our intersections dataset includes state routes that intersect with non-state
+## routes. This is probably our longest function because it needs to account 
+## for a wide variety of different conditions and parameters. However, it uses
+## a general process that works well for most input datasets. It creates columns
+## for route 1, 2, 3, 4, and 5 as well as columns for min, max, and average. 
+## it is up to the function user to decide which of these columns they will keep 
+## for the specific application, or if they will use the resulting columns for 
+## additional analysis.
+##
+## However, this process falls short with the functional class and AADT inputs. 
+## For functional class, there are some routes listed on the intersection as 
+## "local". Although we don't know what route these are, we do know the 
+## functional class is "local", so there is a condition that checks for 
+## functional class and makes sure "local" is included. For AADT, we use an 
+## entirely different process because we need to estimate missing AADT where 
+## there is no route number given, and we need to combine the AADT and truck
+## in such a way that we get total entering vehicles instead. There is a
+## condition in this function that checks for AADT and runs additional analysis
+## if the input dataset is AADT.
 add_int_att <- function(int, att, is_aadt, is_fc){
   # optional arguments
   if(missing(is_aadt)){is_aadt <- FALSE} else if(is_aadt == TRUE){
@@ -1175,7 +1298,7 @@ add_int_att <- function(int, att, is_aadt, is_fc){
                                   local_add,
                                   missing_add), na.rm = TRUE)
             )
-        } # what did the rabbit say to the jackrabbit? At least you're not on four legs.
+        }
       }
     }
     int <- int %>% select(-num_local,-local_add,-num_missing,-missing_add)
@@ -1186,6 +1309,12 @@ add_int_att <- function(int, att, is_aadt, is_fc){
 }
 
 # Expand Intersection Attribute Function
+## This function may be used in conjunction with add_int_att to perform
+## additional analysis. It uses the pivot functions to create new columns for 
+## each roadway attribute type (e.g. the types on functional class are "local",
+## "interstate", "arterial", etc...). This is often a preferable format for 
+## statistical analysis. It also removes the need to have different columns for
+## each approach at the intersection.
 expand_int_att <- function(IC, att){
   # extract attribute data
   df <- IC %>% 
@@ -1219,15 +1348,101 @@ expand_int_att <- function(IC, att){
   return(df)
 }
 
+# Modify intersections to include bus stops and schools near intersections
+## This function uses R's geospatial capabilities within the "sf" package to 
+## combine transit and school data to intersections. It uses a spatial buffer 
+## and spatial intersect to determine how many and which type of transit stops 
+## and schools are within 1000 feet from the intersection.
+mod_intersections <- function(intersections,UTA_Stops,schools){
+  # Separate schools and UTA by type
+  bus_stops <- UTA_stops %>%
+    filter(Mode == "Bus") %>%
+    select(-Mode)
+  rail_stops <- UTA_stops %>%
+    filter(Mode == "Rail") %>%
+    select(-Mode)
+  high_schools <- schools %>%
+    filter(SchoolLeve == "HIGH")
+  mid_schools <- schools %>%
+    filter(SchoolLeve == "MID")
+  elem_schools <- schools %>%
+    filter(SchoolLeve == "ELEM")
+  prek_schools <- schools %>%
+    filter(SchoolLeve == "PREK")
+  ktwelve_schools <- schools %>%
+    filter(SchoolLeve == "K12")
+  # determine which intersections are 1000 ft from a school
+  ints_near_schools <- st_join(intersections, schools, join = st_within) %>%
+    filter(!is.na(SchoolID))
+  # determine which intersections are 1000 ft from a UTA stop
+  ints_near_UTA <- st_join(intersections, UTA_stops, join = st_within) %>%
+    filter(!is.na(UTA_StopID))
+  # modify intersections object
+  intersections <- st_join(intersections, schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, prek_schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_PREK_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, elem_schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_ELEM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, mid_schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_MID_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, high_schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_HIGH_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, ktwelve_schools, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_K12_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
+    select(-SchoolID, -SchoolLeve) %>%
+    unique()
+  intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_UTA_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+    select(-UTA_StopID, -Mode) %>%
+    unique()
+  intersections <- st_join(intersections, bus_stops, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_BUS_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+    select(-UTA_StopID) %>%
+    unique()
+  intersections <- st_join(intersections, rail_stops, join = st_within) %>%
+    group_by(Int_ID) %>%
+    mutate(NUM_RAIL_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
+    select(-UTA_StopID) %>%
+    unique()
+  intersections <- unique(intersections)
+  return(intersections)
+}
 
-# Simple computational functions
+###############################################################################
+
+###
+## Simple Computational Functions
+###
+
+## Modifies the substr function to take n characters from the right
 substrRight <- function(x, n){
   substr(x, nchar(x)-n+1, nchar(x))
 }
+## Modifies the substr function to remove n characters from the right
 substrMinusRight <- function(x, n){
   substr(x, 1, nchar(x)-n)
 }
-
+## Adds an additional parameter to the left_join function which specifies how to
+## fill in missing data rather than defaulting to "NA"
 left_join_fill <- function(x, y, by, fill = 0L, ...){
   z <- left_join(x, y, by, ...)
   new_cols <- setdiff(names(z), names(x))
@@ -1235,196 +1450,4 @@ left_join_fill <- function(x, y, by, fill = 0L, ...){
   return(z)
 }
 
-# Modify intersections to include bus stops and schools near intersections
-mod_intersections <- function(intersections,UTA_Stops,schools){
-  # intersections <- st_join(intersections, schools, join = st_within) %>%
-  #   group_by(Int_ID) %>%
-  #   mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-  #   select(-SchoolID)
-  # 
-  # intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-  #   group_by(Int_ID) %>%
-  #   mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-  #   select(-UTA_StopID)
-  # 
-  # intersections <- unique(intersections)
-  # st_drop_geometry(intersections)
-  
-  # Alternative Method (more variables)
 
-  # Separate schools and UTA by type
-  bus_stops <- UTA_stops %>%
-    filter(Mode == "Bus") %>%
-    select(-Mode)
-
-  rail_stops <- UTA_stops %>%
-    filter(Mode == "Rail") %>%
-    select(-Mode)
-
-  high_schools <- schools %>%
-    filter(SchoolLeve == "HIGH")
-
-  mid_schools <- schools %>%
-    filter(SchoolLeve == "MID")
-
-  elem_schools <- schools %>%
-    filter(SchoolLeve == "ELEM")
-
-  prek_schools <- schools %>%
-    filter(SchoolLeve == "PREK")
-
-  ktwelve_schools <- schools %>%
-    filter(SchoolLeve == "K12")
-
-  # determine which intersections are 1000 ft from a school
-  ints_near_schools <- st_join(intersections, schools, join = st_within) %>%
-    filter(!is.na(SchoolID))
-
-  # determine which intersections are 1000 ft from a UTA stop
-  ints_near_UTA <- st_join(intersections, UTA_stops, join = st_within) %>%
-    filter(!is.na(UTA_StopID))
-
-  # modify intersections object
-  intersections <- st_join(intersections, schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, prek_schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_PREK_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, elem_schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_ELEM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, mid_schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_MID_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, high_schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_HIGH_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, ktwelve_schools, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_K12_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-    select(-SchoolID, -SchoolLeve) %>%
-    unique()
-
-  intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_UTA_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-    select(-UTA_StopID, -Mode) %>%
-    unique()
-
-  intersections <- st_join(intersections, bus_stops, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_BUS_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-    select(-UTA_StopID) %>%
-    unique()
-
-  intersections <- st_join(intersections, rail_stops, join = st_within) %>%
-    group_by(Int_ID) %>%
-    mutate(NUM_RAIL_STOPS = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-    select(-UTA_StopID) %>%
-    unique()
-
-  intersections <- unique(intersections)
-  return(intersections)
-}
-
-
-
-
-
-###
-## Unused Code
-###
-
-# # Potential code to replace the shell method
-# 
-# # assign variables
-# sdtms <- list(aadt, fc, speed, lane)
-# sdtms <- lapply(sdtms, as_tibble)
-# df <- rbind(fc, lane, aadt, speed)
-# # extract columns from data
-# colns <- colnames(df)
-# colns <- tail(colns, -4)    # remove ID and first 
-# # sort by route and milepoints (assumes consistent naming convention for these)
-# df <- df %>%
-#   arrange(ROUTE, BEG_MP, END_MP) %>%
-#   select(ROUTE, BEG_MP, END_MP)
-# # loop through variables and rows
-# iter <- 0
-# count <- 0
-# route <- -1
-# value <- variables
-# df$ID <- 0
-# # create new variables to replace the old ones
-# 
-# 
-# 
-# for(i in 1:nrow(df)){
-#   new_route <- df$ROUTE[i]
-#   test = 0
-#   for (j in 1:length(variables)){      # test each of the variables for if they are unique from the prev row
-#     varName <- variables[j]
-#     new_value <- df[[varName]][i]
-#     if(is.na(new_value)){              # treat NA as zero to avoid errors
-#       new_value = 0
-#     }
-#     if(new_value != value[j]){         # set test = 1 if any of the variables are unique from prev row
-#       value[j] <- new_value
-#       test = 1
-#     }
-#   }
-#   if((new_route != route) | (test == 1)){    # create new ID ("iter") if test=1 or there is a unique route
-#     iter <- iter + 1
-#     route <- new_route
-#   } else {
-#     count = count + 1
-#   }
-#   df$ID[i] <- iter
-# }
-# # use summarize to compress segments
-# df <- df %>% 
-#   group_by(ID) %>%
-#   summarise(
-#     ROUTE = unique(ROUTE),
-#     BEG_MP = min(BEG_MP),
-#     END_MP = max(END_MP), 
-#     across(.cols = col)
-#   ) %>%
-#   unique()
-# # report the number of combined rows
-# print(paste("combined", count, "rows"))
-
-# ###
-# ## Unused Intersection Code
-# ###
-#
-# # Modify intersections to include bus stops and schools near intersections
-# mod_intersections <- function(intersections,UTA_Stops,schools){
-#   intersections <- st_join(intersections, schools, join = st_within) %>%
-#     group_by(Int_ID) %>%
-#     mutate(NUM_SCHOOLS = length(SchoolID[!is.na(SchoolID)])) %>%
-#     select(-SchoolID)
-#   
-#   intersections <- st_join(intersections, UTA_stops, join = st_within) %>%
-#     group_by(Int_ID) %>%
-#     mutate(NUM_UTA = length(UTA_StopID[!is.na(UTA_StopID)])) %>%
-#     select(-UTA_StopID)
-#   
-#   intersections <- unique(intersections)
-#   st_drop_geometry(intersections)
-# }

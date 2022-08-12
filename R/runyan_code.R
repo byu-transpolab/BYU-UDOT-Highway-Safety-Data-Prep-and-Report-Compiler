@@ -738,3 +738,193 @@ add_crash_attribute <- function(att_name, segs, csh){
 # df %>%
 #   as_tibble() %>%
 #   filter(RAMP_ID == 0 | is.na(RAMP_ID))
+
+###
+## Unused Code
+###
+
+# The code below this point is old, but may have some useful parts
+
+# CRASH DATA
+
+```{r Load Crash Data}
+location <- read_csv("data/Crash_Data_14-20.csv",show_col_types = F)
+vehicle <- read_csv("data/Vehicle_Data_14-20.csv",show_col_types = F)
+rollups <- read_csv("data/Rollups_14-20.csv",show_col_types = F)
+```
+
+```{r Check Crash Data Headers}
+location <- check_location(location)
+vehicle <- check_vehicle(vehicle)
+rollups <- check_rollups(rollups)
+```
+
+```{r Join Crash Data}
+crash <- left_join(location,rollups,by='crash_id')
+full_crash <- left_join(crash,vehicle,by='crash_id')
+rm("location","vehicle","rollups")
+# crash <- filter_CAMS(crash)
+```
+
+```{r}
+# write.csv(crash, "C:/Users/barrigat/Downloads/crashtest2.csv",row.names = F)
+```
+
+# Roadway Data
+
+```{r Load Roadway Data}
+# load AADT csv
+aadt <- read_csv("data/AADT_Rounded.csv",show_col_types = F)
+# load functional class csv
+functional_class <- read_csv("data/Functional_Class_ALRS.csv",show_col_types = F)
+# load intersections csv and convert to spatial frame
+intersections <- read_csv("data/Intersection_w_ID_MEV_MP.csv") %>%
+  st_as_sf(
+    coords = c("BEG_LONG", "BEG_LAT"), 
+    crs = 4326,
+    remove = F) %>%
+  st_transform(crs = 26912)
+# load UTA stops shapefile
+UTA_stops <- read_sf("data/UTA_Stops/UTA_Stops_and_Most_Recent_Ridership.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(UTA_StopID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# load schools (not college) shapefile
+schools <- read_sf("data/Utah_Schools_PreK_to_12/Utah_Schools_PreK_to_12.shp") %>%
+  st_transform(crs = 26912) %>%
+  select(SchoolID) %>%
+  st_buffer(dist = 304.8) #buffer 1000 ft (units converted to meters)
+# modify intersections to include bus stops and schools nearby
+intersections <- mod_intersections(intersections,UTA_Stops,schools)
+# remove unneeded dfs
+rm("schools","UTA_stops")
+# load lanes csv
+lanes <- read_csv("data/Lanes.csv",show_col_types = F)
+# load pavement messages csv
+pavement_messages <- read_csv("data/Pavement_Messages.csv",show_col_types = F)
+# load speed limit csv
+speed_limit <- read_csv("data/UDOT_Speed_Limits_2019.csv",show_col_types = F)
+
+# urban_code_large <- read_sf("data/Urban_Boundaries_Large.shp")
+# urban_code_small <- read_sf("data/Urban_Boundaries_Small.shp")
+
+# urban_code_test <- shapefile("data/Urban_Boundaries_Large")
+```
+
+```{r Check Roadway Data Headers}
+aadt <- check_aadt(aadt)
+functional_class <- check_functionalclass(functional_class)
+intersections <- check_intersections(intersections)
+lanes <- check_lanes(lanes)
+pavement_messages <- check_pavementmessages(pavement_messages)
+speed_limit <- check_speedlimit(speed_limit)
+```
+
+```{r Join Roadway Data}
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(,,by='')
+road <- left_join(road,,by='')
+rm("aadt","functional_class","intersections","lanes","pavement_messages","speed_limit")
+```
+
+```{r Temporary Load Excel GUI Data}
+# The code before this should hopefully get us to this point. In the meanwhile,
+# we can just use the file created by the Excel GUI and modify it as needed.
+# CAMS_no_spatial <- read_csv("data/CAMSinput.csv")
+# ISAM <- read_csv("data/UICPMinput.csv")
+test <- RC
+RC <- test
+
+# CAMS from the Excel GUI doesn't include spatial data so we can add it in here.
+# load sf data
+sf <- read_sf("data/shapefile/UDOT_Routes_(ALRS).shp") %>%
+  select(ROUTE_ALIA, BEG_MILEAG, END_MILEAG, SHAPE_Leng)
+sf$ROUTE_ALIA <- paste(substr(sf$ROUTE_ALIA, 1, 6), "M", sep = "")
+# append spatial data
+CAMS <- right_join(sf, RC, by = c("ROUTE_ALIA"="ROUTE"), keep = TRUE) %>%
+  select(-ROUTE_ALIA) %>%
+  st_transform(crs = 26912) #convert to UTM Zone 12 Projection
+# remove intermediate data
+# rm(CAMS_no_spatial,sf)
+# segment the routes based on segment milepoints
+#CAMS_lineref <- ogrlineref(
+#  l = CAMS$geometry,
+#  mb = CAMS$BEG_MILEPOINT*1609.34,
+#  me = CAMS$END_MILEPOINT*1609.34
+#)
+
+# write CAMS data to shapefile
+CAMS_write <- CAMS %>%
+  select(ROUTE, BEG_MP, END_MP, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
+  group_by(ROUTE) %>%
+  mutate(BEG_MP = case_when(
+    BEG_MP == min(BEG_MP) ~ BEG_MILEAG,
+    BEG_MP != min(BEG_MP) ~ BEG_MP
+  ),
+  Seg_Length = END_MP - BEG_MP
+  ) %>%
+  filter(Seg_Length > 0) %>%
+  mutate(BEG_MP = case_when(
+    BEG_MP == min(BEG_MP) ~ BEG_MILEAG,
+    BEG_MP != min(BEG_MP) ~ BEG_MP
+  ),
+  BEG_MP = min(BEG_MP) + (BEG_MP-min(BEG_MP)) * (END_MILEAG - BEG_MILEAG)/(max(END_MP) - min(BEG_MP)),
+  END_MP = min(BEG_MP) + (END_MP-min(BEG_MP)) * (END_MILEAG - BEG_MILEAG)/(max(END_MP) - min(BEG_MP)),
+  Seg_Length = END_MP - BEG_MP
+  ) %>%
+  #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
+  #      BEG_MILEPOINT = BEG_MILEPOINT - BEG_MILEAG,
+  #     END_MILEPOINT = END_MILEPOINT - BEG_MILEAG,
+  #    BEG_MILEAG = 0
+  #   ) %>%
+  unique()
+CAMS_write <- CAMS_write %>% rowid_to_column("SEG_ID")
+st_write(CAMS_write,"data/shapefile/CAMS.shp")
+
+CAMS_write <- CAMS %>%
+  select(ROUTE, BEG_MILEAG, END_MILEAG, SHAPE_Leng) %>%
+  #mutate(END_MILEAG = END_MILEAG - BEG_MILEAG,
+  #      BEG_MILEAG = 0
+  #     ) %>%
+  unique()
+st_write(CAMS_write,"data/shapefile/CAMS_routes.shp")
+
+rm(CAMS_write)
+
+```
+
+```{python Geospatial Segmentation using Arcpy}
+
+# -*- coding: utf-8 -*-
+"""
+Generated by ArcGIS ModelBuilder on : 2022-03-17 17:20:36
+"""
+import arcpy
+
+def Model():  # Model
+  
+  # To allow overwriting outputs change overwriteOutput option to True.
+  arcpy.env.overwriteOutput = False
+
+# Model Environment settings
+with arcpy.EnvManager(scratchWorkspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb", workspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb"):
+  CAMS_routes_shp = "C:\\Users\\samyan\\Documents\\ArcGIS\\Projects\\test_CAMS-segmentation\\data\\CAMS_routes\\CAMS_routes.shp"
+CAMS_shp = "C:\\Users\\samyan\\Documents\\ArcGIS\\Projects\\test_CAMS-segmentation\\data\\CAMS\\CAMS.shp"
+
+# Process: Create Routes (Create Routes) (lr)
+CAMS_routes_CreateRoutes = "C:\\Users\\samyan\\Documents\\ArcGIS\\Projects\\test_CAMS-segmentation\\test_CAMS-segmentation.gdb\\CAMS_routes_CreateRoutes"
+with arcpy.EnvManager(scratchWorkspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb", workspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb"):
+  arcpy.lr.CreateRoutes(in_line_features=CAMS_routes_shp, route_id_field="LABEL", out_feature_class=CAMS_routes_CreateRoutes, measure_source="TWO_FIELDS", from_measure_field="BEG_MIL", to_measure_field="END_MIL", coordinate_priority="UPPER_LEFT", measure_factor=1, measure_offset=0, ignore_gaps="IGNORE", build_index="INDEX")
+
+# Process: Make Route Event Layer (Make Route Event Layer) (lr)
+CAMS_Events = "CAMS Events1"
+with arcpy.EnvManager(scratchWorkspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb", workspace=r"C:\Users\samyan\Documents\ArcGIS\Projects\test_CAMS-segmentation\test_CAMS-segmentation.gdb"):
+  arcpy.lr.MakeRouteEventLayer(in_routes=CAMS_routes_CreateRoutes, route_id_field="LABEL", in_table=CAMS_shp, in_event_properties="LABEL Line BEG_MILEP END_MILEP", out_layer=CAMS_Events, offset_field="", add_error_field="ERROR_FIELD", add_angle_field="NO_ANGLE_FIELD", angle_type="NORMAL", complement_angle="ANGLE", offset_direction="LEFT", point_event_type="POINT")
+
+if __name__ == '__main__':
+  Model()
+
+```
+

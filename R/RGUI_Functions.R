@@ -457,7 +457,7 @@ aadt_neg <- function(aadt, rtes, divd){
 ##
 ## b2 <- mean(a2*mean(b1/a1,b3/a3),c2*mean(b1/c1,b3/c3))
 ##
-## If this does not work we use the following one of the following....
+## If this does not work we use one of the following....
 ##
 ## b2 <- mean(a2, c2)
 ## b2 <- mean(b1, b3)

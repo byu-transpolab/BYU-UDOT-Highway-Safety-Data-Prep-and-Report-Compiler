@@ -237,6 +237,31 @@ RC <- RC %>%
   ) %>%
   select(SEG_ID:END_MP, LENGTH_MILES, LENGTH_FEET, everything())
 
+# Fill all missing data
+
+# First fill missing RouteDir with letter from route name and fill missing 
+# RouteType with "State"
+RC <- RC %>% 
+  mutate(
+    RouteDir = if_else(is.na(RouteDir),substr(ROUTE,5,5),RouteDir),
+    RouteType = if_else(is.na(RouteType),"State",RouteType)
+  )
+
+# Create a list of columns that have missing data to be filled.
+missing <- RC %>% 
+  ungroup() %>% 
+  select(FUNCTIONAL_CLASS:Left_Shoulder_Avg) %>%
+  select(-contains("MEDIAN_TYP_"), -RouteDir, -RouteType, -Driveway_Freq) %>%
+  colnames()
+subsetting_var <- c("Median_Type")
+subset_cols <- list(RC %>% 
+  ungroup() %>% 
+  select(contains("MEDIAN_TYP_")) %>% 
+  colnames())
+
+# Run the fill_all_missing function to interpolate remaining data
+RC <- fill_all_missing(RC, missing, "ROUTE", subsetting_var, subset_cols)
+
 # Save a copy for future use
 RC_byseg <- RC
 
@@ -304,7 +329,7 @@ IC <- add_int_att(IC, urban_full) %>%
 IC <- expand_int_att(IC, "URBAN_CODE")
 
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
-  select(-(MAX_FUNCTIONAL_CLASS:AVG_FUNCTIONAL_CLASS))
+  select(-MAX_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS)
 
 IC <- expand_int_att(IC, "FUNCTIONAL_CLASS")
 
@@ -316,6 +341,31 @@ IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>%
 IC <- add_int_att(IC, lane_full) %>%
   select(-(THRU_CNT_0:THRU_CNT_4),-(THRU_WDTH_0:THRU_WDTH_4))
 
+# Create a list of columns that have missing data to be filled.
+missing <- IC %>% 
+  ungroup() %>% 
+  select(MAX_SPEED_LIMIT:AVG_SPEED_LIMIT, 
+         MIN_URBAN_CODE, 
+         MIN_FUNCTIONAL_CLASS,
+         MAX_THRU_CNT:AVG_THRU_WDTH) %>%
+  colnames()
+subsetting_var <- c("MIN_URBAN_CODE", "MIN_FUNCTIONAL_CLASS")
+subset_cols <- list(IC %>% 
+    ungroup() %>% 
+    select(contains("URBAN_CODE_")) %>% 
+    colnames(),
+  IC %>% 
+    ungroup() %>% 
+    select(contains("FUNCTIONAL_CLASS_")) %>% 
+    colnames())
+
+# Run the fill_all_missing function to interpolate remaining data
+IC <- fill_all_missing(IC, missing, "INT_RT_0", subsetting_var, subset_cols)
+
+# Save a copy for future use
+IC_byint <- IC
+
+# Pivot AADT (add years)
 IC <- pivot_aadt_int(IC) %>% 
   mutate(
     NUM_ENT_TRUCKS = (SUTRK + CUTRK),

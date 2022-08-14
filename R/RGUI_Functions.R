@@ -1430,6 +1430,88 @@ mod_intersections <- function(intersections,UTA_Stops,schools){
 ###############################################################################
 
 ###
+## Additional Interpolation/Data Cleaning Functions
+###
+
+# Fill in Missing Roadway Data
+## This function simply looks through a list of columns and fills in missing 
+## data with data from adjacent segments
+fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
+  n <- 1   # set the subsetting_var index
+  subset_chk <- 0   # set the variable to check for subsetting
+  for(var in missing){
+    # check if the previous variable was subsetting then increment subsetting index
+    if(subset_chk == 1 & n < length(subsetting_var)){
+      n <- n + 1
+      subset_chk <- 0
+    }
+    # display progress
+    print(paste("Filling Missing Values for",var))
+    # loop several times in case data is missing at beginning of route
+    for(iter in 1:2){
+      if(iter == 1){b <- 0}else{b <- nrow(df)+1}
+      # loop through rows
+      for(i in 1:nrow(df)){
+        a <- abs(b - i)
+        # check if the value is NA
+        value <- df[[var]][a]
+        if(is.na(value)){
+          # record previous and next segments 
+          prev <- NA
+          nxt <- NA
+          prev_match <- 0
+          nxt_match <- 0
+          # fill previous segment
+          if(df[[rt_col]][a] == df[[rt_col]][a-1] & a-1>0){
+            prev <- df[[var]][a-1]
+            # count variables in common with previous segment
+            for(j in 1:ncol(df)){
+              if(df[a,j] == df[a-1,j] & !is.na(df[a,j]) & !is.na(df[a-1,j])){
+                prev_match <- prev_match + 1
+              }
+            }
+          }
+          # fill next segment
+          if(df[[rt_col]][a] == df[[rt_col]][a+1] & a+1<nrow(df)){
+            nxt <- df[[var]][a+1]
+            # count variables in common with next segment
+            for(j in 1:ncol(df)){
+              if(df[a,j] == df[a+1,j] & !is.na(df[a,j]) & !is.na(df[a+1,j])){
+                nxt_match <- nxt_match + 1
+              }
+            }
+          }
+          # check whether previous or next segment has more in common and fill
+          if(nxt_match > prev_match & !is.na(nxt) | is.na(prev)){
+            df[[var]][a] <- nxt
+            # fill subsetted variables if applicable
+            if(var == subsetting_var[n]){
+              subset_chk <- 1
+              for(k in subset_vars[[n]]){
+                df[[k]][a] <- df[[k]][a+1]
+              }
+            }
+          } else {
+            df[[var]][a] <- prev
+            # fill subsetted variables if applicable
+            if(var == subsetting_var[n]){
+              subset_chk <- 1
+              for(k in subset_vars[[n]]){
+                df[[k]][a] <- df[[k]][a-1]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  # return df
+  return(df)
+}
+
+###############################################################################
+
+###
 ## Simple Computational Functions
 ###
 

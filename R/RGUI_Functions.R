@@ -1440,6 +1440,8 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
   n <- 1   # set the subsetting_var index
   subset_chk <- 0   # set the variable to check for subsetting
   for(var in missing){
+    filled <- 0     # reset filled count
+    not_filled <- 0     # reset not filled count
     # check if the previous variable was subsetting then increment subsetting index
     if(subset_chk == 1 & n < length(subsetting_var)){
       n <- n + 1
@@ -1447,7 +1449,7 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
     }
     # display progress
     print(paste("Filling Missing Values for",var))
-    # loop several times in case data is missing at beginning of route
+    # loop forwards then backwards in case data is missing at beginning of route
     for(iter in 1:2){
       if(iter == 1){b <- 0}else{b <- nrow(df)+1}
       # loop through rows
@@ -1501,9 +1503,18 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
               }
             }
           }
+          # count the variables filled and not filled
+          if(!is.na(df[[var]][a])){
+            filled <- filled + 1
+          } else if(is.na(df[[var]][a]) & iter == 2){
+            not_filled <- not_filled + 1
+          }
         }
       }
     }
+    # announce variables filled and not filled
+    print(paste("Filled",filled,"missing entries. However",(not_filled),"entries could not be filled."))
+    print("-------------------------------------")
   }
   # return df
   return(df)

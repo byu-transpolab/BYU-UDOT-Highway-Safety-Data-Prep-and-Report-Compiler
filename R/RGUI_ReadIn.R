@@ -47,7 +47,8 @@ fc_col <- c("ROUTE_ID",
             "TO_MEASURE",
             "FUNCTIONAL_CLASS",                             
             "RouteDir",                             
-            "RouteType")
+            "RouteType",
+            "COUNTY_CODE")
 
 speed_fp <- "data/csv/UDOT_Speed_Limits_2019.csv"
 speed_col <- c("ROUTE_ID",
@@ -202,6 +203,9 @@ vehicle_col <-  c("crash_id",
                   "most_harmful_event_id", 
                   "vehicle_maneuver_id")
 
+regions_fp <- "data/csv/UDOT_Regions.csv"
+regions_col <- c("COUNTY_CODE", 
+                 "UDOT_Region")
 
 ###
 ## Routes Data Prep
@@ -244,6 +248,11 @@ names(fc)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
 # Compress fc
 fc <- compress_seg(fc)
 
+# Fix Missing Data
+fc <- fc %>% mutate(COUNTY_CODE = if_else(ROUTE == "0131PM","Salt Lake", COUNTY_CODE),
+                    COUNTY_CODE = if_else(ROUTE == "0190PM","Salt Lake", COUNTY_CODE),
+                    COUNTY_CODE = if_else(ROUTE == "0209PM","Salt Lake", COUNTY_CODE))
+
 # Create Full fc File (Including Fed Routes) For Merging with Intersections
 fc_full <- fc
 
@@ -263,6 +272,18 @@ state.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Fix Endpoints
 fc <- fix_endpoints(fc, routes)
+
+
+###
+## Regions Data Prep
+###
+
+# Read in regions data set
+regions <- read_csv_file(regions_fp, regions_col)
+
+# Left Join to fc
+fc <- left_join(fc, regions, "COUNTY_CODE")
+fc_full <- left_join(fc_full, regions, "COUNTY_CODE")
 
 
 ####

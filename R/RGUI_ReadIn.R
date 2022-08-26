@@ -492,6 +492,17 @@ FA_ref <- tibble(
     d3 = 50,
     total = d1 + d2 + d3
   )
+FA_ref <- tibble(
+  INT_TYPE = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,"ROUNDABOUT","CFI OFFSET LEFT TURN",
+               "THRU TURN CENTRAL","THRU TURN OFFSET U-TURN","SPUI","DDI",
+               "MID-BLOCK"),
+  TRAFFIC_CO = c("SIGNAL","STOP SIGN - SIDE STREET","STOP SIGN - ALL WAY",
+                 "STOP SIGN","YIELD SIGN","YIELD SIGN - ALL WAY",
+                 "YIELD SIGN - SIDE STREET","UNCONTROLLED","OTHER",
+                 NA,NA,NA,NA,NA,NA,NA),                     
+  d = list(300,150,100,150,100,100,100,100,150,300,c(400,300),c(400,200),c(400,300),500,
+           400,100)
+)
 
 # Add Speed Limits for Each Intersection Approach on intersections File
 intersection$INT_RT_0_SL <- NA

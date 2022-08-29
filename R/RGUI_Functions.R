@@ -848,6 +848,7 @@ shell_join <- function(sdtm) {
     if (!is.na(with_shell$BEG_MP[i]) &
         with_shell$BEG_MP[i] == with_shell$startpoints[i]){
       pdv <- with_shell[i, 4:ncol(with_shell)]
+      
     }
     
     if (!is.na(pdv$BEG_MP) & !is.na(pdv$END_MP) &
@@ -1520,6 +1521,7 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
   return(df)
 }
 
+
 ###############################################################################
 
 ###
@@ -1530,10 +1532,14 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
 substrRight <- function(x, n){
   substr(x, nchar(x)-n+1, nchar(x))
 }
+
+
 ## Modifies the substr function to remove n characters from the right
 substrMinusRight <- function(x, n){
   substr(x, 1, nchar(x)-n)
 }
+
+
 ## Adds an additional parameter to the left_join function which specifies how to
 ## fill in missing data rather than defaulting to "NA"
 left_join_fill <- function(x, y, by, fill = 0L, ...){
@@ -1542,5 +1548,4 @@ left_join_fill <- function(x, y, by, fill = 0L, ...){
   z <- replace_na(z, setNames(as.list(rep(fill, length(new_cols))), new_cols))
   return(z)
 }
-
 

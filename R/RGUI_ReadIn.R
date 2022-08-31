@@ -483,15 +483,15 @@ for(i in 2:nrow(intersection)){
 intersection <- intersection %>% arrange(INT_RT_0, INT_RT_0_M)
 
 # Create Functional Area Reference Table
-FA_ref <- tibble(
-  speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
-  d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275,275), 
-  d2 = c(70,70,70,70,105,150,225,290,360,440,525,655,755,875,995,995)
-) %>%
-  mutate(
-    d3 = 50,
-    total = d1 + d2 + d3
-  )
+# FA_ref <- tibble(
+#   speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
+#   d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275,275), 
+#   d2 = c(70,70,70,70,105,150,225,290,360,440,525,655,755,875,995,995)
+# ) %>%
+#   mutate(
+#     d3 = 50,
+#     total = d1 + d2 + d3
+#   )
 FA_ref <- tibble(
   INT_TYPE = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,"ROUNDABOUT","CFI OFFSET LEFT TURN",
                "THRU TURN CENTRAL","THRU TURN OFFSET U-TURN","SPUI","DDI",
@@ -598,68 +598,115 @@ intersection$INT_RT_1_FA <- NA
 intersection$INT_RT_2_FA <- NA
 intersection$INT_RT_3_FA <- NA
 intersection$INT_RT_4_FA <- NA
-stopbar <- 60
+# stopbar <- 60
 for(i in 1:nrow(intersection)){
+  # Assign values to variables
   route0 <- intersection[["INT_RT_0"]][i]
   route1 <- intersection[["INT_RT_1"]][i]
   route2 <- intersection[["INT_RT_2"]][i]
   route3 <- intersection[["INT_RT_3"]][i]
   route4 <- intersection[["INT_RT_4"]][i]
-  route0_sl <- intersection[["INT_RT_0_SL"]][i]
-  route1_sl <- intersection[["INT_RT_1_SL"]][i]
-  route2_sl <- intersection[["INT_RT_2_SL"]][i]
-  route3_sl <- intersection[["INT_RT_3_SL"]][i]
-  route4_sl <- intersection[["INT_RT_4_SL"]][i]
-  dist0 <- 0
-  dist1 <- 0
-  dist2 <- 0
-  dist3 <- 0
-  dist4 <- 0
+  type <- intersection$INT_TYPE[i]
+  traffic_co <- intersection$TRAFFIC_CO[i]
+  # Determine functional area distance from FA_ref table
+  fa_row <- which(FA_ref$INT_TYPE == type)
+  if(length(fa_row) == 0){
+    fa_row <- which(FA_ref$TRAFFIC_CO == traffic_co)
+  }
+  dist <- as.numeric(unlist(FA_ref$d[fa_row]))
+  # Assign functional area distance to each applicable leg
   if(!is.na(route0)){
-    if(!is.na(route0_sl)){
-      FA_row0 <- which(FA_ref$speed == route0_sl)
-      dist0 <- FA_ref$total[FA_row0]
-    } else{
-      dist0 <- 250   # This is the default if there is no Speed Limit
-    }
-    intersection[["INT_RT_0_FA"]][i] <- dist0 + stopbar
+    intersection$INT_RT_0_FA[i] <- dist[1]
   }
   if(!is.na(route1)){
-    if(!is.na(route1_sl)){
-      FA_row1 <- which(FA_ref$speed == route1_sl)
-      dist1 <- FA_ref$total[FA_row1]
+    if(length(dist) > 1 & route1 != substrMinusRight(route0,2)){
+      intersection$INT_RT_1_FA[i] <- dist[2]
     } else{
-      dist1 <- 250   # This is the default if there is no Speed Limit
+      intersection$INT_RT_1_FA[i] <- dist[1]
     }
-    intersection[["INT_RT_1_FA"]][i] <- dist1 + stopbar
   }
   if(!is.na(route2)){
-    if(!is.na(route2_sl)){
-      FA_row2 <- which(FA_ref$speed == route2_sl)
-      dist2 <- FA_ref$total[FA_row2]
+    if(length(dist) > 1 & route2 != substrMinusRight(route0,2)){
+      intersection$INT_RT_2_FA[i] <- dist[2]
     } else{
-      dist2 <- 250   # This is the default if there is no Speed Limit
+      intersection$INT_RT_2_FA[i] <- dist[1]
     }
-    intersection[["INT_RT_2_FA"]][i] <- dist2 + stopbar
   }
   if(!is.na(route3)){
-    if(!is.na(route3_sl)){
-      FA_row3 <- which(FA_ref$speed == route3_sl)
-      dist3 <- FA_ref$total[FA_row3]
+    if(length(dist) > 1 & route3 != substrMinusRight(route0,2)){
+      intersection$INT_RT_3_FA[i] <- dist[2]
     } else{
-      dist3 <- 250   # This is the default if there is no Speed Limit
+      intersection$INT_RT_3_FA[i] <- dist[1]
     }
-    intersection[["INT_RT_3_FA"]][i] <- dist3 + stopbar
   }
   if(!is.na(route4)){
-    if(!is.na(route4_sl)){
-      FA_row4 <- which(FA_ref$speed == route4_sl)
-      dist4 <- FA_ref$total[FA_row4]
+    if(length(dist) > 1 & route4 != substrMinusRight(route0,2)){
+      intersection$INT_RT_4_FA[i] <- dist[2]
     } else{
-      dist4 <- 250   # This is the default if there is no Speed Limit
+      intersection$INT_RT_4_FA[i] <- dist[1]
     }
-    intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
   }
+  
+  # route0 <- intersection[["INT_RT_0"]][i]
+  # route1 <- intersection[["INT_RT_1"]][i]
+  # route2 <- intersection[["INT_RT_2"]][i]
+  # route3 <- intersection[["INT_RT_3"]][i]
+  # route4 <- intersection[["INT_RT_4"]][i]
+  # route0_sl <- intersection[["INT_RT_0_SL"]][i]
+  # route1_sl <- intersection[["INT_RT_1_SL"]][i]
+  # route2_sl <- intersection[["INT_RT_2_SL"]][i]
+  # route3_sl <- intersection[["INT_RT_3_SL"]][i]
+  # route4_sl <- intersection[["INT_RT_4_SL"]][i]
+  # dist0 <- 0
+  # dist1 <- 0
+  # dist2 <- 0
+  # dist3 <- 0
+  # dist4 <- 0
+  # if(!is.na(route0)){
+  #   if(!is.na(route0_sl)){
+  #     FA_row0 <- which(FA_ref$speed == route0_sl)
+  #     dist0 <- FA_ref$total[FA_row0]
+  #   } else{
+  #     dist0 <- 250   # This is the default if there is no Speed Limit
+  #   }
+  #   intersection[["INT_RT_0_FA"]][i] <- dist0 + stopbar
+  # }
+  # if(!is.na(route1)){
+  #   if(!is.na(route1_sl)){
+  #     FA_row1 <- which(FA_ref$speed == route1_sl)
+  #     dist1 <- FA_ref$total[FA_row1]
+  #   } else{
+  #     dist1 <- 250   # This is the default if there is no Speed Limit
+  #   }
+  #   intersection[["INT_RT_1_FA"]][i] <- dist1 + stopbar
+  # }
+  # if(!is.na(route2)){
+  #   if(!is.na(route2_sl)){
+  #     FA_row2 <- which(FA_ref$speed == route2_sl)
+  #     dist2 <- FA_ref$total[FA_row2]
+  #   } else{
+  #     dist2 <- 250   # This is the default if there is no Speed Limit
+  #   }
+  #   intersection[["INT_RT_2_FA"]][i] <- dist2 + stopbar
+  # }
+  # if(!is.na(route3)){
+  #   if(!is.na(route3_sl)){
+  #     FA_row3 <- which(FA_ref$speed == route3_sl)
+  #     dist3 <- FA_ref$total[FA_row3]
+  #   } else{
+  #     dist3 <- 250   # This is the default if there is no Speed Limit
+  #   }
+  #   intersection[["INT_RT_3_FA"]][i] <- dist3 + stopbar
+  # }
+  # if(!is.na(route4)){
+  #   if(!is.na(route4_sl)){
+  #     FA_row4 <- which(FA_ref$speed == route4_sl)
+  #     dist4 <- FA_ref$total[FA_row4]
+  #   } else{
+  #     dist4 <- 250   # This is the default if there is no Speed Limit
+  #   }
+  #   intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
+  # }
 }
 
 # Create FA File which has FA for Each Route

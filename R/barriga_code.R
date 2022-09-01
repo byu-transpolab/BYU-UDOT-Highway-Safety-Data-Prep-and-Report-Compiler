@@ -48,11 +48,11 @@ fc.columns <- c("ROUTE_ID",
                 "RouteDir",                             
                 "RouteType")
 
-speed.filepath <- "data/csv/UDOT_Speed_Limits_2019.csv"
-speed.columns <- c("ROUTE_ID",
-                   "FROM_MEASURE",
-                   "TO_MEASURE",
-                   "SPEED_LIMIT")
+speed.filepath <- "data/csv/2021_Statewide_Speed_Limits.csv"
+speed.columns <- c("Route",
+                   "Beg_MP",
+                   "End_MP",
+                   "Speed Limit")
 
 lane.filepath <- "data/csv/Lanes.csv"
 lane.columns <- c("ROUTE",
@@ -740,10 +740,6 @@ speed <- read_filez_csv(speed.filepath, speed.columns)
 
 # Standardizing Column Names
 names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
-
-# Getting Only Main Routes
-speed <- speed %>% filter(ROUTE %in% substr(main.routes, 1, 6)) %>%
-  filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in speed file
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()

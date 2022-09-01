@@ -50,11 +50,11 @@ fc_col <- c("ROUTE_ID",
             "RouteType",
             "COUNTY_CODE")
 
-speed_fp <- "data/csv/UDOT_Speed_Limits_2019.csv"
-speed_col <- c("ROUTE_ID",
-               "FROM_MEASURE",
-               "TO_MEASURE",
-               "SPEED_LIMIT")
+speed_fp <- "data/csv/2021_Statewide_Speed_Limits.csv"
+speed_col <- c("Route",
+               "Beg_MP",
+               "End_MP",
+               "Speed Limit")
 
 lane_fp <- "data/csv/Lanes.csv"
 lane_col <- c("ROUTE",
@@ -342,16 +342,8 @@ speed <- compress_seg(speed)
 # Create Full speed File (Including Fed Routes) For Merging with Intersections
 speed_full <- speed
 
-# Select Only Main Routes
-speed <- speed %>% 
-  filter(grepl("M", ROUTE)) %>%
-  filter(BEG_MP < END_MP)
-
 # Find Number of Unique Routes in speed File
 num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
-
-# Get Only State Routes
-speed <- speed %>% filter(ROUTE %in% substr(state.routes, 1, 6))
 
 # Fix Endpoints
 speed <- fix_endpoints(speed, routes)

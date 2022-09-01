@@ -334,7 +334,7 @@ aadt <- aadt %>% filter(ROUTE %in% substr(state_routes, 1, 6))
 speed <- read_csv_file(speed_fp, speed_col)
 
 # Standardizing Column Names
-names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")
+names(speed)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP", "SPEED_LIMIT")
 
 # Compress speed
 speed <- compress_seg(speed)

@@ -19,8 +19,6 @@ aadt_fp <- "data/csv/AADT_Unrounded.csv"
 aadt_col <- c("ROUTE_NAME",
               "START_ACCU",
               "END_ACCUM",
-              "AADT2021",
-              "SUTRK2021",
               "AADT2020",
               "SUTRK2020",
               "CUTRK2020",

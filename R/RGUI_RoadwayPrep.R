@@ -297,7 +297,7 @@ for(i in 1:nrow(IC)){
   id <- IC[["Int_ID"]][i]
   for(j in 1:4){
     rt <- IC[[paste0("INT_RT_",j)]][i]
-    if(!is.na(rt) & tolower(rt) != "local"){    # old condition: rt %in% substr(state.routes,1,4)
+    if(!is.na(rt) & tolower(rt) != "local"){    # old condition: rt %in% substr(state_routes,1,4)
       if(rt == substr(IC$INT_RT_0[i],0,4)){
         IC[[paste0("INT_RT_",j)]][i] <- IC$INT_RT_0[i]
       } else{

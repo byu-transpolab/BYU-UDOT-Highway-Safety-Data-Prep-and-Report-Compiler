@@ -225,7 +225,7 @@ routes <- routes %>%
   mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
 
 # Find Number of Unique Routes in the routes File
-num.routes.routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
+num_routes_routes <- routes %>% pull(ROUTE) %>% unique() %>% length()
 
 # Load divided routes Data
 div_routes <- read_csv("data/csv/DividedRoutesList_20220307_Adjusted.csv") 
@@ -261,14 +261,14 @@ fc <- fc %>% filter(grepl("M", ROUTE))
 
 # Create fed routes List
 fed <- fc %>% filter(grepl("Fed Aid", RouteType))
-fed.routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
+fed_routes <- as.character(fed %>% pull(ROUTE) %>% unique() %>% sort())
 
 # Select only State Routes
 fc <- fc %>% filter(grepl("State", RouteType))
 
 # Find Number of Unique Routes in the fc File
-num.fc.routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
-state.routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())  
+num_fc_routes <- fc %>% pull(ROUTE) %>% unique() %>% length()
+state_routes <- as.character(fc %>% pull(ROUTE) %>% unique() %>% sort())  
 
 # Fix Endpoints
 fc <- fix_endpoints(fc, routes)
@@ -314,7 +314,7 @@ aadt <- aadt %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in aadt file
-num.aadt.routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
+num_aadt_routes <- aadt %>% pull(ROUTE) %>% unique() %>% length()
 
 # Fix Negative aadt Values
 aadt <- aadt_neg(aadt, routes, div_routes)
@@ -323,7 +323,7 @@ aadt <- aadt_neg(aadt, routes, div_routes)
 aadt <- fix_endpoints(aadt, routes)
 
 # Get Only State Routes
-aadt <- aadt %>% filter(ROUTE %in% substr(state.routes, 1, 6))
+aadt <- aadt %>% filter(ROUTE %in% substr(state_routes, 1, 6))
 
 
 ###
@@ -343,7 +343,7 @@ speed <- compress_seg(speed)
 speed_full <- speed
 
 # Find Number of Unique Routes in speed File
-num.speed.routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
+num_speed_routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 
 # Fix Endpoints
 speed <- fix_endpoints(speed, routes)
@@ -373,10 +373,10 @@ lane <- lane %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in lanes File
-num.lane.routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
+num_lane_routes <- lane %>% pull(ROUTE) %>% unique() %>% length()
 
 # Get Only State Routes
-lane <- lane %>% filter(ROUTE %in% substr(state.routes, 1, 6))
+lane <- lane %>% filter(ROUTE %in% substr(state_routes, 1, 6))
 
 # Fix Endpoints
 lane <- fix_endpoints(lane, routes)
@@ -407,10 +407,10 @@ urban <- urban %>%
   mutate(BEG_MP = round(BEG_MP,6), END_MP = round(END_MP,6))
 
 # Find Number of Unique Routes in urban code File
-num.urban.routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
+num_urban_routes <- urban %>% pull(ROUTE) %>% unique() %>% length()
 
 # Get Only State Routes
-urban <- urban %>% filter(ROUTE %in% substr(state.routes, 1, 6))
+urban <- urban %>% filter(ROUTE %in% substr(state_routes, 1, 6))
 
 # Fix Endpoints
 urban <- fix_endpoints(urban, routes)
@@ -437,26 +437,26 @@ intersection$INT_RT_0 <- paste(substr(intersection$INT_RT_0, 1, 5), "M", sep = "
 # Get Only State Routes  
 intersection <- intersection %>% 
   filter(
-    INT_RT_0 %in% substr(state.routes, 1,4) |
-    INT_RT_1 %in% substr(state.routes, 1,4) |
-    INT_RT_2 %in% substr(state.routes, 1,4) |
-    INT_RT_3 %in% substr(state.routes, 1,4) |
-    INT_RT_4 %in% substr(state.routes, 1,4) 
+    INT_RT_0 %in% substr(state_routes, 1,4) |
+    INT_RT_1 %in% substr(state_routes, 1,4) |
+    INT_RT_2 %in% substr(state_routes, 1,4) |
+    INT_RT_3 %in% substr(state_routes, 1,4) |
+    INT_RT_4 %in% substr(state_routes, 1,4) 
   )
 
 # Find Number of Unique primary Routes in intersections File
-num.intersection.routes <- intersection %>% pull(INT_RT_0) %>% unique() %>% length()
+num_intersection_routes <- intersection %>% pull(INT_RT_0) %>% unique() %>% length()
 
 # Filter SR_SR, Fed_Aid, and Signalized
 intersection <- intersection %>%
   filter(
     SR_SR == "YES" | 
     TRAFFIC_CO == "SIGNAL" | 
-    INT_RT_0 %in% substr(fed.routes,1,4) |
-    INT_RT_1 %in% substr(fed.routes,1,4) |
-    INT_RT_2 %in% substr(fed.routes,1,4) | 
-    INT_RT_3 %in% substr(fed.routes,1,4) |
-    INT_RT_4 %in% substr(fed.routes,1,4)
+    INT_RT_0 %in% substr(fed_routes,1,4) |
+    INT_RT_1 %in% substr(fed_routes,1,4) |
+    INT_RT_2 %in% substr(fed_routes,1,4) | 
+    INT_RT_3 %in% substr(fed_routes,1,4) |
+    INT_RT_4 %in% substr(fed_routes,1,4)
   )
 
 # Ensure Intersection IDs are Unique
@@ -714,7 +714,7 @@ for(i in 1:nrow(intersection)){
     rt <- intersection[[paste0("INT_RT_",j)]][i]
     mp <- intersection[[paste0("INT_RT_",j,"_M")]][i]
     fa <- intersection[[paste0("INT_RT_",j,"_FA")]][i]
-    if(!is.na(rt) & tolower(rt) != "local"){   #old condition:  rt %in% substr(state.routes,1,4)
+    if(!is.na(rt) & tolower(rt) != "local"){   #old condition:  rt %in% substr(state_routes,1,4)
       row <- row + 1
       if(substr(rt,0,4) == substr(intersection$INT_RT_0[i],0,4)){
         ROUTE[row] <- intersection$INT_RT_0[i]
@@ -750,11 +750,11 @@ shoulder <- shoulder %>% filter(nchar(ROUTE) == 5)
 shoulder$ROUTE <- paste(substr(shoulder$ROUTE, 1, 6), "M", sep = "")
 
 # Get Only State Routes
-shoulder <- shoulder %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
+shoulder <- shoulder %>% filter(ROUTE %in% substr(state_routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in shoulder File
-num.shoulder.routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
+num_shoulder_routes <- shoulder %>% pull(ROUTE) %>% unique() %>% length()
 
 # Create Point to Reference Shoulders
 shoulder <- shoulder %>% 
@@ -786,11 +786,11 @@ median <- median %>% filter(nchar(ROUTE) == 5)
 median$ROUTE <- paste(substr(median$ROUTE, 1, 6), "M", sep = "")
 
 # Get Only State Routes
-median <- median %>% filter(ROUTE %in% substr(state.routes, 1, 6)) %>%
+median <- median %>% filter(ROUTE %in% substr(state_routes, 1, 6)) %>%
   filter(BEG_MP < END_MP)
 
 # Find Number of Unique Routes in median File
-num.median.routes <- median %>% pull(ROUTE) %>% unique() %>% length()
+num_median_routes <- median %>% pull(ROUTE) %>% unique() %>% length()
 
 # Compress Medians
 median <- compress_seg(median, variables = c("MEDIAN_TYP", "TRFISL_TYP", "MDN_PRTCTN"))

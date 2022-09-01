@@ -346,12 +346,18 @@ IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>%
 IC <- add_int_att(IC, lane_full) %>%
   select(-(THRU_CNT_0:THRU_CNT_4),-(THRU_WDTH_0:THRU_WDTH_4))
 
+# pivot by num legs for statistical purposes (setting all_legs to false allows
+# us to do this even though there is only one column for NUM_LEGS)
+IC <- expand_int_att(IC, "NUM_LEGS", all_legs = FALSE)
+
 # Create a list of columns that have missing data to be filled.
 missing <- IC %>% 
   ungroup() %>% 
   select(MAX_SPEED_LIMIT:AVG_SPEED_LIMIT, 
          MIN_URBAN_CODE, 
          MIN_FUNCTIONAL_CLASS,
+         COUNTY_CODE,
+         UDOT_Region,
          MAX_THRU_CNT:AVG_THRU_WDTH) %>%
   colnames()
 subsetting_var <- c("MIN_URBAN_CODE", "MIN_FUNCTIONAL_CLASS")

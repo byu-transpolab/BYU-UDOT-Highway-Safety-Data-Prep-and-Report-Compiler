@@ -1323,21 +1323,27 @@ add_int_att <- function(int, att, is_aadt, is_fc){
 ## "interstate", "arterial", etc...). This is often a preferable format for 
 ## statistical analysis. It also removes the need to have different columns for
 ## each approach at the intersection.
-expand_int_att <- function(IC, att){
+expand_int_att <- function(IC, att, all_legs){
+  # optional arguments
+  if(missing(all_legs)){all_legs <- TRUE}
   # extract attribute data
   df <- IC %>% 
     select(Int_ID, contains(att))
-  # pivot longer
-  df <- df %>%
-    pivot_longer(cols = c(!!sym(paste0(att,"_0")),
-                          !!sym(paste0(att,"_1")),
-                          !!sym(paste0(att,"_2")),
-                          !!sym(paste0(att,"_3")),
-                          !!sym(paste0(att,"_4"))),
-                 names_to = "delete",
-                 values_to = att) %>%
-    select(-delete) %>%
-    filter(!is.na(!!sym(att)))
+  if(all_legs == TRUE){
+    # pivot longer
+    df <- df %>%
+      pivot_longer(cols = c(!!sym(paste0(att,"_0")),
+                            !!sym(paste0(att,"_1")),
+                            !!sym(paste0(att,"_2")),
+                            !!sym(paste0(att,"_3")),
+                            !!sym(paste0(att,"_4"))),
+                   names_to = "delete",
+                   values_to = att) %>%
+      select(-delete) %>%
+      filter(!is.na(!!sym(att)))
+  } else{
+    df <- df %>% filter(!is.na(!!sym(att)))
+  }
   # pivot wider
   df <- df %>%
     group_by(Int_ID, !!sym(att)) %>% 
@@ -1351,8 +1357,11 @@ expand_int_att <- function(IC, att){
                 values_fill = 0,
                 values_fn = max)
   # join to segments
-  df <- left_join_fill(IC, df, by = c("Int_ID"="Int_ID"), fill = 0L) %>%
-    select(-(!!sym(paste0(att,"_0")):!!sym(paste0(att,"_4"))))
+  df <- left_join_fill(IC, df, by = c("Int_ID"="Int_ID"), fill = 0L) 
+  if(all_legs == TRUE){
+    df <- df %>%
+      select(-(!!sym(paste0(att,"_0")):!!sym(paste0(att,"_4"))))
+  }
   return(df)
 }
 
@@ -1457,66 +1466,66 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
     }
     # display progress
     print(paste("Filling Missing Values for",var))
-    # loop forwards then backwards in case data is missing at beginning of route
-    for(iter in 1:2){
-      if(iter == 1){b <- 0}else{b <- nrow(df)+1}
-      # loop through rows
-      for(i in 1:nrow(df)){
-        a <- abs(b - i)
-        # check if the value is NA
-        value <- df[[var]][a]
-        if(is.na(value)){
-          # record previous and next segments 
-          prev <- NA
-          nxt <- NA
-          prev_match <- 0
-          nxt_match <- 0
-          # fill previous segment
-          if(df[[rt_col]][a] == df[[rt_col]][a-1] & a-1>0){
-            prev <- df[[var]][a-1]
-            # count variables in common with previous segment
-            for(j in 1:ncol(df)){
-              if(df[a,j] == df[a-1,j] & !is.na(df[a,j]) & !is.na(df[a-1,j])){
-                prev_match <- prev_match + 1
-              }
+    # loop through rows
+    for(i in 1:nrow(df)){
+      # check if the value is NA
+      value <- df[[var]][i]
+      if(is.na(value)){
+        # record previous and next segments 
+        prev <- NA
+        nxt <- NA
+        prev_match <- 0
+        nxt_match <- 0
+        # assign values from previous segment
+        if(df[[rt_col]][i] == df[[rt_col]][i-1] & i-1>0){
+          prev <- df[[var]][i-1]
+          # count variables in common with previous segment
+          for(j in 1:ncol(df)){
+            if(df[i,j] == df[i-1,j] & !is.na(df[i,j]) & !is.na(df[i-1,j])){
+              prev_match <- prev_match + 1
             }
           }
-          # fill next segment
-          if(df[[rt_col]][a] == df[[rt_col]][a+1] & a+1<nrow(df)){
-            nxt <- df[[var]][a+1]
-            # count variables in common with next segment
-            for(j in 1:ncol(df)){
-              if(df[a,j] == df[a+1,j] & !is.na(df[a,j]) & !is.na(df[a+1,j])){
-                nxt_match <- nxt_match + 1
-              }
+        }
+        # assign values from next non-NA segment
+        for(next_val in (i+1):nrow(df)){
+          if(!is.na(df[[var]][next_val]) | df[[rt_col]][next_val+1] != df[[rt_col]][i]){
+            break
+          }
+        }
+        if(df[[rt_col]][i] == df[[rt_col]][next_val] & next_val<nrow(df)){
+          nxt <- df[[var]][next_val]
+          # count variables in common with next segment
+          for(j in 1:ncol(df)){
+            if(df[i,j] == df[next_val,j] & !is.na(df[i,j]) & !is.na(df[next_val,j])){
+              nxt_match <- nxt_match + 1
             }
           }
-          # check whether previous or next segment has more in common and fill
-          if(nxt_match > prev_match & !is.na(nxt) | is.na(prev)){
-            df[[var]][a] <- nxt
-            # fill subsetted variables if applicable
-            if(var == subsetting_var[n]){
-              subset_chk <- 1
-              for(k in subset_vars[[n]]){
-                df[[k]][a] <- df[[k]][a+1]
-              }
-            }
-          } else {
-            df[[var]][a] <- prev
-            # fill subsetted variables if applicable
-            if(var == subsetting_var[n]){
-              subset_chk <- 1
-              for(k in subset_vars[[n]]){
-                df[[k]][a] <- df[[k]][a-1]
-              }
+        }
+        # check whether previous or next segment has more in common and fill
+        if(nxt_match > prev_match & !is.na(nxt) | is.na(prev)){
+          df[[var]][i] <- nxt
+          # fill subsetted variables if applicable
+          if(var == subsetting_var[n]){
+            subset_chk <- 1
+            for(k in subset_vars[[n]]){
+              df[[k]][i] <- df[[k]][next_val]
             }
           }
-          # count the variables filled and not filled
-          if(!is.na(df[[var]][a])){
-            filled <- filled + 1
-          } else if(is.na(df[[var]][a]) & iter == 2){
-            not_filled <- not_filled + 1
+        } else {
+          df[[var]][i] <- prev
+          # fill subsetted variables if applicable
+          if(var == subsetting_var[n]){
+            subset_chk <- 1
+            for(k in subset_vars[[n]]){
+              df[[k]][i] <- df[[k]][i-1]
+            }
           }
+        }
+        # count the variables filled and not filled
+        if(!is.na(df[[var]][i])){
+          filled <- filled + 1
+        } else{
+          not_filled <- not_filled + 1
         }
       }
     }

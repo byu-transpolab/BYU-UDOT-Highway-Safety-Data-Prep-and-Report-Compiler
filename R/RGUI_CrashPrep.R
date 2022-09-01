@@ -10,10 +10,8 @@ library(dplyr)
 ###
 
 # Join Crash Files
-crash <- left_join(location,rollups,by='crash_id')
-
-# # Join Crash Vehicle File
-# fullcrash <- left_join(crash,vehicle,by='crash_id')
+crash <- left_join(severity, location, by='crash_id') %>%
+  left_join(., rollups, by='crash_id') 
 
 # Filter out Ramps
 crash <- crash %>% filter(is.na(ramp_id) | ramp_id == 0)

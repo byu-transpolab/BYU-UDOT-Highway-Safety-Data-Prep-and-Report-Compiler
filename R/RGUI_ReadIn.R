@@ -130,15 +130,9 @@ shoulder_col <- c("ROUTE",
                   "UTPOSITION",
                   "SHLDR_WDTH")
 
-location_fp <- "data/csv/Crash_Data_14-20.csv"
-location_col <- c("crash_id", 
-                  "crash_datetime", 
-                  "route", 
-                  "route_direction", 
-                  "ramp_id", 
-                  "milepoint", 
-                  "lat", 
-                  "long",
+severity_fp <- "data/csv/Severity_File.csv"
+severity_col <- c("crash_id", 
+                  "crash_datetime",
                   "crash_severity_id", 
                   "light_condition_id", 
                   "weather_condition_id", 
@@ -148,9 +142,25 @@ location_col <- c("crash_id",
                   "horizontal_alignment_id",
                   "vertical_alignment_id", 
                   "roadway_contrib_circum_id",
-                  "first_harmful_event_id")
+                  "total_number_roadway_lanes",
+                  "first_harmful_event_id",
+                  "first_harmful_evt_loc_id",
+                  "motor_carrier_involved_yn") 
 
-rollups_fp <- "data/csv/Rollups_14-20.csv"
+location_fp <- "data/csv/Location_File.csv"
+location_col <- c("crash_id",
+                  "county_id",
+                  "city",
+                  "route", 
+                  "roadway_type",
+                  "route_direction", 
+                  "ramp_id", 
+                  "milepoint", 
+                  "lat", 
+                  "long",
+                  "number_vehicles_involved")
+
+rollups_fp <- "data/csv/Rollup_File.csv"
 rollups_col <- c("crash_id", 
                  "number_fatalities", 
                  "number_four_injuries",
@@ -166,7 +176,9 @@ rollups_col <- c("crash_id",
                  "motorcycle_involved",	
                  "motorcycle_involved_level4_tot",	
                  "motorcycle_involved_fatal_tot",
-                 "unrestrained", 
+                 "unrestrained",
+                 "unrestrained_fatal_tot",
+                 "unrestrained_involved_level4_tot",
                  "dui", 
                  "aggressive_driving",	
                  "distracted_driving",	
@@ -192,9 +204,13 @@ rollups_col <- c("crash_id",
                  "transit_vehicle_involved",	
                  "collision_with_fixed_object")
 
-vehicle_fp <- "data/csv/Vehicle_Data_14-20.csv"
-vehicle_col <-  c("crash_id", 
-                  "vehicle_num", 
+
+vehicle_fp <- "data/csv/Vehicle_File.csv"
+vehicle_col <-  c("crash_id",
+                  "vehicle_num",
+                  "vehicle_num_occupants",
+                  "posted_speed",
+                  "estimated_travel_speed",
                   "travel_direction_id", 
                   "event_sequence_1_id", 
                   "event_sequence_2_id", 
@@ -832,6 +848,7 @@ drv_disc <- driveway %>%
 ## Read in Crash Files
 ###
 
+severity <- read_csv_file(severity_fp, severity_col)
 location <- read_csv_file(location_fp, location_col)
 rollups <- read_csv_file(rollups_fp, rollups_col)
 vehicle <- read_csv_file(vehicle_fp, vehicle_col)

@@ -19,6 +19,8 @@ aadt_fp <- "data/csv/AADT_Unrounded.csv"
 aadt_col <- c("ROUTE_NAME",
               "START_ACCU",
               "END_ACCUM",
+              "AADT2021",
+              "SUTRK2021",
               "AADT2020",
               "SUTRK2020",
               "CUTRK2020",
@@ -33,13 +35,7 @@ aadt_col <- c("ROUTE_NAME",
               "CUTRK2017",
               "AADT2016",
               "SUTRK2016",
-              "CUTRK2016",
-              "AADT2015",
-              "SUTRK2015",
-              "CUTRK2015",
-              "AADT2014",
-              "SUTRK2014",
-              "CUTRK2014")
+              "CUTRK2016")
 
 fc_fp <- "data/csv/Functional_Class_ALRS.csv"
 fc_col <- c("ROUTE_ID",                          

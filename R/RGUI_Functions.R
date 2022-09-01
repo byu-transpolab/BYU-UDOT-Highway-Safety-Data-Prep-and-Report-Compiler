@@ -1198,7 +1198,7 @@ add_int_att <- function(int, att, is_aadt, is_fc){
           !!sym(paste0("AVG_",var)) := ifelse(is.nan(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
         )
       # add local functional classes if functional class
-      if(is_fc == TRUE){
+      if(is_fc == TRUE & toupper(var) == "FUNCTIONAL_CLASS"){
         int <- int %>%
           rowwise() %>%
           mutate(
@@ -1211,7 +1211,14 @@ add_int_att <- function(int, att, is_aadt, is_fc){
             !!sym(paste0(var,"_3")) := case_when(tolower(INT_RT_3) == "local" ~ "Local",
                                                  TRUE ~ !!sym(paste0(var,".d"))),
             !!sym(paste0(var,"_4")) := case_when(tolower(INT_RT_4) == "local" ~ "Local",
-                                                 TRUE ~ !!sym(paste0(var,".e")))
+                                                 TRUE ~ !!sym(paste0(var,".e"))),
+            # need to redo min with the new functional classes
+            !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,"_0")),
+                                               !!sym(paste0(var,"_1")),
+                                               !!sym(paste0(var,"_2")),
+                                               !!sym(paste0(var,"_3")),
+                                               !!sym(paste0(var,"_4"))), 
+                                             na.rm = TRUE)
           )
       }
     }

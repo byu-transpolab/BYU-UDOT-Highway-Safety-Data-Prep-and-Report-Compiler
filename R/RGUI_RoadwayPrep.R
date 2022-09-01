@@ -329,7 +329,12 @@ IC <- add_int_att(IC, urban_full) %>%
 IC <- expand_int_att(IC, "URBAN_CODE")
 
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
-  select(-MAX_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS)
+  select(-MAX_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, 
+         -(COUNTY_CODE_0:COUNTY_CODE_4), -(UDOT_Region_0:UDOT_Region_4),
+         -MAX_COUNTY_CODE, -AVG_COUNTY_CODE,
+         -MAX_UDOT_Region, -AVG_UDOT_Region) %>%
+  rename(COUNTY_CODE = MIN_COUNTY_CODE,
+         UDOT_Region = MIN_UDOT_Region)
 
 IC <- expand_int_att(IC, "FUNCTIONAL_CLASS")
 

@@ -1488,7 +1488,10 @@ fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars){
         }
         # assign values from next non-NA segment
         for(next_val in (i+1):nrow(df)){
-          if(!is.na(df[[var]][next_val]) | df[[rt_col]][next_val+1] != df[[rt_col]][i]){
+          if((!is.na(df[[var]][next_val]) & 
+             next_val <= nrow(df)) |
+             (df[[rt_col]][next_val+1] != df[[rt_col]][i] &
+             next_val+1 <= nrow(df))){
             break
           }
         }

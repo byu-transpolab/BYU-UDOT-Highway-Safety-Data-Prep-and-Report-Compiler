@@ -262,6 +262,89 @@ subset_cols <- list(RC %>%
 # Run the fill_all_missing function to interpolate remaining data
 RC <- fill_all_missing(RC, missing, "ROUTE", subsetting_var, subset_cols)
 
+# Manually fill in remaining missing data
+RC <- RC %>% 
+  mutate(
+    COUNTY_CODE = if_else(ROUTE == "0231PM" & is.na(COUNTY_CODE), "Sanpete", COUNTY_CODE),
+    UDOT_Region = if_else(ROUTE == "0231PM" & is.na(UDOT_Region), 4, UDOT_Region),
+    FUNCTIONAL_CLASS = if_else(ROUTE == "0231PM" & is.na(FUNCTIONAL_CLASS), "Major Collector", FUNCTIONAL_CLASS),
+    SPEED_LIMIT = if_else(ROUTE == "0231PM" & is.na(SPEED_LIMIT), 30, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0231PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0231PM" & is.na(THRU_WDTH), 14, THRU_WDTH),
+    URBAN_CODE = if_else(ROUTE == "0231PM" & is.na(URBAN_CODE), 99999, URBAN_CODE),
+                    
+    SPEED_LIMIT = if_else(ROUTE == "0136PM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0140PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0168PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0191NM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0290PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT), # hard to tell. Just the road around Snow College
+    
+    SPEED_LIMIT = if_else(ROUTE == "0291PM" & is.na(SPEED_LIMIT), 3, SPEED_LIMIT), # school for the deaf. Therefore very low speed limit
+    THRU_CNT = if_else(ROUTE == "0291PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0291PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
+    Median_Type = if_else(ROUTE == "0291PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    Right_Shoulder = if_else(ROUTE == "0291PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0291PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0303PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0303PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0303PM" & is.na(THRU_WDTH), 14, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0303PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0303PM" & is.na(Median_Type), "PAINTED MEDIAN", Median_Type),
+    `MEDIAN_TYP_PAINTED MEDIAN` = if_else(ROUTE == "0303PM" & is.na(`MEDIAN_TYP_PAINTED MEDIAN`), 1, `MEDIAN_TYP_PAINTED MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0303PM" & is.na(Right_Shoulder), 6, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0303PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0304PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0304PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0304PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0304PM" & is.na(Driveway_Freq), 28, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0304PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0304PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0304PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0304PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0306PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0306PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0306PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0306PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0306PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0306PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0306PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0306PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0309PM" & is.na(SPEED_LIMIT), 25, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0309PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0309PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0309PM" & is.na(Driveway_Freq), 3, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0309PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0309PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0309PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0309PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0310PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0310PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0310PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0310PM" & is.na(Driveway_Freq), 2, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0310PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0310PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0310PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0310PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+    
+    SPEED_LIMIT = if_else(ROUTE == "0317PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    THRU_CNT = if_else(ROUTE == "0317PM" & is.na(THRU_CNT), 2, THRU_CNT),
+    THRU_WDTH = if_else(ROUTE == "0317PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
+    Driveway_Freq = if_else(ROUTE == "0317PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
+    Median_Type = if_else(ROUTE == "0317PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0317PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Right_Shoulder = if_else(ROUTE == "0317PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0317PM" & is.na(Left_Shoulder), 0, Left_Shoulder)
+  )
+
 # Save a copy for future use
 RC_byseg <- RC
 
@@ -372,6 +455,24 @@ subset_cols <- list(IC %>%
 
 # Run the fill_all_missing function to interpolate remaining data
 IC <- fill_all_missing(IC, missing, "INT_RT_0", subsetting_var, subset_cols)
+
+# Manually fill in remaining missing data
+IC <- IC %>% 
+  mutate(
+    MAX_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
+    MIN_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MIN_SPEED_LIMIT), 65, MIN_SPEED_LIMIT),
+    AVG_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MIN_SPEED_LIMIT), 65, MIN_SPEED_LIMIT),
+    
+    MIN_URBAN_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+    MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_FUNCTIONAL_CLASS), "Major Collector", MIN_FUNCTIONAL_CLASS),
+    COUNTY_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(COUNTY_CODE), "Juab", COUNTY_CODE),
+    UDOT_Region = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_URBAN_CODE), 3, MIN_URBAN_CODE),
+    
+    MIN_URBAN_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+    MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_FUNCTIONAL_CLASS), "Local", MIN_FUNCTIONAL_CLASS),
+    COUNTY_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(COUNTY_CODE), "Box Elder", COUNTY_CODE),
+    UDOT_Region = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_URBAN_CODE), 1, MIN_URBAN_CODE)
+  )
 
 # Save a copy for future use
 IC_byint <- IC

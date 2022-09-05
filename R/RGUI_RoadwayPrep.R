@@ -466,12 +466,12 @@ IC <- IC %>%
     MIN_URBAN_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
     MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_FUNCTIONAL_CLASS), "Major Collector", MIN_FUNCTIONAL_CLASS),
     COUNTY_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(COUNTY_CODE), "Juab", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_URBAN_CODE), 3, MIN_URBAN_CODE),
+    UDOT_Region = if_else(Int_ID == "0054P-0-1828" & is.na(UDOT_Region), 3, UDOT_Region),
     
     MIN_URBAN_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
     MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_FUNCTIONAL_CLASS), "Local", MIN_FUNCTIONAL_CLASS),
     COUNTY_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(COUNTY_CODE), "Box Elder", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_URBAN_CODE), 1, MIN_URBAN_CODE)
+    UDOT_Region = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(UDOT_Region), 1, UDOT_Region)
   )
 
 # Save a copy for future use

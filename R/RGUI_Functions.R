@@ -14,13 +14,27 @@ library(sf)
 ## Initial Data Prep Functions
 ###
 
-# Read in Function
+# Read in csv Function
 ## Refers to the filepath and columns list for each and every data set that we 
 ## have and ensures that only the selected columns are read in
 read_csv_file <- function(filepath, columns) {
   if (str_detect(filepath, ".csv")) {
     print("reading csv")
     read_csv(filepath) %>% select(all_of(columns))
+  }
+  else {
+    print("Error reading in:")
+    print(filepath)
+  }
+}
+
+# Read in shapefile Function
+## Refers to the filepath and columns list for each and every data set that we 
+## have and ensures that only the selected columns are read in
+read_filez_shp <- function(filepath, columns) {
+  if (str_detect(filepath, ".shp")) {
+    print("reading shapefile")
+    read_sf(filepath) %>% select(all_of(columns))
   }
   else {
     print("Error reading in:")

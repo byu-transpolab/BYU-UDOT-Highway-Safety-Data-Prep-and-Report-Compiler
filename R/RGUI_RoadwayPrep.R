@@ -259,6 +259,16 @@ subset_cols <- list(RC %>%
   select(contains("MEDIAN_TYP_")) %>% 
   colnames())
 
+# Change all NA shoulders to 0
+RC$Right_Shoulder[is.na(RC$Right_Shoulder)] <- 0
+RC$Right_Shoulder_Max[is.na(RC$Right_Shoulder_Max)] <- 0 
+RC$Right_Shoulder_Min[is.na(RC$Right_Shoulder_Min)] <- 0 
+RC$Right_Shoulder_Avg[is.na(RC$Right_Shoulder_Avg)] <- 0 
+RC$Left_Shoulder[is.na(RC$Left_Shoulder)] <- 0
+RC$Left_Shoulder_Max[is.na(RC$Left_Shoulder_Max)] <- 0 
+RC$Left_Shoulder_Min[is.na(RC$Left_Shoulder_Min)] <- 0
+RC$Left_Shoulder_Avg[is.na(RC$Left_Shoulder_Avg)] <- 0 
+
 # Run the fill_all_missing function to interpolate remaining data
 RC <- fill_all_missing(RC, missing, "ROUTE", subsetting_var, subset_cols)
 

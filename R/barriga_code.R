@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(dplyr)
+library(sf)
 
 ###
 ## Set Filepath and Column Names for each Dataset
@@ -75,6 +76,7 @@ intersection.columns <- c("ROUTE",
                           "INT_TYPE",
                           "TRAFFIC_CO",
                           "Group_",
+                          "Leg_Distan",
                           "SR_SR",
                           "INT_RT_1",
                           "INT_RT_2",

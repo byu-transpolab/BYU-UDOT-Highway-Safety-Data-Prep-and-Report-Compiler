@@ -81,7 +81,7 @@ urban_col <- c("ROUTE_ID",
 #                       "BEG_LAT",
 #                       "BEG_ELEV")
 
-intersection_fp <- "data/csv/Intersection_w_ID_MEV_MP.csv"
+intersection_fp <- "data/shapefile/Intersections_MEV_2016_2020.shp"
 intersection_col <- c("ROUTE",
                       "INT_RT_1",
                       "INT_RT_2",
@@ -92,15 +92,37 @@ intersection_col <- c("ROUTE",
                       "INT_RT_2_M",
                       "INT_RT_3_M",
                       "INT_RT_4_M",
-                      "Int_ID",
+                      "TARGET_FID",
+                      "Group_",
                       "INT_TYPE",
                       "TRAFFIC_CO",
+                      "Leg_Distan",
                       "SR_SR",
                       "STATION",
                       "REGION",
                       "BEG_LONG",
                       "BEG_LAT",
-                      "BEG_ELEV")
+                      "BEG_ELEV",
+                      "IntVol2020",
+                      "MEV_2020",
+                      "IntVol2019",
+                      "MEV_2019",
+                      "IntVol2018",
+                      "MEV_2018",
+                      "IntVol2017",
+                      "MEV_2017",
+                      "IntVol2016",
+                      "MEV_2016")
+
+int_mp_fp <- "data/csv/Intersection_w_ID_MEV_MP.csv"
+int_mp_col <- c("ROUTE",
+                "UDOT_BMP",
+                "INT_RT_1_M",
+                "INT_RT_2_M",
+                "INT_RT_3_M",
+                "INT_RT_4_M",
+                "BEG_LONG",
+                "BEG_LAT")
 
 driveway_fp<- "data/csv/Driveway.csv"
 driveway_col<- c("ROUTE",
@@ -433,13 +455,34 @@ urban <- fix_endpoints(urban, routes)
 # Intersections are labeled at a point, not a segment
 
 # Read in intersection File
-intersection <- read_csv_file(intersection_fp, intersection_col)
+intersection <- read_filez_shp(intersection_fp, intersection_col)
+
+# Remove geometry and round down lat-long
+intersection <- st_drop_geometry(intersection)
+intersection <- intersection %>%
+  mutate(BEG_LONG_MATCH = round(BEG_LONG, 3),
+         BEG_LAT_MATCH = round(BEG_LAT, 3))
+
+# Read in intersection milepoints File
+int_mp <- read_csv_file(int_mp_fp, int_mp_col)
 
 # Standardize Column Names
-names(intersection)[c(1,6)] <- c("INT_RT_0", "INT_RT_0_M")
+names(intersection)[c(1,6,11,12)] <- c("INT_RT_0", "INT_RT_0_M", "Int_ID", "INT_DESC")
+names(int_mp)[c(1,2,7,8)] <- c("INT_RT_0","INT_RT_0_M","BEG_LONG_MATCH","BEG_LAT_MATCH")
+
+# Join int_mp to intersection file
+int_mp <- int_mp %>% select(-INT_RT_0,-INT_RT_0_M)
+intersection <- left_join(intersection, int_mp, by=c("BEG_LONG_MATCH","BEG_LAT_MATCH")) %>%
+  select(-BEG_LONG_MATCH,-BEG_LAT_MATCH,-contains(".x")) %>%
+  rename(INT_RT_1_M = INT_RT_1_M.y,
+         INT_RT_2_M = INT_RT_2_M.y,
+         INT_RT_3_M = INT_RT_3_M.y,
+         INT_RT_4_M = INT_RT_4_M.y) %>%
+  select(INT_RT_0:INT_RT_0_M, INT_RT_1_M:INT_RT_4_M, everything())
 
 # Organize Columns
-intersection <- intersection %>% select(Int_ID:BEG_ELEV, everything())
+intersection <- intersection %>% select(Int_ID:BEG_ELEV, everything()) %>%
+  arrange(INT_RT_0,INT_RT_0_M)
 
 # Add M to Primary Route Column to Standardize Route Format
 intersection$INT_RT_0 <- paste(substr(intersection$INT_RT_0, 1, 5), "M", sep = "")

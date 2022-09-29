@@ -551,10 +551,10 @@ FA_ref <- tibble(
 
 # Add Speed Limits for Each Intersection Approach on intersections File
 intersection$INT_RT_0_SL <- NA
-# intersection$INT_RT_1_SL <- NA
-# intersection$INT_RT_2_SL <- NA
-# intersection$INT_RT_3_SL <- NA
-# intersection$INT_RT_4_SL <- NA
+intersection$INT_RT_1_SL <- NA
+intersection$INT_RT_2_SL <- NA
+intersection$INT_RT_3_SL <- NA
+intersection$INT_RT_4_SL <- NA
 for (i in 1:nrow(intersection)){
   int_route0 <- intersection[["INT_RT_0"]][i]
   # int_route1 <- intersection[["INT_RT_1"]][i]
@@ -782,9 +782,9 @@ for(i in 1:nrow(intersection)){
   #     Int_ID[row] <- id
   #   }
   # }
-  rt <- intersection[[paste0("INT_RT_",j)]][i]
-  mp <- intersection[[paste0("INT_RT_",j,"_M")]][i]
-  fa <- intersection[[paste0("INT_RT_",j,"_FA")]][i]
+  rt <- intersection$INT_RT_0[i]
+  mp <- intersection$INT_RT_0_M[i]
+  fa <- intersection$INT_RT_0_FA[i]
   if(!is.na(rt) & tolower(rt) != "local"){   #old condition:  rt %in% substr(state_routes,1,4)
     row <- row + 1
     if(substr(rt,0,4) == substr(intersection$INT_RT_0[i],0,4)){

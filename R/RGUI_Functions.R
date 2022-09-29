@@ -328,7 +328,7 @@ pivot_aadt <- function(aadt){
 pivot_aadt_int <- function(aadt){
   aadt <- aadt %>%
     pivot_longer(
-      cols = contains("AADT") | contains("SUTRK") | contains("CUTRK"),
+      cols = contains("AADT") | contains("SUTRK") | contains("CUTRK") | contains("IntVol") | contains("MEV_"),
       names_to = "count_type",
       values_to = "count"
     ) %>%

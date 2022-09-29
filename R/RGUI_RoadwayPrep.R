@@ -370,9 +370,9 @@ RC <- pivot_aadt(RC)
 IC <- intersection %>% 
   rowwise() %>%
   mutate(
-    MAX_SPEED_LIMIT = max(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
-    MIN_SPEED_LIMIT = min(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
-    AVG_SPEED_LIMIT = mean(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
+    MAX_SPEED_LIMIT = max(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
+    # MIN_SPEED_LIMIT = min(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
+    # AVG_SPEED_LIMIT = mean(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
   ) %>%
   select(Int_ID, everything()) %>%
   select(-contains("_SL"), -contains("_FA"))
@@ -380,9 +380,9 @@ IC <- intersection %>%
 # Remove Infinity Values
 IC <- IC %>%
   mutate(
-    MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT),
-    MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT),
-    AVG_SPEED_LIMIT = ifelse(is.nan(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT)
+    MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT)
+    # MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT),
+    # AVG_SPEED_LIMIT = ifelse(is.nan(AVG_SPEED_LIMIT), NA, AVG_SPEED_LIMIT)
   )
 
 # append "PM" or "NM" to routes
@@ -391,10 +391,14 @@ for(i in 1:nrow(IC)){
   for(j in 1:4){
     rt <- IC[[paste0("INT_RT_",j)]][i]
     if(!is.na(rt) & tolower(rt) != "local"){    # old condition: rt %in% substr(state_routes,1,4)
-      if(rt == substr(IC$INT_RT_0[i],0,4)){
+      if(as.integer(rt) == as.integer(gsub(".*?([0-9]+).*", "\\1", IC$INT_RT_0[i]))){
         IC[[paste0("INT_RT_",j)]][i] <- IC$INT_RT_0[i]
       } else{
-        IC[[paste0("INT_RT_",j)]][i] <- paste0(rt,"PM")   # assuming if direction not specified it is positive
+        # assuming if direction not specified it is positive
+        if(as.integer(rt)<10){IC[[paste0("INT_RT_",j)]][i] <- paste0("000",rt,"PM")}
+        else if(as.integer(rt)<100){IC[[paste0("INT_RT_",j)]][i] <- paste0("00",rt,"PM")}
+        else if(as.integer(rt)<1000){IC[[paste0("INT_RT_",j)]][i] <- paste0("0",rt,"PM")}
+        else{IC[[paste0("INT_RT_",j)]][i] <- paste0(rt,"PM")}
       }
     }
   }
@@ -422,7 +426,7 @@ IC <- add_int_att(IC, urban_full) %>%
 IC <- expand_int_att(IC, "URBAN_CODE")
 
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
-  select(-MAX_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, 
+  select(-MIN_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, 
          -(COUNTY_CODE_0:COUNTY_CODE_4), -(UDOT_Region_0:UDOT_Region_4),
          -MAX_COUNTY_CODE, -AVG_COUNTY_CODE,
          -MAX_UDOT_Region, -AVG_UDOT_Region) %>%
@@ -446,7 +450,7 @@ IC <- expand_int_att(IC, "NUM_LEGS", all_legs = FALSE)
 # Create a list of columns that have missing data to be filled.
 missing <- IC %>% 
   ungroup() %>% 
-  select(MAX_SPEED_LIMIT:AVG_SPEED_LIMIT, 
+  select(MAX_SPEED_LIMIT, 
          MIN_URBAN_CODE, 
          MIN_FUNCTIONAL_CLASS,
          COUNTY_CODE,
@@ -490,10 +494,12 @@ IC_byint <- IC
 # Pivot AADT (add years)
 IC <- pivot_aadt_int(IC) %>% 
   mutate(
-    NUM_ENT_TRUCKS = (SUTRK + CUTRK),
-    MAX_NUM_TRUCKS = (MAX_SUTRK + MAX_CUTRK) * MAX_AADT,
-    MIN_NUM_TRUCKS = (MIN_SUTRK + MIN_CUTRK) * MIN_AADT,
-    AVG_NUM_TRUCKS = (AVG_SUTRK + AVG_CUTRK) * AVG_AADT
+    ENT_TRUCKS = (SUTRK + CUTRK),
+    MAX_ENT_TRUCKS = (MAX_SUTRK + MAX_CUTRK) * MAX_AADT,
+    MIN_ENT_TRUCKS = (MIN_SUTRK + MIN_CUTRK) * MIN_AADT,
+    AVG_ENT_TRUCKS = (AVG_SUTRK + AVG_CUTRK) * AVG_AADT
   ) %>%
-  select(-contains("SUTRK"),-contains("CUTRK")) %>% 
-  rename(DAILY_ENT_VEH = AADT)
+  select(-contains("SUTRK"),-contains("CUTRK"),-contains("AADT"),
+         -MIN_ENT_TRUCKS,-AVG_ENT_TRUCKS) %>% 
+  rename(ENT_VEH = IntVol,
+         MEV = MEV_)

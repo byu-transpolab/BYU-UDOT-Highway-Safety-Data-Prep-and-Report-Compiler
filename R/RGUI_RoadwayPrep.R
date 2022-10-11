@@ -452,12 +452,12 @@ missing <- IC %>%
   ungroup() %>% 
   select(MAX_SPEED_LIMIT, 
          MIN_URBAN_CODE, 
-         MIN_FUNCTIONAL_CLASS,
+         MAX_FUNCTIONAL_CLASS,
          COUNTY_CODE,
          UDOT_Region,
          MAX_THRU_CNT:AVG_THRU_WDTH) %>%
   colnames()
-subsetting_var <- c("MIN_URBAN_CODE", "MIN_FUNCTIONAL_CLASS")
+subsetting_var <- c("MIN_URBAN_CODE", "MAX_FUNCTIONAL_CLASS")
 subset_cols <- list(IC %>% 
     ungroup() %>% 
     select(contains("URBAN_CODE_")) %>% 
@@ -470,22 +470,39 @@ subset_cols <- list(IC %>%
 # Run the fill_all_missing function to interpolate remaining data
 IC <- fill_all_missing(IC, missing, "INT_RT_0", subsetting_var, subset_cols)
 
+# Get rid of remaining unnecessary columns (we can do this more cleanly in the future.)
+IC <- IC %>%
+  select(-(URBAN_CODE_99999:URBAN_CODE_78499),
+         -`FUNCTIONAL_CLASS_Other Principal Arterial`,
+         -(`FUNCTIONAL_CLASS_Minor Arterial`:`FUNCTIONAL_CLASS_Minor Collector`),
+         -MIN_THRU_CNT, -MIN_THRU_WDTH, -AVG_THRU_CNT, -AVG_THRU_WDTH)
+
 # Manually fill in remaining missing data
 IC <- IC %>% 
   mutate(
-    MAX_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
-    MIN_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MIN_SPEED_LIMIT), 65, MIN_SPEED_LIMIT),
-    AVG_SPEED_LIMIT = if_else(Int_ID == "0131P-3.047-0140" & is.na(MIN_SPEED_LIMIT), 65, MIN_SPEED_LIMIT),
+    MAX_SPEED_LIMIT = if_else(Int_ID == 3115 & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
+    MIN_URBAN_CODE = if_else(Int_ID == 3115 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3115 & is.na(MAX_FUNCTIONAL_CLASS), "Other Principal Arterial", MAX_FUNCTIONAL_CLASS),
+    COUNTY_CODE = if_else(Int_ID == 3115 & is.na(COUNTY_CODE), "Millard", COUNTY_CODE),
+    UDOT_Region = if_else(Int_ID == 3115 & is.na(UDOT_Region), 4, UDOT_Region),
+    MAX_THRU_CNT = if_else(Int_ID == 3115 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+    MAX_THRU_WDTH = if_else(Int_ID == 3115 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
     
-    MIN_URBAN_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-    MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0054P-0-1828" & is.na(MIN_FUNCTIONAL_CLASS), "Major Collector", MIN_FUNCTIONAL_CLASS),
-    COUNTY_CODE = if_else(Int_ID == "0054P-0-1828" & is.na(COUNTY_CODE), "Juab", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == "0054P-0-1828" & is.na(UDOT_Region), 3, UDOT_Region),
+    MAX_SPEED_LIMIT = if_else(Int_ID == 3829 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
+    MIN_URBAN_CODE = if_else(Int_ID == 3829 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3829 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
+    COUNTY_CODE = if_else(Int_ID == 3829 & is.na(COUNTY_CODE), "Sevier", COUNTY_CODE),
+    UDOT_Region = if_else(Int_ID == 3829 & is.na(UDOT_Region), 4, UDOT_Region),
+    MAX_THRU_CNT = if_else(Int_ID == 3829 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+    MAX_THRU_WDTH = if_else(Int_ID == 3829 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
     
-    MIN_URBAN_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-    MIN_FUNCTIONAL_CLASS = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(MIN_FUNCTIONAL_CLASS), "Local", MIN_FUNCTIONAL_CLASS),
-    COUNTY_CODE = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(COUNTY_CODE), "Box Elder", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == "0015PR39802P-0-1142" & is.na(UDOT_Region), 1, UDOT_Region)
+    MAX_SPEED_LIMIT = if_else(Int_ID == 5605 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
+    MIN_URBAN_CODE = if_else(Int_ID == 5605 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 5605 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
+    COUNTY_CODE = if_else(Int_ID == 5605 & is.na(COUNTY_CODE), "Utah", COUNTY_CODE),
+    UDOT_Region = if_else(Int_ID == 5605 & is.na(UDOT_Region), 3, UDOT_Region),
+    MAX_THRU_CNT = if_else(Int_ID == 5605 & is.na(MAX_THRU_CNT), 4, MAX_THRU_CNT),
+    MAX_THRU_WDTH = if_else(Int_ID == 5605 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
   )
 
 # Save a copy for future use

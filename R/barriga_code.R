@@ -68,7 +68,7 @@ urban.columns <- c("ROUTE_ID",
                    "TO_MEASURE",
                    "URBAN_CODE")
 
-intersection.filepath <- "data/shapefile/Intersections_MEV_2016_2020.shp"
+intersection.filepath <- "data/csv/Intersections_CleanedRouteNames.csv"
 intersection.columns <- c("ROUTE",
                           "INT_RT_1",
                           "INT_RT_2",
@@ -79,7 +79,7 @@ intersection.columns <- c("ROUTE",
                           "INT_RT_2_M",
                           "INT_RT_3_M",
                           "INT_RT_4_M",
-                          "TARGET_FID",
+                          "OBJECTID_1",
                           "Group_",
                           "INT_TYPE",
                           "TRAFFIC_CO",
@@ -828,7 +828,7 @@ urban <- fix_endpoints(urban, routes)
 ###
 
 # Read in intersection file
-intersection <- read_filez_shp(intersection.filepath, intersection.columns)
+intersection <- read_filez_csv(intersection.filepath, intersection.columns)
 
 # Standardize Column Names
 names(intersection)[c(1:3)] <- c("ROUTE", "BEG_MP", "END_MP")

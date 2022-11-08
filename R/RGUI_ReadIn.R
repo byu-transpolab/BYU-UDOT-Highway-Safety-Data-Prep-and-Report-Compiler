@@ -35,7 +35,7 @@ aadt_col <- c("ROUTE_NAME",
               "SUTRK2016",
               "CUTRK2016")
 
-fc_fp <- "data/csv/Functional_Class_ALRS_FIXED.csv"
+fc_fp <- "data/csv/Functional_Class_ALRS.csv"
 fc_col <- c("ROUTE_ID",                          
             "FROM_MEASURE",                             
             "TO_MEASURE",
@@ -290,6 +290,15 @@ fc_full <- fc
 
 # Select Only Main Routes
 fc <- fc %>% filter(grepl("M", ROUTE))
+
+# Excluded Routes List (Given by UDOT/Clancy Black 11/2/22)
+excludedroutes <- c("0285PM","0286PM","0287PM","0291PM","0293PM","0294PM",
+                    "0296PM","0298PM","0299PM","0303PM","0304PM","0306PM",
+                    "0309PM","0310PM","0312PM","0314PM","0315PM","0317PM",
+                    "0319PM","0320PM")
+
+# Exclude the Routes from Model
+fc <- subset(fc, !(ROUTE %in% excludedroutes))
 
 # Create fed routes List
 fed <- fc %>% filter(grepl("Fed Aid", RouteType))

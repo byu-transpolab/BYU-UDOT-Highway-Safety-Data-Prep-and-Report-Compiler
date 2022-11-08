@@ -91,7 +91,7 @@ for (i in 1:nrow(RC)){
   drive_row <- which(driveway$ROUTE == RCroute & 
                        driveway$MP > RCbeg & 
                        driveway$MP < RCend)
-  RC[["Driveway_Freq"]][i] <- length(drive_row)
+  RC[["Driveway_Freq"]][i] <- length(drive_row)/(abs(RCend-RCbeg))
 }
 
 # Add Medians

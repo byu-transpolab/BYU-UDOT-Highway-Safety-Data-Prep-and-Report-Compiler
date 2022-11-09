@@ -44,13 +44,13 @@ fc_col <- c("ROUTE_ID",
             "RouteType",
             "COUNTY_CODE")
 
-speed_fp <- "data/csv/2021_Statewide_Speed_Limits_FIXED.csv"
+speed_fp <- "data/csv/2021_Statewide_Speed_Limits.csv"
 speed_col <- c("Route",
                "Beg_MP",
                "End_MP",
                "Speed Limit")
 
-lane_fp <- "data/csv/Lanes_FIXED.csv"
+lane_fp <- "data/csv/Lanes.csv"
 lane_col <- c("ROUTE",
               "START_ACCUM",
               "END_ACCUM",

@@ -355,6 +355,9 @@ RC <- RC %>%
     Left_Shoulder = if_else(ROUTE == "0317PM" & is.na(Left_Shoulder), 0, Left_Shoulder)
   )
 
+# Add Interstate Column
+RC <- RC %>% mutate(INTERSTATE = case_when(FUNCTIONAL_CLASS=="Interstate"~"1",FUNCTIONAL_CLASS!="Interstate"~"0"))
+
 # Save a copy for future use
 RC_byseg <- RC
 

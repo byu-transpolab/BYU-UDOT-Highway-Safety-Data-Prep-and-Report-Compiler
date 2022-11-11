@@ -272,35 +272,39 @@ RC$Left_Shoulder_Avg[is.na(RC$Left_Shoulder_Avg)] <- 0
 # Run the fill_all_missing function to interpolate remaining data
 RC <- fill_all_missing(RC, missing, "ROUTE", subsetting_var, subset_cols)
 
+# Replace "no sign" with NA on speed limits
+RC <- RC %>%
+  mutate(SPEED_LIMIT = ifelse(SPEED_LIMIT == "No Sign", NA, SPEED_LIMIT))
+
 # Manually fill in remaining missing data if they haven't been filled already
 RC <- RC %>% 
   mutate(
     COUNTY_CODE = if_else(ROUTE == "0231PM" & is.na(COUNTY_CODE), "Sanpete", COUNTY_CODE),
     UDOT_Region = if_else(ROUTE == "0231PM" & is.na(UDOT_Region), 4, UDOT_Region),
     FUNCTIONAL_CLASS = if_else(ROUTE == "0231PM" & is.na(FUNCTIONAL_CLASS), "Major Collector", FUNCTIONAL_CLASS),
-    SPEED_LIMIT = if_else(ROUTE == "0231PM" & is.na(SPEED_LIMIT), 30, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0231PM" & is.na(SPEED_LIMIT), 30, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0231PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0231PM" & is.na(THRU_WDTH), 14, THRU_WDTH),
     URBAN_CODE = if_else(ROUTE == "0231PM" & is.na(URBAN_CODE), 99999, URBAN_CODE),
                     
-    SPEED_LIMIT = if_else(ROUTE == "0136PM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0136PM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
     
-    SPEED_LIMIT = if_else(ROUTE == "0140PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0140PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
     
-    SPEED_LIMIT = if_else(ROUTE == "0168PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0168PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT),
     
-    SPEED_LIMIT = if_else(ROUTE == "0191NM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0191NM" & is.na(SPEED_LIMIT), 65, SPEED_LIMIT),
     
-    SPEED_LIMIT = if_else(ROUTE == "0290PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT), # hard to tell. Just the road around Snow College
+    SPEED_LIMIT = ifelse(ROUTE == "0290PM" & is.na(SPEED_LIMIT), 35, SPEED_LIMIT), # hard to tell. Just the road around Snow College
     
-    SPEED_LIMIT = if_else(ROUTE == "0291PM" & is.na(SPEED_LIMIT), 3, SPEED_LIMIT), # school for the deaf. Therefore very low speed limit
+    SPEED_LIMIT = ifelse(ROUTE == "0291PM" & is.na(SPEED_LIMIT), 3, SPEED_LIMIT), # school for the deaf. Therefore very low speed limit
     THRU_CNT = if_else(ROUTE == "0291PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0291PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
     Median_Type = if_else(ROUTE == "0291PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
     Right_Shoulder = if_else(ROUTE == "0291PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0291PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0303PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0303PM" & is.na(SPEED_LIMIT), 45, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0303PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0303PM" & is.na(THRU_WDTH), 14, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0303PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
@@ -309,7 +313,7 @@ RC <- RC %>%
     Right_Shoulder = if_else(ROUTE == "0303PM" & is.na(Right_Shoulder), 6, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0303PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0304PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0304PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0304PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0304PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0304PM" & is.na(Driveway_Freq), 28, Driveway_Freq),
@@ -318,7 +322,7 @@ RC <- RC %>%
     Right_Shoulder = if_else(ROUTE == "0304PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0304PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0306PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0306PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0306PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0306PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0306PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
@@ -327,7 +331,7 @@ RC <- RC %>%
     Right_Shoulder = if_else(ROUTE == "0306PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0306PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0309PM" & is.na(SPEED_LIMIT), 25, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0309PM" & is.na(SPEED_LIMIT), 25, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0309PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0309PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0309PM" & is.na(Driveway_Freq), 3, Driveway_Freq),
@@ -336,7 +340,7 @@ RC <- RC %>%
     Right_Shoulder = if_else(ROUTE == "0309PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0309PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0310PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0310PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0310PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0310PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0310PM" & is.na(Driveway_Freq), 2, Driveway_Freq),
@@ -345,14 +349,19 @@ RC <- RC %>%
     Right_Shoulder = if_else(ROUTE == "0310PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0310PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
-    SPEED_LIMIT = if_else(ROUTE == "0317PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
+    SPEED_LIMIT = ifelse(ROUTE == "0317PM" & is.na(SPEED_LIMIT), 15, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0317PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0317PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0317PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
     Median_Type = if_else(ROUTE == "0317PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
     `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0317PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
     Right_Shoulder = if_else(ROUTE == "0317PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
-    Left_Shoulder = if_else(ROUTE == "0317PM" & is.na(Left_Shoulder), 0, Left_Shoulder)
+    Left_Shoulder = if_else(ROUTE == "0317PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
+
+    Median_Type = if_else(ROUTE == "0319PM" & is.na(Median_Type), "TWO WAY LEFT TURN LANE", Median_Type),
+    `MEDIAN_TYP_TWO WAY LEFT TURN LANE` = if_else(ROUTE == "0319PM" & is.na(`MEDIAN_TYP_TWO WAY LEFT TURN LANE`), 1, `MEDIAN_TYP_TWO WAY LEFT TURN LANE`),
+    Right_Shoulder = if_else(ROUTE == "0319PM" & is.na(Right_Shoulder), 12, Right_Shoulder),
+    Left_Shoulder = if_else(ROUTE == "0319PM" & is.na(Left_Shoulder), 12, Left_Shoulder)
   )
 
 # Add Interstate Column
@@ -363,7 +372,6 @@ RC_byseg <- RC
 
 # Pivot AADT (add years)
 RC <- pivot_aadt(RC)
-
 
 ###
 ## Create Intersection Roadway data shell

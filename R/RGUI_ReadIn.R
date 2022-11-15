@@ -63,25 +63,7 @@ urban_col <- c("ROUTE_ID",
                "TO_MEASURE",
                "URBAN_CODE")
 
-# intersection_fp <- "data/csv/Intersections.csv"
-# intersection_col <- c("ROUTE",
-#                       "START_ACCUM",
-#                       "END_ACCUM",
-#                       "ID",
-#                       "INT_TYPE",
-#                       "TRAFFIC_CO",
-#                       "SR_SR",
-#                       "INT_RT_1",
-#                       "INT_RT_2",
-#                       "INT_RT_3",
-#                       "INT_RT_4",
-#                       "STATION",
-#                       "REGION",
-#                       "BEG_LONG",
-#                       "BEG_LAT",
-#                       "BEG_ELEV")
-
-intersection_fp <- "data/shapefile/Intersections_MEV_2016_2020.shp"
+intersection_fp <- "data/csv/Intersections_CleanedRouteNames.csv"
 intersection_col <- c("ROUTE",
                       "INT_RT_1",
                       "INT_RT_2",
@@ -92,7 +74,7 @@ intersection_col <- c("ROUTE",
                       "INT_RT_2_M",
                       "INT_RT_3_M",
                       "INT_RT_4_M",
-                      "TARGET_FID",
+                      "OBJECTID_1",
                       "Group_",
                       "INT_TYPE",
                       "TRAFFIC_CO",
@@ -113,6 +95,39 @@ intersection_col <- c("ROUTE",
                       "MEV_2018",
                       "MEV_2017",
                       "MEV_2016")
+
+# intersection_fp <- "data/shapefile/Intersections_MEV_2016_2020.shp"
+# intersection_col <- c("ROUTE",
+#                       "INT_RT_1",
+#                       "INT_RT_2",
+#                       "INT_RT_3",
+#                       "INT_RT_4",
+#                       "UDOT_BMP",
+#                       "INT_RT_1_M",
+#                       "INT_RT_2_M",
+#                       "INT_RT_3_M",
+#                       "INT_RT_4_M",
+#                       "TARGET_FID",
+#                       "Group_",
+#                       "INT_TYPE",
+#                       "TRAFFIC_CO",
+#                       "Leg_Distan",
+#                       "SR_SR",
+#                       "STATION",
+#                       "REGION",
+#                       "BEG_LONG",
+#                       "BEG_LAT",
+#                       "BEG_ELEV",
+#                       "IntVol2020",
+#                       "IntVol2019",
+#                       "IntVol2018",
+#                       "IntVol2017",
+#                       "IntVol2016",
+#                       "MEV_2020",
+#                       "MEV_2019",
+#                       "MEV_2018",
+#                       "MEV_2017",
+#                       "MEV_2016")
 
 int_mp_fp <- "data/csv/Intersection_w_ID_MEV_MP.csv"
 int_mp_col <- c("ROUTE",
@@ -464,10 +479,10 @@ urban <- fix_endpoints(urban, routes)
 # Intersections are labeled at a point, not a segment
 
 # Read in intersection File
-intersection <- read_filez_shp(intersection_fp, intersection_col)
+intersection <- read_csv_file(intersection_fp, intersection_col)
 
 # Remove geometry
-intersection <- st_drop_geometry(intersection)
+# intersection <- st_drop_geometry(intersection)
 # intersection <- intersection %>%
 #   mutate(BEG_LONG_MATCH = round(BEG_LONG, 3),
 #          BEG_LAT_MATCH = round(BEG_LAT, 3))
@@ -496,14 +511,14 @@ intersection <- intersection %>% select(Int_ID:BEG_ELEV, everything()) %>%
 # Add M to Primary Route Column to Standardize Route Format
 intersection$INT_RT_0 <- paste(substr(intersection$INT_RT_0, 1, 5), "M", sep = "")
 
-# Get Only State Routes  
-intersection <- intersection %>% 
+# Get Only State Routes
+intersection <- intersection %>%
   filter(
-    as.integer(INT_RT_0) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
-    as.integer(INT_RT_1) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
-    as.integer(INT_RT_2) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
-    as.integer(INT_RT_3) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
-    as.integer(INT_RT_4) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) 
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_0)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_1)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_2)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_3)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_4)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes))
   )
 
 # Find Number of Unique primary Routes in intersections File
@@ -514,11 +529,11 @@ intersection <- intersection %>%
   filter(
     SR_SR == "YES" | 
     TRAFFIC_CO == "SIGNAL" | 
-    as.integer(INT_RT_0) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(INT_RT_1) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(INT_RT_2) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(INT_RT_3) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(INT_RT_4) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes))
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_0)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_1)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_2)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_3)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_4)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes))
   )
 
 # Ensure Intersection IDs are Unique
@@ -536,7 +551,7 @@ for(i in 2:nrow(intersection)){
 # Sort intersections
 intersection <- intersection %>% arrange(INT_RT_0, INT_RT_0_M)
 
-# Create Functional Area Reference Table
+# Create Functional Area Reference Table **FOR USE IF SPEED IS USED TO DETERMINE FUNCTIONAL CLASS**
 # FA_ref <- tibble(
 #   speed = c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80), 
 #   d1 = c(75,75,75,75,90,110,130,145,165,185,200,220,240,255,275,275), 
@@ -546,6 +561,7 @@ intersection <- intersection %>% arrange(INT_RT_0, INT_RT_0_M)
 #     d3 = 50,
 #     total = d1 + d2 + d3
 #   )
+
 FA_ref <- tibble(
   INT_TYPE = c(NA,NA,NA,NA,NA,NA,NA,NA,NA,"ROUNDABOUT","CFI OFFSET LEFT TURN",
                "THRU TURN CENTRAL","THRU TURN OFFSET U-TURN","SPUI","DDI",
@@ -566,142 +582,142 @@ intersection$INT_RT_3_SL <- NA
 intersection$INT_RT_4_SL <- NA
 for (i in 1:nrow(intersection)){
   int_route0 <- intersection[["INT_RT_0"]][i]
-  # int_route1 <- intersection[["INT_RT_1"]][i]
-  # int_route2 <- intersection[["INT_RT_2"]][i]
-  # int_route3 <- intersection[["INT_RT_3"]][i]
-  # int_route4 <- intersection[["INT_RT_4"]][i]
+  int_route1 <- intersection[["INT_RT_1"]][i]
+  int_route2 <- intersection[["INT_RT_2"]][i]
+  int_route3 <- intersection[["INT_RT_3"]][i]
+  int_route4 <- intersection[["INT_RT_4"]][i]
   int_mp_0 <- intersection[["INT_RT_0_M"]][i]
-  # int_mp_1 <- intersection[["INT_RT_1_M"]][i]
-  # int_mp_2 <- intersection[["INT_RT_2_M"]][i]
-  # int_mp_3 <- intersection[["INT_RT_3_M"]][i]
-  # int_mp_4 <- intersection[["INT_RT_4_M"]][i]
+  int_mp_1 <- intersection[["INT_RT_1_M"]][i]
+  int_mp_2 <- intersection[["INT_RT_2_M"]][i]
+  int_mp_3 <- intersection[["INT_RT_3_M"]][i]
+  int_mp_4 <- intersection[["INT_RT_4_M"]][i]
   speed_row0 <- NA
-  # speed_row1 <- NA
-  # speed_row2 <- NA
-  # speed_row3 <- NA
-  # speed_row4 <- NA
+  speed_row1 <- NA
+  speed_row2 <- NA
+  speed_row3 <- NA
+  speed_row4 <- NA
   # Get Route Direction
   suffix = substr(intersection$INT_RT_0[i],5,6)
   # Find Rows in speed File
   if(!is.na(int_route0) & tolower(int_route0) != "local"){
-    speed_row0 <- which(speed_full$ROUTE == int_route0 & 
-                          speed_full$BEG_MP <= int_mp_0 & 
+    speed_row0 <- which(speed_full$ROUTE == int_route0 &
+                          speed_full$BEG_MP <= int_mp_0 &
                           speed_full$END_MP >= int_mp_0)
     if(length(speed_row0) == 0 ){
       speed_row0 <- NA
     }
-    # print(paste(speed_row1, "at", int_route1, int_mp_1))
+    print(paste(speed_row1, "at", int_route1, int_mp_1))
   }
-  # if(!is.na(int_route1) & tolower(int_route1) != "local"){
-  #   # Determine the Direction
-  #   # Assume Same as Primary Route if Same Route Number and "PM" Otherwise
-  #   if(int_route1 == substr(int_route0,1,4)){
-  #     int_route1 <- paste0(int_route1, suffix)
-  #   } else{int_route1 <- paste0(int_route1, "PM")}
-  #   speed_row1 <- which(speed_full$ROUTE == int_route1 & 
-  #                         speed_full$BEG_MP <= int_mp_1 & 
-  #                         speed_full$END_MP >= int_mp_1)
-  #   if(length(speed_row1) == 0 ){
-  #     speed_row1 <- NA
-  #   }
-  # }
-  # if(!is.na(int_route2) & tolower(int_route2) != "local"){
-  #   if(int_route2 == substr(int_route0,1,4)){
-  #     int_route2 <- paste0(int_route2, suffix)
-  #   } else{int_route2 <- paste0(int_route2, "PM")}
-  #   speed_row2 <- which(speed_full$ROUTE == int_route2 & 
-  #                         speed_full$BEG_MP <= int_mp_2 & 
-  #                         speed_full$END_MP >= int_mp_2)
-  #   if(length(speed_row2) == 0 ){
-  #     speed_row2 <- NA
-  #   }
-  # }
-  # if(!is.na(int_route3) & tolower(int_route3) != "local"){
-  #   if(int_route3 == substr(int_route0,1,4)){
-  #     int_route3 <- paste0(int_route3, suffix)
-  #   } else{int_route3 <- paste0(int_route3, "PM")}
-  #   speed_row3 <- which(speed_full$ROUTE == int_route3 & 
-  #                         speed_full$BEG_MP <= int_mp_3 & 
-  #                         speed_full$END_MP >= int_mp_3)
-  #   if(length(speed_row3) == 0 ){
-  #     speed_row3 <- NA
-  #   }
-  # }
-  # if(!is.na(int_route4) & tolower(int_route4) != "local"){
-  #   if(int_route4 == substr(int_route0,1,4)){
-  #     int_route4 <- paste0(int_route4, suffix)
-  #   } else{int_route4 <- paste0(int_route4, "PM")}
-  #   speed_row4 <- which(speed_full$ROUTE == int_route4 & 
-  #                         speed_full$BEG_MP <= int_mp_4 & 
-  #                         speed_full$END_MP >= int_mp_4)
-  #   if(length(speed_row4) == 0 ){
-  #     speed_row4 <- NA
-  #   }
-  # }
+  if(!is.na(int_route1) & tolower(int_route1) != "local"){
+    # Determine the Direction
+    # Assume Same as Primary Route if Same Route Number and "PM" Otherwise
+    if(int_route1 == substr(int_route0,1,4)){
+      int_route1 <- paste0(int_route1, suffix)
+    } else{int_route1 <- paste0(int_route1, "PM")}
+    speed_row1 <- which(speed_full$ROUTE == int_route1 &
+                          speed_full$BEG_MP <= int_mp_1 &
+                          speed_full$END_MP >= int_mp_1)
+    if(length(speed_row1) == 0 ){
+      speed_row1 <- NA
+    }
+  }
+  if(!is.na(int_route2) & tolower(int_route2) != "local"){
+    if(int_route2 == substr(int_route0,1,4)){
+      int_route2 <- paste0(int_route2, suffix)
+    } else{int_route2 <- paste0(int_route2, "PM")}
+    speed_row2 <- which(speed_full$ROUTE == int_route2 &
+                          speed_full$BEG_MP <= int_mp_2 &
+                          speed_full$END_MP >= int_mp_2)
+    if(length(speed_row2) == 0 ){
+      speed_row2 <- NA
+    }
+  }
+  if(!is.na(int_route3) & tolower(int_route3) != "local"){
+    if(int_route3 == substr(int_route0,1,4)){
+      int_route3 <- paste0(int_route3, suffix)
+    } else{int_route3 <- paste0(int_route3, "PM")}
+    speed_row3 <- which(speed_full$ROUTE == int_route3 &
+                          speed_full$BEG_MP <= int_mp_3 &
+                          speed_full$END_MP >= int_mp_3)
+    if(length(speed_row3) == 0 ){
+      speed_row3 <- NA
+    }
+  }
+  if(!is.na(int_route4) & tolower(int_route4) != "local"){
+    if(int_route4 == substr(int_route0,1,4)){
+      int_route4 <- paste0(int_route4, suffix)
+    } else{int_route4 <- paste0(int_route4, "PM")}
+    speed_row4 <- which(speed_full$ROUTE == int_route4 &
+                          speed_full$BEG_MP <= int_mp_4 &
+                          speed_full$END_MP >= int_mp_4)
+    if(length(speed_row4) == 0 ){
+      speed_row4 <- NA
+    }
+  }
   # fill values
   intersection[["INT_RT_0_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row0]
-  # intersection[["INT_RT_1_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row1]
-  # intersection[["INT_RT_2_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row2]
-  # intersection[["INT_RT_3_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row3]
-  # intersection[["INT_RT_4_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row4]
+  intersection[["INT_RT_1_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row1]
+  intersection[["INT_RT_2_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row2]
+  intersection[["INT_RT_3_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row3]
+  intersection[["INT_RT_4_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row4]
 }
 
 # Add Functional Area for Each Approach
-intersection$INT_RT_0_FA <- NA
-intersection$INT_RT_1_FA <- NA
-intersection$INT_RT_2_FA <- NA
-intersection$INT_RT_3_FA <- NA
-intersection$INT_RT_4_FA <- NA
-# stopbar <- 60
-for(i in 1:nrow(intersection)){
-  # Assign values to variables
-  route0 <- intersection[["INT_RT_0"]][i]
-  route1 <- intersection[["INT_RT_1"]][i]
-  route2 <- intersection[["INT_RT_2"]][i]
-  route3 <- intersection[["INT_RT_3"]][i]
-  route4 <- intersection[["INT_RT_4"]][i]
-  type <- intersection$INT_TYPE[i]
-  traffic_co <- intersection$TRAFFIC_CO[i]
-  # # Determine functional area distance from FA_ref table
-  # fa_row <- which(FA_ref$INT_TYPE == type)
-  # if(length(fa_row) == 0){
-  #   fa_row <- which(FA_ref$TRAFFIC_CO == traffic_co)
-  # }
-  # dist <- as.numeric(unlist(FA_ref$d[fa_row]))
-  # Determine functional area distance from Leg_Distan column
-  dist <- as.numeric(intersection$Leg_Distan[i])
-  # Assign functional area distance to each applicable leg
-  if(!is.na(route0)){
-    intersection$INT_RT_0_FA[i] <- dist[1]
-  }
-  if(!is.na(route1)){
-    if(length(dist) > 1 & route1 != substrMinusRight(route0,2)){
-      intersection$INT_RT_1_FA[i] <- dist[2]
-    } else{
-      intersection$INT_RT_1_FA[i] <- dist[1]
-    }
-  }
-  if(!is.na(route2)){
-    if(length(dist) > 1 & route2 != substrMinusRight(route0,2)){
-      intersection$INT_RT_2_FA[i] <- dist[2]
-    } else{
-      intersection$INT_RT_2_FA[i] <- dist[1]
-    }
-  }
-  if(!is.na(route3)){
-    if(length(dist) > 1 & route3 != substrMinusRight(route0,2)){
-      intersection$INT_RT_3_FA[i] <- dist[2]
-    } else{
-      intersection$INT_RT_3_FA[i] <- dist[1]
-    }
-  }
-  if(!is.na(route4)){
-    if(length(dist) > 1 & route4 != substrMinusRight(route0,2)){
-      intersection$INT_RT_4_FA[i] <- dist[2]
-    } else{
-      intersection$INT_RT_4_FA[i] <- dist[1]
-    }
-  }
+# intersection$INT_RT_0_FA <- NA
+# intersection$INT_RT_1_FA <- NA
+# intersection$INT_RT_2_FA <- NA
+# intersection$INT_RT_3_FA <- NA
+# intersection$INT_RT_4_FA <- NA
+# # stopbar <- 60
+# for(i in 1:nrow(intersection)){
+#   # Assign values to variables
+#   route0 <- intersection[["INT_RT_0"]][i]
+#   route1 <- intersection[["INT_RT_1"]][i]
+#   route2 <- intersection[["INT_RT_2"]][i]
+#   route3 <- intersection[["INT_RT_3"]][i]
+#   route4 <- intersection[["INT_RT_4"]][i]
+#   type <- intersection$INT_TYPE[i]
+#   traffic_co <- intersection$TRAFFIC_CO[i]
+#   # # Determine functional area distance from FA_ref table
+#   # fa_row <- which(FA_ref$INT_TYPE == type)
+#   # if(length(fa_row) == 0){
+#   #   fa_row <- which(FA_ref$TRAFFIC_CO == traffic_co)
+#   # }
+#   # dist <- as.numeric(unlist(FA_ref$d[fa_row]))
+#   # Determine functional area distance from Leg_Distan column
+#   dist <- as.numeric(intersection$Leg_Distan[i])
+#   # Assign functional area distance to each applicable leg
+#   if(!is.na(route0)){
+#     intersection$INT_RT_0_FA[i] <- dist[1]
+#   }
+#   if(!is.na(route1)){
+#     if(length(dist) > 1 & route1 != substrMinusRight(route0,2)){
+#       intersection$INT_RT_1_FA[i] <- dist[2]
+#     } else{
+#       intersection$INT_RT_1_FA[i] <- dist[1]
+#     }
+#   }
+#   if(!is.na(route2)){
+#     if(length(dist) > 1 & route2 != substrMinusRight(route0,2)){
+#       intersection$INT_RT_2_FA[i] <- dist[2]
+#     } else{
+#       intersection$INT_RT_2_FA[i] <- dist[1]
+#     }
+#   }
+#   if(!is.na(route3)){
+#     if(length(dist) > 1 & route3 != substrMinusRight(route0,2)){
+#       intersection$INT_RT_3_FA[i] <- dist[2]
+#     } else{
+#       intersection$INT_RT_3_FA[i] <- dist[1]
+#     }
+#   }
+#   if(!is.na(route4)){
+#     if(length(dist) > 1 & route4 != substrMinusRight(route0,2)){
+#       intersection$INT_RT_4_FA[i] <- dist[2]
+#     } else{
+#       intersection$INT_RT_4_FA[i] <- dist[1]
+#     }
+#   }
   
   # route0 <- intersection[["INT_RT_0"]][i]
   # route1 <- intersection[["INT_RT_1"]][i]
@@ -763,7 +779,7 @@ for(i in 1:nrow(intersection)){
   #   }
   #   intersection[["INT_RT_4_FA"]][i] <- dist4 + stopbar
   # }
-}
+# }
 
 # Create FA File which has FA for Each Route
 ROUTE <- NA

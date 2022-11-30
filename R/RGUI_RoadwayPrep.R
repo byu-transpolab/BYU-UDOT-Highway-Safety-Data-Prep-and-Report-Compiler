@@ -382,9 +382,14 @@ RC <- pivot_aadt(RC)
 IC <- intersection %>% 
   rowwise() %>%
   mutate(
-    MAX_SPEED_LIMIT = max(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
-    # MIN_SPEED_LIMIT = min(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
-    # AVG_SPEED_LIMIT = mean(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
+    INT_RT_0_SL = as.integer(INT_RT_0_SL),
+    INT_RT_1_SL = as.integer(INT_RT_1_SL),
+    INT_RT_2_SL = as.integer(INT_RT_2_SL),
+    INT_RT_3_SL = as.integer(INT_RT_3_SL),
+    INT_RT_4_SL = as.integer(INT_RT_4_SL),
+    MAX_SPEED_LIMIT = max(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
+    MIN_SPEED_LIMIT = min(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE),
+    AVG_SPEED_LIMIT = mean(c_across(INT_RT_0_SL:INT_RT_4_SL), na.rm = TRUE)
   ) %>%
   select(Int_ID, everything()) %>%
   select(-contains("_SL"), -contains("_FA"))
@@ -392,9 +397,9 @@ IC <- intersection %>%
 # Remove Infinity Values
 IC <- IC %>%
   mutate(
-    MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT)
-    # MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT),
-    # AVG_SPEED_LIMIT = ifelse(is.nan(AVG_SPEED_LIMIT), NA, AVG_SPEED_LIMIT)
+    MAX_SPEED_LIMIT = ifelse(is.infinite(MAX_SPEED_LIMIT), NA, MAX_SPEED_LIMIT),
+    MIN_SPEED_LIMIT = ifelse(is.infinite(MIN_SPEED_LIMIT), NA, MIN_SPEED_LIMIT),
+    AVG_SPEED_LIMIT = ifelse(is.nan(AVG_SPEED_LIMIT), NA, AVG_SPEED_LIMIT)
   )
 
 # append "PM" or "NM" to routes
@@ -402,7 +407,7 @@ for(i in 1:nrow(IC)){
   id <- IC[["Int_ID"]][i]
   for(j in 1:4){
     rt <- IC[[paste0("INT_RT_",j)]][i]
-    if(!is.na(rt) & tolower(rt) != "local"){    # old condition: rt %in% substr(state_routes,1,4)
+    if(!is.na(rt) & is.numeric(rt)){
       if(as.integer(rt) == as.integer(gsub(".*?([0-9]+).*", "\\1", IC$INT_RT_0[i]))){
         IC[[paste0("INT_RT_",j)]][i] <- IC$INT_RT_0[i]
       } else{
@@ -433,15 +438,18 @@ IC <- st_drop_geometry(IC)
 # Add roadway data (disclaimer. Make sure column names don't have a "." in them)
 # Note: There will be some warnings, but these are resolved within the function so don't mind them.
 IC <- add_int_att(IC, urban_full) %>% 
-  select(-MAX_URBAN_CODE, -AVG_URBAN_CODE)
+  select(-MAX_URBAN_CODE, -AVG_URBAN_CODE) 
 
 IC <- expand_int_att(IC, "URBAN_CODE")
 
+IC <- IC %>% rename(URBAN_CODE = MIN_URBAN_CODE)
+
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
-  select(-MIN_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, 
+  select(-MIN_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, -MAX_FUNCTIONAL_CLASS,
          -(COUNTY_CODE_0:COUNTY_CODE_4), -(UDOT_Region_0:UDOT_Region_4),
          -MAX_COUNTY_CODE, -AVG_COUNTY_CODE,
          -MAX_UDOT_Region, -AVG_UDOT_Region) %>%
+  mutate(PRINCIPAL_FUNCTIONAL_CLASS = FUNCTIONAL_CLASS_0) %>%
   rename(COUNTY_CODE = MIN_COUNTY_CODE,
          UDOT_Region = MIN_UDOT_Region)
 
@@ -453,7 +461,27 @@ IC <- add_int_att(IC, aadt_full, is_aadt = TRUE) %>%
                                         # In this case, a number followed by an underscore, then another number
 
 IC <- add_int_att(IC, lane_full) %>%
-  select(-(THRU_CNT_0:THRU_CNT_4),-(THRU_WDTH_0:THRU_WDTH_4))
+  select(-(THRU_WDTH_0:THRU_WDTH_4))
+
+# Add Total Thru Lane Column
+IC <- IC %>%
+  rowwise() %>%
+  mutate(
+    KNOWN_LEGS = 5L - sum(is.na(c(THRU_CNT_0,
+                                  THRU_CNT_1,
+                                  THRU_CNT_2,
+                                  THRU_CNT_3,
+                                  THRU_CNT_4))),
+    TOTAL_THRU_CNT = sum(c_across(THRU_CNT_0:THRU_CNT_4), na.rm = TRUE),
+    TOTAL_THRU_CNT = case_when(
+      NUM_LEGS - KNOWN_LEGS == 0 ~ TOTAL_THRU_CNT,
+      NUM_LEGS - KNOWN_LEGS == 1 ~ TOTAL_THRU_CNT + 1,
+      NUM_LEGS - KNOWN_LEGS == 2 ~ TOTAL_THRU_CNT + 2,
+      NUM_LEGS - KNOWN_LEGS == 3 ~ TOTAL_THRU_CNT + 3,
+      NUM_LEGS - KNOWN_LEGS == 4 ~ TOTAL_THRU_CNT + 4,
+      NUM_LEGS - KNOWN_LEGS == 5 ~ TOTAL_THRU_CNT + 5,)
+    ) %>%
+  select(-(THRU_CNT_0:THRU_CNT_4))
 
 # pivot by num legs for statistical purposes (setting all_legs to false allows
 # us to do this even though there is only one column for NUM_LEGS)
@@ -462,14 +490,16 @@ IC <- expand_int_att(IC, "NUM_LEGS", all_legs = FALSE)
 # Create a list of columns that have missing data to be filled.
 missing <- IC %>% 
   ungroup() %>% 
-  select(MAX_SPEED_LIMIT, 
-         MIN_URBAN_CODE, 
-         MAX_FUNCTIONAL_CLASS,
+  select(MAX_SPEED_LIMIT,
+         MIN_SPEED_LIMIT,
+         AVG_SPEED_LIMIT,
+         URBAN_CODE, 
+         PRINCIPAL_FUNCTIONAL_CLASS,
          COUNTY_CODE,
          UDOT_Region,
          MAX_THRU_CNT:AVG_THRU_WDTH) %>%
   colnames()
-subsetting_var <- c("MIN_URBAN_CODE", "MAX_FUNCTIONAL_CLASS")
+subsetting_var <- c("URBAN_CODE", "PRINCIPAL_FUNCTIONAL_CLASS")
 subset_cols <- list(IC %>% 
     ungroup() %>% 
     select(contains("URBAN_CODE_")) %>% 
@@ -484,38 +514,39 @@ IC <- fill_all_missing(IC, missing, "INT_RT_0", subsetting_var, subset_cols)
 
 # Get rid of remaining unnecessary columns (we can do this more cleanly in the future.)
 IC <- IC %>%
-  select(-(URBAN_CODE_99999:URBAN_CODE_78499),
-         -`FUNCTIONAL_CLASS_Other Principal Arterial`,
-         -(`FUNCTIONAL_CLASS_Minor Arterial`:`FUNCTIONAL_CLASS_Minor Collector`),
-         -MIN_THRU_CNT, -MIN_THRU_WDTH, -AVG_THRU_CNT, -AVG_THRU_WDTH)
+  select(-(URBAN_CODE_99999:URBAN_CODE_78499))
+         # -`FUNCTIONAL_CLASS_Other Principal Arterial`,
+         # -(`FUNCTIONAL_CLASS_Minor Arterial`:`FUNCTIONAL_CLASS_Minor Collector`),
+         # -MIN_THRU_CNT, -MIN_THRU_WDTH, -AVG_THRU_CNT, -AVG_THRU_WDTH)
 
 # Manually fill in remaining missing data
-IC <- IC %>% 
-  mutate(
-    MAX_SPEED_LIMIT = if_else(Int_ID == 3115 & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
-    MIN_URBAN_CODE = if_else(Int_ID == 3115 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3115 & is.na(MAX_FUNCTIONAL_CLASS), "Other Principal Arterial", MAX_FUNCTIONAL_CLASS),
-    COUNTY_CODE = if_else(Int_ID == 3115 & is.na(COUNTY_CODE), "Millard", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == 3115 & is.na(UDOT_Region), 4, UDOT_Region),
-    MAX_THRU_CNT = if_else(Int_ID == 3115 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
-    MAX_THRU_WDTH = if_else(Int_ID == 3115 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-    
-    MAX_SPEED_LIMIT = if_else(Int_ID == 3829 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
-    MIN_URBAN_CODE = if_else(Int_ID == 3829 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3829 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
-    COUNTY_CODE = if_else(Int_ID == 3829 & is.na(COUNTY_CODE), "Sevier", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == 3829 & is.na(UDOT_Region), 4, UDOT_Region),
-    MAX_THRU_CNT = if_else(Int_ID == 3829 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
-    MAX_THRU_WDTH = if_else(Int_ID == 3829 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-    
-    MAX_SPEED_LIMIT = if_else(Int_ID == 5605 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
-    MIN_URBAN_CODE = if_else(Int_ID == 5605 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-    MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 5605 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
-    COUNTY_CODE = if_else(Int_ID == 5605 & is.na(COUNTY_CODE), "Utah", COUNTY_CODE),
-    UDOT_Region = if_else(Int_ID == 5605 & is.na(UDOT_Region), 3, UDOT_Region),
-    MAX_THRU_CNT = if_else(Int_ID == 5605 & is.na(MAX_THRU_CNT), 4, MAX_THRU_CNT),
-    MAX_THRU_WDTH = if_else(Int_ID == 5605 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-  )
+# This code won't work anymore because the ID's changed
+# IC <- IC %>% 
+#   mutate(
+#     MAX_SPEED_LIMIT = if_else(Int_ID == 3115 & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
+#     MIN_URBAN_CODE = if_else(Int_ID == 3115 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3115 & is.na(MAX_FUNCTIONAL_CLASS), "Other Principal Arterial", MAX_FUNCTIONAL_CLASS),
+#     COUNTY_CODE = if_else(Int_ID == 3115 & is.na(COUNTY_CODE), "Millard", COUNTY_CODE),
+#     UDOT_Region = if_else(Int_ID == 3115 & is.na(UDOT_Region), 4, UDOT_Region),
+#     MAX_THRU_CNT = if_else(Int_ID == 3115 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+#     MAX_THRU_WDTH = if_else(Int_ID == 3115 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
+#     
+#     MAX_SPEED_LIMIT = if_else(Int_ID == 3829 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
+#     MIN_URBAN_CODE = if_else(Int_ID == 3829 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3829 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
+#     COUNTY_CODE = if_else(Int_ID == 3829 & is.na(COUNTY_CODE), "Sevier", COUNTY_CODE),
+#     UDOT_Region = if_else(Int_ID == 3829 & is.na(UDOT_Region), 4, UDOT_Region),
+#     MAX_THRU_CNT = if_else(Int_ID == 3829 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+#     MAX_THRU_WDTH = if_else(Int_ID == 3829 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
+#     
+#     MAX_SPEED_LIMIT = if_else(Int_ID == 5605 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
+#     MIN_URBAN_CODE = if_else(Int_ID == 5605 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
+#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 5605 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
+#     COUNTY_CODE = if_else(Int_ID == 5605 & is.na(COUNTY_CODE), "Utah", COUNTY_CODE),
+#     UDOT_Region = if_else(Int_ID == 5605 & is.na(UDOT_Region), 3, UDOT_Region),
+#     MAX_THRU_CNT = if_else(Int_ID == 5605 & is.na(MAX_THRU_CNT), 4, MAX_THRU_CNT),
+#     MAX_THRU_WDTH = if_else(Int_ID == 5605 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
+#   )
 
 # Save a copy for future use
 IC_byint <- IC
@@ -528,6 +559,7 @@ IC <- pivot_aadt_int(IC) %>%
     MIN_ENT_TRUCKS = (MIN_SUTRK + MIN_CUTRK) * MIN_AADT,
     AVG_ENT_TRUCKS = (AVG_SUTRK + AVG_CUTRK) * AVG_AADT
   ) %>%
+  rename(ESTIMATED_ENT_VEH = AADT) %>%
   select(-contains("SUTRK"),-contains("CUTRK"),-contains("AADT"),
          -MIN_ENT_TRUCKS,-AVG_ENT_TRUCKS) %>% 
   rename(ENT_VEH = IntVol,

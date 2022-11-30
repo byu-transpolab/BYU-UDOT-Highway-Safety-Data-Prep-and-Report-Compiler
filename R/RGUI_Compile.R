@@ -235,9 +235,9 @@ IC <- add_crash_attribute_int("collision_with_fixed_object", IC, crash_int) %>%
 
 # Last Minute Changes to the Data
 
-# # WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
+# WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
 # # Remove rows where AADT is zero because we are assuming the route didn't exist during that year
-# IC <- IC %>% filter(!is.na(AVG_AADT))
+# IC <- IC %>% filter(!is.na(ENT_VEH))
 
 
 ###

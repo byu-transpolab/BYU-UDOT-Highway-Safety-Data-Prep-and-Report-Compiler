@@ -520,33 +520,69 @@ IC <- IC %>%
          # -MIN_THRU_CNT, -MIN_THRU_WDTH, -AVG_THRU_CNT, -AVG_THRU_WDTH)
 
 # Manually fill in remaining missing data
-# This code won't work anymore because the ID's changed
-# IC <- IC %>% 
-#   mutate(
-#     MAX_SPEED_LIMIT = if_else(Int_ID == 3115 & is.na(MAX_SPEED_LIMIT), 65, MAX_SPEED_LIMIT),
-#     MIN_URBAN_CODE = if_else(Int_ID == 3115 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3115 & is.na(MAX_FUNCTIONAL_CLASS), "Other Principal Arterial", MAX_FUNCTIONAL_CLASS),
-#     COUNTY_CODE = if_else(Int_ID == 3115 & is.na(COUNTY_CODE), "Millard", COUNTY_CODE),
-#     UDOT_Region = if_else(Int_ID == 3115 & is.na(UDOT_Region), 4, UDOT_Region),
-#     MAX_THRU_CNT = if_else(Int_ID == 3115 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
-#     MAX_THRU_WDTH = if_else(Int_ID == 3115 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-#     
-#     MAX_SPEED_LIMIT = if_else(Int_ID == 3829 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
-#     MIN_URBAN_CODE = if_else(Int_ID == 3829 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 3829 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
-#     COUNTY_CODE = if_else(Int_ID == 3829 & is.na(COUNTY_CODE), "Sevier", COUNTY_CODE),
-#     UDOT_Region = if_else(Int_ID == 3829 & is.na(UDOT_Region), 4, UDOT_Region),
-#     MAX_THRU_CNT = if_else(Int_ID == 3829 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
-#     MAX_THRU_WDTH = if_else(Int_ID == 3829 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-#     
-#     MAX_SPEED_LIMIT = if_else(Int_ID == 5605 & is.na(MAX_SPEED_LIMIT), 55, MAX_SPEED_LIMIT),
-#     MIN_URBAN_CODE = if_else(Int_ID == 5605 & is.na(MIN_URBAN_CODE), 99999, MIN_URBAN_CODE),
-#     MAX_FUNCTIONAL_CLASS = if_else(Int_ID == 5605 & is.na(MAX_FUNCTIONAL_CLASS), "Major Collector", MAX_FUNCTIONAL_CLASS),
-#     COUNTY_CODE = if_else(Int_ID == 5605 & is.na(COUNTY_CODE), "Utah", COUNTY_CODE),
-#     UDOT_Region = if_else(Int_ID == 5605 & is.na(UDOT_Region), 3, UDOT_Region),
-#     MAX_THRU_CNT = if_else(Int_ID == 5605 & is.na(MAX_THRU_CNT), 4, MAX_THRU_CNT),
-#     MAX_THRU_WDTH = if_else(Int_ID == 5605 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
-#   )
+IC <- IC %>%
+  mutate(
+    IntVol2020 = if_else(Int_ID == 903 & is.na(IntVol2020), 72445, IntVol2020),
+    IntVol2019 = if_else(Int_ID == 903 & is.na(IntVol2019), 71169, IntVol2019),
+    IntVol2018 = if_else(Int_ID == 903 & is.na(IntVol2018), 65980, IntVol2018),
+    IntVol2017 = if_else(Int_ID == 903 & is.na(IntVol2017), 69160, IntVol2017),
+    IntVol2016 = if_else(Int_ID == 903 & is.na(IntVol2016), 65768, IntVol2016),
+    MEV_2020 = if_else(Int_ID == 903 & is.na(MEV_2020), 26.44, MEV_2020),
+    MEV_2019 = if_else(Int_ID == 903 & is.na(MEV_2019), 25.98, MEV_2019),
+    MEV_2018 = if_else(Int_ID == 903 & is.na(MEV_2018), 24.08, MEV_2018),
+    MEV_2017 = if_else(Int_ID == 903 & is.na(MEV_2017), 25.24, MEV_2017),
+    MEV_2016 = if_else(Int_ID == 903 & is.na(MEV_2016), 24.01, MEV_2016),
+
+    IntVol2020 = if_else(Int_ID == 4017 & is.na(IntVol2020), 11305, IntVol2020),
+    IntVol2019 = if_else(Int_ID == 4017 & is.na(IntVol2019), 12994, IntVol2019),
+    IntVol2018 = if_else(Int_ID == 4017 & is.na(IntVol2018), 12865, IntVol2018),
+    IntVol2017 = if_else(Int_ID == 4017 & is.na(IntVol2017), 11759, IntVol2017),
+    IntVol2016 = if_else(Int_ID == 4017 & is.na(IntVol2016), 10809, IntVol2016),
+    MEV_2020 = if_else(Int_ID == 4017 & is.na(MEV_2020), 4.13, MEV_2020),
+    MEV_2019 = if_else(Int_ID == 4017 & is.na(MEV_2019), 4.74, MEV_2019),
+    MEV_2018 = if_else(Int_ID == 4017 & is.na(MEV_2018), 4.70, MEV_2018),
+    MEV_2017 = if_else(Int_ID == 4017 & is.na(MEV_2017), 4.29, MEV_2017),
+    MEV_2016 = if_else(Int_ID == 4017 & is.na(MEV_2016), 3.95, MEV_2016),
+    
+    IntVol2020 = if_else(Int_ID == 4022 & is.na(IntVol2020), 15593, IntVol2020),
+    IntVol2019 = if_else(Int_ID == 4022 & is.na(IntVol2019), 17774, IntVol2019),
+    IntVol2018 = if_else(Int_ID == 4022 & is.na(IntVol2018), 17608, IntVol2018),
+    IntVol2017 = if_else(Int_ID == 4022 & is.na(IntVol2017), 17395, IntVol2017),
+    IntVol2016 = if_else(Int_ID == 4022 & is.na(IntVol2016), 16964, IntVol2016),
+    MEV_2020 = if_else(Int_ID == 4022 & is.na(MEV_2020), 5.69, MEV_2020),
+    MEV_2019 = if_else(Int_ID == 4022 & is.na(MEV_2019), 6.49, MEV_2019),
+    MEV_2018 = if_else(Int_ID == 4022 & is.na(MEV_2018), 6.43, MEV_2018),
+    MEV_2017 = if_else(Int_ID == 4022 & is.na(MEV_2017), 6.35, MEV_2017),
+    MEV_2016 = if_else(Int_ID == 4022 & is.na(MEV_2016), 6.19, MEV_2016),
+    
+    IntVol2020 = if_else(Int_ID == 4030 & is.na(IntVol2020), 29839, IntVol2020),
+    IntVol2019 = if_else(Int_ID == 4030 & is.na(IntVol2019), 34148, IntVol2019),
+    IntVol2018 = if_else(Int_ID == 4030 & is.na(IntVol2018), 33820, IntVol2018),
+    IntVol2017 = if_else(Int_ID == 4030 & is.na(IntVol2017), 14473, IntVol2017),
+    IntVol2016 = if_else(Int_ID == 4030 & is.na(IntVol2016), 14119, IntVol2016),
+    MEV_2020 = if_else(Int_ID == 4030 & is.na(MEV_2020), 10.89, MEV_2020),
+    MEV_2019 = if_else(Int_ID == 4030 & is.na(MEV_2019), 12.46, MEV_2019),
+    MEV_2018 = if_else(Int_ID == 4030 & is.na(MEV_2018), 12.34, MEV_2018),
+    MEV_2017 = if_else(Int_ID == 4030 & is.na(MEV_2017), 5.28, MEV_2017),
+    MEV_2016 = if_else(Int_ID == 4030 & is.na(MEV_2016), 5.15, MEV_2016),
+    
+    IntVol2020 = if_else(Int_ID == 4031 & is.na(IntVol2020), 29839, IntVol2020),
+    IntVol2019 = if_else(Int_ID == 4031 & is.na(IntVol2019), 34148, IntVol2019),
+    IntVol2018 = if_else(Int_ID == 4031 & is.na(IntVol2018), 33820, IntVol2018),
+    IntVol2017 = if_else(Int_ID == 4031 & is.na(IntVol2017), 14473, IntVol2017),
+    IntVol2016 = if_else(Int_ID == 4031 & is.na(IntVol2016), 14119, IntVol2016),
+    MEV_2020 = if_else(Int_ID == 4031 & is.na(MEV_2020), 10.89, MEV_2020),
+    MEV_2019 = if_else(Int_ID == 4031 & is.na(MEV_2019), 12.46, MEV_2019),
+    MEV_2018 = if_else(Int_ID == 4031 & is.na(MEV_2018), 12.34, MEV_2018),
+    MEV_2017 = if_else(Int_ID == 4031 & is.na(MEV_2017), 5.28, MEV_2017),
+    MEV_2016 = if_else(Int_ID == 4031 & is.na(MEV_2016), 5.15, MEV_2016),
+    
+    IntVol2016 = if_else(Int_ID == 7613 & is.na(IntVol2016), 17833.667, IntVol2016),
+    MEV_2016 = if_else(Int_ID == 7613 & is.na(MEV_2016), 6.509, MEV_2016),
+    
+    IntVol2016 = if_else(Int_ID == 7614 & is.na(IntVol2016), 17833.667, IntVol2016),
+    MEV_2016 = if_else(Int_ID == 7614 & is.na(MEV_2016), 6.509, MEV_2016)
+  )
 
 # Save a copy for future use
 IC_byint <- IC

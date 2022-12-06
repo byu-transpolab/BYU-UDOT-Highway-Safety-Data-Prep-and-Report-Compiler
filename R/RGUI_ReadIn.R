@@ -510,6 +510,14 @@ intersection <- intersection %>%
     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_4)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", state_routes))
   )
 
+# Excluded Intersection List (Given by UDOT/Clancy Black 11/30/22)
+excludedids <- c("263","272","800","810","811","826","819","2197","2516",
+                 "3471","3480","3490","3905","3919","3927","4037","4822",
+                 "5462","5463")
+
+# Exclude the Routes from Model
+intersection <- subset(intersection, !(Int_ID %in% excludedids))
+
 # Find Number of Unique primary Routes in intersections File
 num_intersection_routes <- intersection %>% pull(INT_RT_0) %>% unique() %>% length()
 

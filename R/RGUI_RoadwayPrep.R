@@ -282,7 +282,7 @@ RC <- RC %>%
     COUNTY_CODE = if_else(ROUTE == "0231PM" & is.na(COUNTY_CODE), "Sanpete", COUNTY_CODE),
     UDOT_Region = if_else(ROUTE == "0231PM" & is.na(UDOT_Region), 4, UDOT_Region),
     FUNCTIONAL_CLASS = if_else(ROUTE == "0231PM" & is.na(FUNCTIONAL_CLASS), "Major Collector", FUNCTIONAL_CLASS),
-    SPEED_LIMIT = ifelse(ROUTE == "0231PM" & is.na(SPEED_LIMIT), 30, SPEED_LIMIT),
+    SPEED_LIMIT = if_else(ROUTE == "0231PM" & is.na(SPEED_LIMIT), 30, SPEED_LIMIT),
     THRU_CNT = if_else(ROUTE == "0231PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0231PM" & is.na(THRU_WDTH), 14, THRU_WDTH),
     URBAN_CODE = if_else(ROUTE == "0231PM" & is.na(URBAN_CODE), 99999, URBAN_CODE),
@@ -532,7 +532,7 @@ IC <- IC %>%
     MEV_2018 = if_else(Int_ID == 903 & is.na(MEV_2018), 24.08, MEV_2018),
     MEV_2017 = if_else(Int_ID == 903 & is.na(MEV_2017), 25.24, MEV_2017),
     MEV_2016 = if_else(Int_ID == 903 & is.na(MEV_2016), 24.01, MEV_2016),
-
+    
     IntVol2020 = if_else(Int_ID == 4017 & is.na(IntVol2020), 11305, IntVol2020),
     IntVol2019 = if_else(Int_ID == 4017 & is.na(IntVol2019), 12994, IntVol2019),
     IntVol2018 = if_else(Int_ID == 4017 & is.na(IntVol2018), 12865, IntVol2018),
@@ -576,6 +576,13 @@ IC <- IC %>%
     MEV_2018 = if_else(Int_ID == 4031 & is.na(MEV_2018), 12.34, MEV_2018),
     MEV_2017 = if_else(Int_ID == 4031 & is.na(MEV_2017), 5.28, MEV_2017),
     MEV_2016 = if_else(Int_ID == 4031 & is.na(MEV_2016), 5.15, MEV_2016),
+    
+    MAX_SPEED_LIMIT = if_else(Int_ID == 5537 & is.na(MAX_SPEED_LIMIT), 40, MAX_SPEED_LIMIT),
+    MAX_THRU_CNT = if_else(Int_ID == 5537 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+    MAX_THRU_WDTH = if_else(Int_ID == 5537 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
+    
+    MAX_THRU_CNT = if_else(Int_ID == 5943 & is.na(MAX_THRU_CNT), 2, MAX_THRU_CNT),
+    MAX_THRU_WDTH = if_else(Int_ID == 5943 & is.na(MAX_THRU_WDTH), 12, MAX_THRU_WDTH),
     
     IntVol2016 = if_else(Int_ID == 7613 & is.na(IntVol2016), 17833.667, IntVol2016),
     MEV_2016 = if_else(Int_ID == 7613 & is.na(MEV_2016), 6.509, MEV_2016),

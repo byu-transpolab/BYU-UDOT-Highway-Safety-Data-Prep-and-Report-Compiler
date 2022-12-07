@@ -274,7 +274,7 @@ RC <- fill_all_missing(RC, missing, "ROUTE", subsetting_var, subset_cols)
 
 # Replace "no sign" with NA on speed limits
 RC <- RC %>%
-  mutate(SPEED_LIMIT = ifelse(SPEED_LIMIT == "No Sign", NA, SPEED_LIMIT))
+  mutate(SPEED_LIMIT = as.numeric(ifelse(SPEED_LIMIT == "No Sign", NA, SPEED_LIMIT)))
 
 # Manually fill in remaining missing data if they haven't been filled already
 RC <- RC %>% 

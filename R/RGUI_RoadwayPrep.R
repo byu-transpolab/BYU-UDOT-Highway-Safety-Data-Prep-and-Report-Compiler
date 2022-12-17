@@ -34,6 +34,10 @@ RC <- c(list(shell), joined_populated) %>%
   select(ROUTE, BEG_MP, END_MP, everything()) %>% 
   arrange(ROUTE, BEG_MP)
 
+# Save a csv so you don't have to run everything every time
+write_csv(RC, file = "data/temp/RC_shell.csv")
+RC <- read_csv("data/temp/RC_shell.csv")
+
 
 ###
 ## Final Data Compilation
@@ -373,6 +377,10 @@ RC_byseg <- RC
 # Pivot AADT (add years)
 RC <- pivot_aadt(RC)
 
+# Save a csv so you don't have to run everything every time
+write_csv(RC, file = "data/temp/RC.csv")
+write_csv(RC_byseg, file = "data/temp/RC_byseg.csv")
+
 
 ###
 ## Create Intersection Roadway data shell
@@ -436,7 +444,7 @@ IC <- mod_intersections(IC,UTA_Stops,schools)
 IC <- st_drop_geometry(IC)
 
 # Add roadway data (disclaimer. Make sure column names don't have a "." in them)
-# Note: There will be some warnings, but these are resolved within the function so don't mind them.
+# Note: There may be some warnings, but these are probably resolved within the function so don't mind them.
 IC <- add_int_att(IC, urban_full) %>% 
   select(-MAX_URBAN_CODE, -AVG_URBAN_CODE) 
 
@@ -445,13 +453,8 @@ IC <- expand_int_att(IC, "URBAN_CODE")
 IC <- IC %>% rename(URBAN_CODE = MIN_URBAN_CODE)
 
 IC <- add_int_att(IC, fc_full %>% select(-RouteDir,-RouteType), is_fc = TRUE) %>% 
-  select(-MIN_FUNCTIONAL_CLASS, -AVG_FUNCTIONAL_CLASS, -MAX_FUNCTIONAL_CLASS,
-         -(COUNTY_CODE_0:COUNTY_CODE_4), -(UDOT_Region_0:UDOT_Region_4),
-         -MAX_COUNTY_CODE, -AVG_COUNTY_CODE,
-         -MAX_UDOT_Region, -AVG_UDOT_Region) %>%
-  mutate(PRINCIPAL_FUNCTIONAL_CLASS = FUNCTIONAL_CLASS_0) %>%
-  rename(COUNTY_CODE = MIN_COUNTY_CODE,
-         UDOT_Region = MIN_UDOT_Region)
+  select(-MIN_FUNCTIONAL_CLASS) %>%
+  mutate(PRINCIPAL_FUNCTIONAL_CLASS = FUNCTIONAL_CLASS_0)
 
 IC <- expand_int_att(IC, "FUNCTIONAL_CLASS")
 
@@ -618,3 +621,6 @@ IC <- pivot_aadt_int(IC) %>%
   rename(ENT_VEH = IntVol,
          MEV = MEV_)
 
+# Save a csv so you don't have to run everything every time
+write_csv(IC, file = "data/temp/IC.csv")
+write_csv(IC_byint, file = "data/temp/IC_byint.csv")

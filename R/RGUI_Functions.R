@@ -1178,43 +1178,46 @@ add_int_att <- function(int, att, is_aadt, is_fc){
   for(i in colnames(int)){
     if(substrRight(i,2) == ".a"){
       var <- substrMinusRight(i,2)
-      int <- int %>%
-        rowwise() %>%
-        mutate(
-          !!sym(paste0("MAX_",var)) := max(c(!!sym(paste0(var,".a")),
-                                             !!sym(paste0(var,".b")),
-                                             !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d")),
-                                             !!sym(paste0(var,".e"))), 
-                                           na.rm = TRUE),
-          !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,".a")),
-                                             !!sym(paste0(var,".b")),
-                                             !!sym(paste0(var,".c")),
-                                             !!sym(paste0(var,".d")),
-                                             !!sym(paste0(var,".e"))), 
-                                           na.rm = TRUE),
-          !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
+      if(is_fc == FALSE){
+        int <- int %>%
+          mutate(
+            !!sym(paste0("MAX_",var)) := pmax(!!sym(paste0(var,".a")),
                                               !!sym(paste0(var,".b")),
                                               !!sym(paste0(var,".c")),
                                               !!sym(paste0(var,".d")),
-                                              !!sym(paste0(var,".e"))), 
-                                            na.rm = TRUE),
-          !!sym(paste0(var,"_0")) := !!sym(paste0(var,".a")),
-          !!sym(paste0(var,"_1")) := !!sym(paste0(var,".b")),
-          !!sym(paste0(var,"_2")) := !!sym(paste0(var,".c")),
-          !!sym(paste0(var,"_3")) := !!sym(paste0(var,".d")),
-          !!sym(paste0(var,"_4")) := !!sym(paste0(var,".e"))
-        ) %>%
-        # convert infinities to NA
-        mutate(
-          !!sym(paste0("MAX_",var)) := ifelse(is.infinite(!!sym(paste0("MAX_",var))), NA, !!sym(paste0("MAX_",var))),
-          !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
-          !!sym(paste0("AVG_",var)) := ifelse(is.nan(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
-        )
-      # add local functional classes if functional class
-      if(is_fc == TRUE & toupper(var) == "FUNCTIONAL_CLASS"){
+                                              !!sym(paste0(var,".e")), 
+                                              na.rm = TRUE),
+            !!sym(paste0("MIN_",var)) := pmin(!!sym(paste0(var,".a")),
+                                              !!sym(paste0(var,".b")),
+                                              !!sym(paste0(var,".c")),
+                                              !!sym(paste0(var,".d")),
+                                              !!sym(paste0(var,".e")), 
+                                              na.rm = TRUE)
+          ) %>%
+          rowwise() %>%
+          mutate(
+            !!sym(paste0("AVG_",var)) := mean(c(!!sym(paste0(var,".a")),
+                                                !!sym(paste0(var,".b")),
+                                                !!sym(paste0(var,".c")),
+                                                !!sym(paste0(var,".d")),
+                                                !!sym(paste0(var,".e"))), 
+                                              na.rm = TRUE),
+            !!sym(paste0(var,"_0")) := !!sym(paste0(var,".a")),
+            !!sym(paste0(var,"_1")) := !!sym(paste0(var,".b")),
+            !!sym(paste0(var,"_2")) := !!sym(paste0(var,".c")),
+            !!sym(paste0(var,"_3")) := !!sym(paste0(var,".d")),
+            !!sym(paste0(var,"_4")) := !!sym(paste0(var,".e"))
+          ) %>%
+          # convert infinities to NA
+          mutate(
+            !!sym(paste0("MAX_",var)) := ifelse(is.infinite(!!sym(paste0("MAX_",var))), NA, !!sym(paste0("MAX_",var))),
+            !!sym(paste0("MIN_",var)) := ifelse(is.infinite(!!sym(paste0("MIN_",var))), NA, !!sym(paste0("MIN_",var))),
+            !!sym(paste0("AVG_",var)) := ifelse(is.nan(!!sym(paste0("AVG_",var))), NA, !!sym(paste0("AVG_",var)))
+          )
+      } else if (toupper(var) == "FUNCTIONAL_CLASS"){
         int <- int %>%
           rowwise() %>%
+          # add local functional classes if functional class
           mutate(
             !!sym(paste0(var,"_0")) := case_when(tolower(INT_RT_0) == "local" ~ "Local",
                                                  TRUE ~ !!sym(paste0(var,".a"))),
@@ -1225,14 +1228,27 @@ add_int_att <- function(int, att, is_aadt, is_fc){
             !!sym(paste0(var,"_3")) := case_when(tolower(INT_RT_3) == "local" ~ "Local",
                                                  TRUE ~ !!sym(paste0(var,".d"))),
             !!sym(paste0(var,"_4")) := case_when(tolower(INT_RT_4) == "local" ~ "Local",
-                                                 TRUE ~ !!sym(paste0(var,".e"))),
+                                                 TRUE ~ !!sym(paste0(var,".e")))
+          ) %>%
+          ungroup() %>%
+          mutate(
             # need to redo min with the new functional classes
-            !!sym(paste0("MIN_",var)) := min(c(!!sym(paste0(var,"_0")),
+            !!sym(paste0("MIN_",var)) := pmin(!!sym(paste0(var,"_0")),
                                                !!sym(paste0(var,"_1")),
                                                !!sym(paste0(var,"_2")),
                                                !!sym(paste0(var,"_3")),
-                                               !!sym(paste0(var,"_4"))), 
+                                               !!sym(paste0(var,"_4")), 
                                              na.rm = TRUE)
+          )
+      } else{
+        int <- int %>%
+          mutate(
+            !!sym(var) := pmin(!!sym(paste0(var,".a")),
+                              !!sym(paste0(var,".b")),
+                              !!sym(paste0(var,".c")),
+                              !!sym(paste0(var,".d")),
+                              !!sym(paste0(var,".e")), 
+                              na.rm = TRUE)
           )
       }
     }

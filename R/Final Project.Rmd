@@ -1,0 +1,301 @@
+---
+title: "Final Project"
+author: "Jace Ritchie"
+date: "2022-12-12"
+output: 
+  bookdown::pdf_document2:
+    toc: false
+abstract: In this project, we explore the uses of the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments methodology as described in the Highway Safety Manual to identify automobile crash hotspots (Highway Safety Manual 2010). Through a simulation study, we find that a quasi-poisson model outperforms a negative binomial model in terms of correctly identified hotspots. Additionally, we show that increasing the difference in relative safety between groups of roadway segments also increases correct hotspot identification rates.
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, cache = TRUE)
+library(ggplot2)
+library(MASS)
+library(mvtnorm)
+library(tidyverse)
+options(dplyr.summarise.inform = FALSE)
+```
+
+```{r}
+set.seed(16)
+aadt_effect <- .000025
+int_safe <- .4
+int_dang <- c(.4, .8, 1.2, 2)
+n_ints <- 89
+n_years <- 5
+n_sims <- 1000
+
+block <- 40000.5^2 * matrix(c(1, .99, .99, .99, .99,
+                            .99, 1, .99, .99, .99,
+                            .99, .99, 1, .99, .99,
+                            .99, .99, .99, 1, .99,
+                            .99, .99, .99, .99, 1), nrow = 5, byrow = TRUE)
+sigma <- diag(n_ints) %x% block
+aadt <- t(rmvnorm(1, rep(50000, n_ints * n_years), sigma = sigma))
+int_id <- rep(1:n_ints, each = n_years)
+
+
+
+safe_length <- rep(rgamma(40, 1, 1), each = 5)
+dang_length <- rep(rgamma(40, 1, 1), each = 5)
+desc_frame <- data.frame(cbind(int_id, aadt))
+colnames(desc_frame) <- c('int_id', 'aadt')
+
+int_frame <- desc_frame %>% 
+  group_by(int_id) %>% 
+  filter(all(aadt>0))
+int_frame$length <- c(safe_length, dang_length)
+int_frame$int_id <- rep(1:80, each = 5)
+
+safe_aadt <- int_frame$aadt[1:200]
+dang_aadt <- int_frame$aadt[201:400]
+```
+
+```{r functions}
+get_ys <- function(dang_increase){
+  safe_y <- rpois(200, exp(int_safe + aadt_effect * safe_aadt + log(safe_length)))
+  dang_y <- rpois(200, exp(int_safe + dang_increase + aadt_effect * dang_aadt + log(safe_length)))
+  return(c(safe_y, dang_y))
+}
+
+fit_mods <- function(test_y){
+  neg_bin_test <- glm.nb(test_y ~ int_frame$aadt + offset(log(int_frame$length)), init.theta = 1)
+  quasi_test <- glm(test_y ~ int_frame$aadt + offset(log(int_frame$length)), family = quasipoisson())
+  return(list(neg_bin_test, quasi_test, test_y))
+}
+
+excess_eb <- function(disp, fitted, ys){
+  int_df <- data.frame(cbind(int_frame, fitted, ys, disp))
+  colnames(int_df) <- c('int_id', 'aadt', 'length', 'y_hat', 'y', 'disp')
+  
+  cc_factors <- int_df %>% 
+    group_by(int_id) %>% 
+    summarise(cc = first(y_hat)/y_hat)
+  
+  weight <- int_df %>% 
+                     group_by(int_id) %>% 
+                     summarise(weights = 1/(1 + sum(disp * y_hat)))
+  
+  n_expect <- int_df %>% 
+    add_column(cc = cc_factors$cc) %>% 
+    left_join(weight, by = 'int_id') %>% 
+    group_by(int_id) %>% 
+    summarise(n_expect = first(weights) * first(y_hat) + (1 - first(weights)) * (sum(y) / sum(cc)), cc = last(cc), y_hat = last(y_hat))
+  
+  excess <- n_expect %>% 
+    summarize(int_id = int_id, excess = n_expect * cc - y_hat) %>% 
+    arrange(across(excess, desc))
+  correct <- sum(excess$int_id[1:40] > 40)
+  return(correct)
+}
+
+do_sim <- function(dang_increase){
+  quasi_results <- numeric(n_sims)
+  nb_results <- numeric(n_sims)
+  quasi_noeb <- numeric(n_sims)
+  nb_noeb <- numeric(n_sims)
+  for(i in 1:n_sims){
+    mods <- fit_mods(get_ys(dang_increase = dang_increase))
+    quasi_disp <- rep(summary(mods[[2]])$dispersion, 400)
+    nb_disp <- 1 / (mods[[1]]$theta / (mods[[1]]$theta + mods[[1]]$fitted.values))
+    quasi_results[i] <- suppressMessages(excess_eb(quasi_disp, mods[[2]]$fitted.values, mods[[3]]))
+    nb_results[i] <- suppressMessages(excess_eb(nb_disp, mods[[1]]$fitted.values, mods[[3]]))
+  }
+  return(list(quasi_results, nb_results))
+}
+
+some <- fit_mods(get_ys(.4))
+quasi_disp <- rep(summary(some[[2]])$dispersion, 400)
+nb_disp <- 1 / (some[[1]]$theta / (some[[1]]$theta + some[[1]]$fitted.values))
+excess_eb(nb_disp, some[[1]]$fitted.values, some[[3]])
+
+sims <- list()
+# for(i in 1:length(int_dang)) sims[[i]] <- do_sim(int_dang[i])
+# saveRDS(sims, 'sims.RDS')
+sims <- readRDS('sims.RDS')
+
+
+for(i in 1:length(int_dang)){
+  assign(paste0('quasi_correct_',int_dang[i]), sims[[i]][[1]])
+  assign(paste0('nb_correct_',int_dang[i]), sims[[i]][[2]])
+}
+
+
+mean_dang_class <- rbind(cbind(mean(nb_correct_0.4), mean(nb_correct_0.8), mean(nb_correct_1.2), mean(nb_correct_2)), cbind(mean(quasi_correct_0.4), mean(quasi_correct_0.8), mean(quasi_correct_1.2), mean(quasi_correct_2)))
+
+colnames(mean_dang_class) <- c('.4', '.8', '1.2', '2')
+rownames(mean_dang_class) <- c('Negative Binomial', 'Quasi-Poisson')
+
+knitr::kable(mean_dang_class, caption = 'Simulation results of each model used with each difference between the intercepts of the safe and dangerous intersections', label = 'Simulation Results')
+
+#bootstrap means
+
+bootstrap <- function(quasi_correct, nb_correct, n_sim = 10000){
+  samps <- numeric(n_sim)
+  for(i in 1:n_sim){
+    samps[i] <- mean(sample(quasi_correct, 1000, replace = TRUE) - sample(nb_correct, 1000, replace = TRUE))
+  }
+  return(samps)
+}
+
+boot.4 <- round(quantile(bootstrap(quasi_correct_0.4, nb_correct_0.4), c(.025, .975)),2)
+boot.8 <- round(quantile(bootstrap(quasi_correct_0.8, nb_correct_0.8), c(.025, .975)),2)
+boot1.2 <- round(quantile(bootstrap(quasi_correct_1.2, nb_correct_1.2), c(.025, .975)),2)
+boot2 <- round(quantile(bootstrap(quasi_correct_2, nb_correct_2), c(.025, .975)),2)
+
+boot_conf <- rbind(boot.4,boot.8, boot1.2, boot2)
+colnames(boot_conf) <- c('Lower', 'Upper')
+rownames(boot_conf) <- c('.4', '.8', '1.2', '2')
+
+knitr::kable(boot_conf, caption = 'Bootstrapped 95% confidence intervals for the difference in means between the quasi-poisson and negative binomial models for each difference in intercepts')
+
+boot.4.8nb <- round(quantile(bootstrap(nb_correct_0.8, nb_correct_0.4), c(.025, .975)),2)
+boot.81.2nb <- round(quantile(bootstrap(nb_correct_1.2, nb_correct_0.8), c(.025, .975)),2)
+boot1.22nb <- round(quantile(bootstrap(nb_correct_2, nb_correct_1.2), c(.025, .975)),2)
+boot.4.8quasi <- round(quantile(bootstrap(quasi_correct_0.8, quasi_correct_0.4), c(.025, .975)),2)
+boot.81.2quasi <- round(quantile(bootstrap(quasi_correct_1.2, quasi_correct_0.8), c(.025, .975)),2)
+boot1.22quasi <- round(quantile(bootstrap(quasi_correct_2, quasi_correct_1.2), c(.025, .975)),2)
+
+boot_conf_nb <- rbind(boot.4.8nb,boot.81.2nb, boot1.22nb)
+colnames(boot_conf_nb) <- c('Lower', 'Upper')
+
+knitr::kable(boot_conf_nb, caption = 'Bootstrapped 95% confidence intervals for the difference in means between the differences in intercept for the negative binomial model')
+
+boot_conf_quasi <- rbind(boot.4.8quasi,boot.81.2quasi, boot1.22quasi)
+colnames(boot_conf_quasi) <- c('Lower', 'Upper')
+
+knitr::kable(boot_conf_quasi, caption = 'Bootstrapped 95% confidence intervals for the difference in means between the differences in intercept for the quasi-poisson model')
+
+
+#stuff for presentation
+##motivation
+##methodology
+##simulation setup
+##results
+##discussion
+
+```
+
+
+# Introduction
+
+Within traffic literature, there is extensive research regarding so-called "hotspot analysis". It is the practice of identifying segments of road that are more dangerous than their characteristics would suggest. However, there are several factors that make this difficult. First is regression-to-the-mean bias, which indicates the bias that occurs if hotspot analysis is based on too few years of data (Highway Safety Manual 2010). When regression-to-the-mean bias occurs, there is a higher likelihood of identifying segments where the number of crashes observed were historical outliers rather than true indicators of the relative safety of a segment of road. Secondly, it is assumed that crashes at any given segment follow a Poisson distribution. However, diverse levels of safety given observed road characteristics due to unobserved heterogeneity result in differing mean functions for segments. Therefore, modeling segments of road as a whole is difficult because the differing mean functions result in overdispersion. Hence, modeling the overdispersion of the segments is integral to hotspot analysis.
+
+There are many methods of hotspot analysis. Perhaps the simplest method of hotspot analysis is ranking segments of road by the number of observed crashes, but this method ignores the fact that many segments are safe given their characteristics. For example, a busy ten-lane highway that observes only ten crashes in a year is much safer than a two-lane back country road that observes ten crashes in a year. In order to account for this, the number of crashes observed minus the number of crashes expected given roadway characteristics could be used. However, this method is highly subject to the problems outlined in the previous paragraph. Hence, other methodologies have been created to account for this.
+
+One such method is the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments as described in the Highway Safety Manual (Highway Safety Manual 2010). This is a well tested methodology with few drawbacks that ranks segments of road according to relative safety in comparison with observed roadway characteristics (Highway Safety Manual 2010). It should be noted that the method does not depend on nor utilize the Empirical Bayes paradigm and can be used by several models. It accounts for regression-to-the-mean bias and the overdispersion due to unobserved heterogeneity. In fact, it relies on the calculation of an overdispersion parameter. Because of these features, hotspot analysis will be limited to this methodology for the scope of this project. In practice, after the segments of road have been ranked according to relative safety using the aforementioned method, those rankings are presented to traffic industry professionals who then go to the site and make recommendations about improvements that can be made.
+
+Under the frequentist paradigm, two methods are often used to calculate overdispersion. The first is the quasi-poisson likelihood where the overdispersion parameter ($\phi$) is calculated such that 
+
+$$
+E(Y_{ij}) = \phi Var(Y_{ij}) \text{ , where  }\phi=\frac{1}{df}\Sigma^I_{i=1}\Sigma^J_{j=1}r^2_{ij}
+$$ 
+
+Here, $Y_{ij}$ is the number of crashes at intersection $i$ for year $j$, $r_{ij}$ is the Pearson residual under a Poisson model for intersection $i$ and year $j$, and $df$ is the degrees of freedom for the model. The second is the negative binomial model where the overdispersion parameter is $\frac{1}{\pi_{ij}}$, where $\pi_{ij}$ is the probability of success under the parameterization where the negative binomial distribution is understood to be the number of failures which occur before a defined number of successes is observed.
+
+The aim of this project is to show which of the two methods for calculating overdispersion results in a higher identification rate of dangerous segments of road through simulations. In addition to changing the overdispersion calculation, the relative safety of the segments of road will be adjusted to see if the method gets more accurate as the difference in safety gets larger.
+
+# Methods
+
+As mentioned above, the method used in this project to identify crash hotspots is the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments. This method is composed of several steps (Highway Safety Manual 2010). First, crash correction factors are calculated for each segment $i$ and year $j$ ($CC_{ij}$) as follows:
+
+$$
+CC_{ij}=\frac{\hat{y}_{i1}}{\hat{y}_{ij}}
+$$
+
+Then, a weight parameter for the segement ($w_i$) is calculated as shown below:
+
+$$
+w_i=\frac{1}{1+\Sigma^J_{j=1}k \times \hat{y}_{ij}}
+$$
+Where $k$ is the overdispersion parameter and $\hat{y}_{ij}$ is the predicted number of crashes for segment $i$ during year $j$. For the quasi-poisson likelihood, $k$ is shared across all segments. However, for the negative binomial likelihood, $k$ is usually different for each segment and year (alternatively denoted $k_{ij}$). Thus, the difference between models does change the way $w_i$ is calculated. Then, a weighted sum of the predicted ($\hat{y}_{i1}$) and observed ($y_{ij}$) crashes for the first year ($y_{i1,expected}$) is created as follows:
+
+$$
+y_{i1,expected}=w_i\times\hat{y}_{i1} +(1-w_i)\times\frac{\Sigma_{j=1}^Jy_{ij}}{\Sigma_{j=1}^JCC_{ij}}
+$$
+
+Then, the excess number of crashes is calculated as follows:
+
+$$
+Excess_i=y_{iJ,expected}-\hat{y}_{iJ}\\
+\text{ , where } y_{iJ,expected}=CC_{iJ}\times y_{i1,expected}
+$$
+
+Finally, each of the $Excess_i$ are ranked, with the highest value being the most dangerous.
+
+In order to simulate data to achieve the above goals, characteristics for 80 segments of road over 5 years (400 observations total) were generated. The annual average daily traffic (AADT) was generated from a multivariate normal distribution with mean 50,000, a standard deviation of 40,000.5, and a blocked compound symmetric covariance structure with observations from the same segment having a correlation of .99. Any negative estimates were re-generated. The segment length was generated from a gamma distribution with shape parameter 1 and rate parameter 1. No other roadway characteristics were generated, so aside from the lengths of the segments and the AADT, the segments are assumed to have the same roadway features. For simplicity's sake, only two groups of relative safety were considered. Each group was composed of 40 segments. Crashes were generated as follows:
+
+$$
+Y_{ij} \sim Poisson(\beta_0 + \beta_1AADT_{ij} + log(Length_i))
+$$
+
+Here, $Y_{ij}$ is the number of crashes at segment $i$ for year $j$, $\beta_0$ is 0.4 for the safer of the two groups and 0.4 + $\alpha_k$ for the other, $AADT_{ij}$ is the AADT for segment $i$ and year $j$, and $Length_i$ is the length of the $i^{th}$ segment. For dangerous segments, $\alpha_k$ can be 0.4, 0.8, 1.2, or 2. Length is used as an offset in order to interpret the mean either in terms of crashes or crashes per mile, which is standard in practice. Because part of this project includes understanding how differences between the two groups of segments changes identification rates, 1,000 simulations were run for each of four groups. The four groups were identical save for the $\alpha_k$ used to generate crash data for the more dangerous group of segments. In each simulation, the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments methodology was used to rank the segments by relative safety. The number of dangerous segments that were ranked in the top 40 were termed to have been correctly identified as dangerous.
+
+Each simulation follows a similar pattern. First, the number of crashes are randomly generated using `rpois` in R. Second, the number of crashes are modeled using the `glm` function in R for the quasi-poisson model and the `glm.nb` function for the negative binomial model. Third, the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments methodology is applied and the number of correctly identified dangerous segments is saved.
+
+# Results
+
+```{r, include = TRUE, message=FALSE, fig.cap='Number of correctly identified dangerous intersections for the quasi-poisson model for different values of $\\alpha_k$', fig.height=3}
+quasi_data <- as.data.frame(cbind(c(quasi_correct_0.4, quasi_correct_0.8, quasi_correct_1.2, quasi_correct_2), rep(c(.4,.8,1.2,2), each = 1000)))
+colnames(quasi_data) <- c("Num_Correct", "alpha")
+quasi_data$alpha <- as.factor(quasi_data$alpha)
+suppressMessages(ggplot(quasi_data, aes(x = Num_Correct)) + geom_histogram() + facet_wrap(~ alpha)) + xlab("Number of Correctly Identified Dangerous Segments") + ggtitle('Quasi-Poisson Results')
+```
+
+After concluding the simulations, the results showed that the quasi-poisson model always correctly identified at least 20 dangerous segments and correctly identified up to 28. The negative binomial model always correctly identified at least 19 dangerous segments and correctly identified up to 24. When $\alpha_k=.4$, the minimum number of correctly identified segments was 19 and the maximum was 25. In contrast, when $\alpha_k=2$, the minimum number of correctly identified segments was 22 and the maximum was 28. Hence, from very preliminary results, there might be a trend as $\alpha_k$ increases and there might be a difference between the correct identification rates of the two models.
+
+
+```{r, include = TRUE, message=FALSE, fig.cap='Number of correctly identified dangerous intersections for the negative binomial model for different values of $\\alpha_k$', fig.height=3}
+nb_data <- as.data.frame(cbind(c(nb_correct_0.4, nb_correct_0.8, nb_correct_1.2, nb_correct_2), rep(c(.4,.8,1.2,2), each = 1000)))
+colnames(nb_data) <- c("Num_Correct", "alpha")
+nb_data$alpha <- as.factor(nb_data$alpha)
+suppressMessages(ggplot(nb_data, aes(x = Num_Correct)) + geom_histogram() + facet_wrap(~ alpha)) + xlab("Number of Correctly Identified Dangerous Segments") + ggtitle('Negative Binomial Results')
+```
+
+The average number of correctly identified dangerous segments identified in the simulations of the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments methodology are found in Table 1. Because the two groups had equal sample sizes, the misclassification rate is the same for both groups. Hence, if thirty of the more dangerous segments were correctly ranked in the top 40 most dangerous segments, thirty of the less dangerous segments were correctly ranked in the top 40 safest segments. Therefore, Table 1 can easily be understood to be the average number of safe segments identified as such, though such an understanding is less interesting.
+
+```{r, include=TRUE}
+knitr::kable(mean_dang_class, caption = 'Simulation results of each model with each $\\alpha_k$',  format = 'simple')
+```
+
+From Table 1, it is easy to observe that there seems to be a slight difference between the average number of correctly identified dangerous segments of road between the quasi-poisson and the negative binomial models when used to identify crash hotspots. Additionally, there seems to be a trend as $\alpha_k$ increases for both models that results in more segments being correctly identified as dangerous.
+
+Additionally, it seems that the sensitivity of the model is not much higher than using a coin flip to determine if a segment of road is relatively dangerous or relatively safe. However, given the 1,000 simulations the true positive rate is statistically significantly better than the coin flip.
+
+In order to gain understanding about the apparent trends in Table 1, the results of the simulations were bootstrapped to create estimates of the variance of the results. Bootstrapping was used instead of other methods due to its ability to accurately estimate variance regardless of distributional assumptions as long as the sampled data reflects the population. Because this data was sampled directly, these distributional assumptions should hold well. For this analysis, the samples were bootstrapped 10,000 times.
+
+```{r, include=TRUE}
+knitr::kable(boot_conf, caption = 'Bootstrapped 95% confidence intervals for the differences in the mean number of correctly identified segments between the quasi-poisson and negative binomial models for each $\\alpha_k$', format = 'simple')
+```
+
+As shown in Table 2, the bootstrapped estimates of the differences between the mean sensitivities of the quasi-poisson and negative binomial models indicate a significant difference between the two models' abilities to correctly identify dangerous segments of road. There may even be a significant interaction with $\alpha_k$ since the first two intervals don't overlap. Regardless, the results shown in Table 2 clearly indicate that the quasi-poisson model outperforms the negative binomial model in terms of correctly identifying dangerous segments of road using Excess Expected Average Crash Frequency with Empirical Bayes Adjustments.
+
+```{r, include=TRUE}
+rownames(boot_conf_nb) <- c(".8-.4", "1.2-.8", "2-1.2")
+knitr::kable(boot_conf_nb, caption = "Bootstrapped 95% confidence intervals for the differences in the mean number of correctly identified segments between the $\\alpha_k$'s for the negative binomial model", format = 'simple')
+```
+
+From Tables 2 and 3, there is a clear indication that as $\alpha_k$ increases, the sensitivity of the methodology significantly increases relative to $\alpha_{k-1}$. There may or may not be a linear trend, but it appears that the values of $\alpha_k$ matter in identifying hotspots using Excess Expected Average Crash Frequency with Empirical Bayes Adjustments.
+
+
+```{r, include=TRUE}
+rownames(boot_conf_quasi) <- c(".8-.4", "1.2-.8", "2-1.2")
+knitr::kable(boot_conf_quasi, caption = "Bootstrapped 95% confidence intervals for the differences in the mean number of correctly identified segments between the $\\alpha_k$'s for the quasi-poisson model", format='simple')
+```
+
+# Discussion
+
+As shown in the previous section, it is clear that the quasi-poisson model outperformed the negative binomial model in terms of correctly identifying dangerous segments of road. This makes intuitive sense since overdispersion within segments of road doesn't exist due to the crashes being Poisson distributed at the segment level. However, the negative binomial overdispersion is accomplished at the segment-year level, thus overparameterizing the overdispersion. The data set as a whole experiences overdispersion, so the overdispersion parameter in the quasi-poisson model reflects the truth better than the negative binomial model. Hence, it improves the ability of the methodology to detect the relative safety of segments of road when using the quasi-poisson model over the negative binomial model.
+
+Additionally, the difference in correct identification rates between $\alpha_k$'s is likewise intuitive. As the difference in relative safety between the two groups increases, the number of excess crashes also increases. This is due to the fact that the predictions of the models are essentially weighted averages of the data, so as one group is distanced from another, the weighted average increases in distance to both groups.
+
+Some next steps may include comparing a Poisson model to the quasi-poisson model under this methodology. Such a comparison would be useful in indicating the efficacy of the method, specifically with the weight parameter as described above. Additionally, more groups of intersections could be used to test the efficacy of this method. Having several groups of intersections could show the ability of the method to rank the groups proficiently. However, such an approach would require a more complex analysis of the results than discussed above since there would be three ordered groups.
+
+In conclusion, when utilizing the Excess Expected Average Crash Frequency with Empirical Bayes Adjustments methodology, it is best to use a quasi-poisson model over a negative binomial model. Identification will get more accurate as the difference in groups increases. Due to the noise prevalent in crash data, hotspot identification can be rather difficult, but the difficulties are mitigated through this methodology.
+
+\newpage
+
+# Bibliography
+
+American Association of State Highway and Transportation Officials. (2010). Chapter 4-Network Screening. In Highway Safety Manual (1st ed., Vol. 1, pp. 4–59-4–77).

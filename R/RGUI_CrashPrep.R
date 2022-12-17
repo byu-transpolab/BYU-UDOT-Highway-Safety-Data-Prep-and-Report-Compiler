@@ -93,3 +93,7 @@ for(i in 1:nrow(crash)){
 crash_seg <- crash %>% filter(is.na(int_id)) %>% select(-int_related,-int_id)
 crash_int <- crash %>% filter(!is.na(int_id)) %>% select(-int_related)
 
+# Save a csv so you don't have to run everything every time
+write_csv(crash_seg, file = "data/temp/crash_seg.csv")
+write_csv(crash_int, file = "data/temp/crash_int.csv")
+

@@ -6,6 +6,17 @@ library(tidyverse)
 library(dplyr)
 
 ###
+## Read in temp files
+###
+
+IC <- read_csv("data/temp/IC.csv")
+IC_byint <- read_csv("data/temp/IC_byint.csv")
+RC <- read_csv("data/temp/RC.csv")
+RC_byseg <- read_csv("data/temp/RC_byseg.csv")
+crash_seg <- read_csv("data/temp/crash_seg.csv")
+crash_int <- read_csv("data/temp/crash_int.csv")
+
+###
 ## Compile Segment Crash & Roadway Data
 ###
 

@@ -81,6 +81,10 @@ RC <- compress_seg_len(RC, 0.1)
 # Add Segment ID Column
 RC <- RC %>% rowid_to_column("SEG_ID")
 
+# Save a csv so you don't have to run everything every time
+write_csv(RC, file = "data/temp/RC_shell_compressed.csv")
+RC <- read_csv("data/temp/RC_shell_compressed.csv")
+
 
 ###
 ## Adding Other Data

@@ -140,6 +140,9 @@ RC <- add_crash_attribute("collision_with_fixed_object", RC, crash_seg) %>%
   select(-collision_with_fixed_object_N) %>%
   rename(collision_with_fixed_object_crashes = collision_with_fixed_object_Y)
 
+# Create Parameters File
+crash_seg <- left_join(crash_seg, RC_byseg, by = c("seg_id" = "SEG_ID"))
+
 # Last Minute Changes to the Data
 
 # WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
@@ -244,6 +247,9 @@ IC <- add_crash_attribute_int("collision_with_fixed_object", IC, crash_int) %>%
   select(-collision_with_fixed_object_N) %>%
   rename(collision_with_fixed_object_crashes = collision_with_fixed_object_Y)
 
+# Create Parameters File
+crash_int <- left_join(crash_int, IC_byint, by = c("int_id" = "Int_ID"))
+
 # Last Minute Changes to the Data
 
 # WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
@@ -259,6 +265,10 @@ CAMSoutput <- paste0("data/output/CAMS_",format(Sys.time(),"%d%b%y_%H_%M"),".csv
 write_csv(RC, file = CAMSoutput)
 ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(IC, file = ISAMoutput)
+CAMSparameters <- paste0("data/output/CAMS_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
+write_csv(crash_seg, file = CAMSparameters)
+ISAMparameters <- paste0("data/output/ISAM_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
+write_csv(crash_int, file = ISAMparameters)
 
 
 # # # reset RC and IC

@@ -4,6 +4,8 @@ This repository contains files related to data preparation and report compiling 
 ## Functions
 The functions used within the R code are contained in the file called "RGUI_Functions.R". Below is a summary what each of these functions do.
 
+### Data Reading Functions
+
 ### `read_csv_file(filepath, columns)`
 This uses the dplyr function `read_csv()` to read .csv files into tibble dataframes. It takes the filepath and desired columns to keep from the .csv file as inputs. The filepath is given as a string and the list of columns is given as a list or vector. This function forces the user to make sure input dataframes contain the correct columns, else an error message will occur. For many of the dataframes in the model, it is important to list route, beginning milepoint, and ending milepoint as the first three columns in the desired columns input.
 - **filepath:** (string) filepath of the .csv file to input, including name and .csv extension
@@ -13,6 +15,9 @@ This uses the dplyr function `read_csv()` to read .csv files into tibble datafra
 This uses the sf function `read_sf()` to read .shp files into tibble dataframes. It works much the same way as `read_csv_file()`. 
 - **filepath:** (string) filepath of the .shp file to input, including name and .shp extension
 - **columns:** (list) desired columns to keep from the .shp file. The order of this list does not need to match the order of the columns in the input file.
+
+
+### Segment Cleaning Functions
 
 ### `compress_seg(df, col = colnames(df), variables = tail(col, -3))`
 This function has a similar purpose as the `unique()` function except that it accounts for the spatial nature of milepoints. If adjacent segments in a data set have the same attributes from selected columns they are combined into one segment. It takes the lower beginning milepoint of the two segments and the larger ending milepoint to combine into one longer segment.
@@ -32,6 +37,9 @@ This function ensures no milepoints of unique segments overlap. This needs to be
 This function ensures that segment lengths are not less than 0.1 of a mile, (or other user specified length). If a segment is less than the specified length then it combines with the adjacent segment that is most similar.
 - **df:** (tibble) dataframe to be compressed. must include the columns ROUTE, BEG_MP, and END_MP.
 - **len:** (double) minimum segment length to be specified.
+
+
+### AADT Functions
 
 ### `aadt_numeric(aadt, aadt.columns)`
 This function ensures AADT data type is a number not a string.
@@ -73,6 +81,9 @@ If this does not work we use one of the following....
 - **df:** (tibble) dataframe containing AADT data to be filled in.
 - **colns:** (list) list of columns to consider.
 
+
+### LRS Correction Functions
+
 ### `neg_to_pos_routes(df, rtes, divd)`
 Merge divided negative routes into positive routes for the full data set only. This is still a work in progress. Right now it's just a copy of the aadt_neg function because it will need to do the same thing in reverse essentially. This may need to be done because it seems like we are only given positive routes in the intersection file. We are still waiting for more clarification from UDOT. (update: There isn't a significant need for this. This was going to be used for the intersection dataframe, IC, but our current methodology is more streamlined and doesn't require as much data.)
 
@@ -80,4 +91,28 @@ Merge divided negative routes into positive routes for the full data set only. T
 Fixes the last ending milepoints (This is also a backchecker for the input files). Since our input datasets are apparently on different LRS's, the milepoints on one file don't match up with another file for the same route. This function does not convert the LRS, because that is not feasible to do without ArcGIS, but it does make sure at least the last milepoint of the route matches across all datasets to prevent the creation of nonexistent segments. Unfortunately, THIS DOES NOT FIX THE UNDERLYING PROBLEM, but it will still be useful when all input datasets are on the same LRS, because it will correct any slight differences that exist, perhaps due to rounding. In the meantime, it is also useful for identifying routes where the LRS is significantly different so we can pay special attention to those routes. (update: the input files are on the same LRS now, but this is still a very useful function.)
 - **df:** (tibble) dataframe to be fixed. must include the columns ROUTE, BEG_MP, and END_MP.
 - **routes:** (tibble) dataframe containing routes data.
+
+
+### Segmentation Functions
+
+### `segment_breaks(sdtm)`
+Created by statistics students for a separate project. Get all measurements where a road segment stops or starts
+
+### `shell_creator(sdtms)`
+Created by statistics students for a separate project. This function is robust to data missing for segments of road presumed to exist (such as within the bounds of other declared road segments) where there is no data. This mostly seems to happen when a road changes hands (state road to interstate, or state to city road, or something like that).
+
+### `shell_join(sdtm)`
+Created by statistics students for a separate project. This segment of the program is essentially reconstructing a SAS DATA step with a RETAIN statement to populate through rows. We start by left joining the shell to each sdtm dataset and populating through all the records whose union is the space interval we have data on. We then get rid of the original START_ACCUM, END_ACCUM variables, since startpoints, endpoints have all the information we need.
+
+
+### Join Functions
+
+### `add_crash_attribute(att_name, segs, csh, return_max_min = FALSE)`
+This function combines crash data to roadway segment data. There needs to be a column for segment id in the crash file which we take care of in the  "RGUI_Compile.R" script. Then, we pivot wider the point crash data so that it makes more sense in the context of segments.
+- **att_name:** (string) name of crash attribute to join.
+- **segs:** (tibble) segment dataframe to join to.
+- **csh:** (tibble) crash dataframe to pull crash attribute from.
+- **return_max_min:** (boolean) Does the crash attribute need to be added as a max/min variable or a single value?
+
+
 

@@ -69,7 +69,7 @@ for(i in 1:nrow(crash)){
       # Redefine Row to Entire Route
       if(length(row) > 0){
         # print(paste("ID #",crash$crash_id[i]))
-        closest <- 100
+        closest <- 1000000
         closest_row <- NA
         for(k in 1:length(row)){                    
           # If Which Returns Multiple Intersections, Returns the Closest
@@ -80,10 +80,26 @@ for(i in 1:nrow(crash)){
             closest_row <- row[k]
           }
         }
-        # print(paste(FA$Int_ID[closest_row],FA$MP[closest_row]))
-        if(!is.na(closest_row)){
+        # find distance from FA of closest intersection
+        d1 <- abs(mp - FA$BEG_MP[closest_row])
+        d2 <- abs(mp - FA$END_MP[closest_row])
+        offst <- min(d1,d2)
+        # remove crash from analysis if unknown error occurred
+        # remove crash from analysis if distance from FA is too great
+        # assign intersection id to crash otherwise.
+        if(is.na(closest_row)){
+          crash$int_id[i] <- "UNKNOWN"
+          warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. Unknown error."))
+        } else if(offst > 0.002){
+          crash$int_id[i] <- "DNE"
+          warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. FA error."))
+        } else{
           crash$int_id[i] <- FA$Int_ID[closest_row]
         }
+      # remove crash from analysis if there are no intersections on the route
+      } else{
+        crash$int_id[i] <- "DNE_route"
+        warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. Route error."))
       }
     }
   }
@@ -94,6 +110,7 @@ crash_seg <- crash %>% filter(is.na(int_id)) %>% select(-int_related,-int_id)
 crash_int <- crash %>% filter(!is.na(int_id)) %>% select(-int_related)
 
 # Save a csv so you don't have to run everything every time
+write_csv(crash, file = "data/temp/crash.csv")
 write_csv(crash_seg, file = "data/temp/crash_seg.csv")
 write_csv(crash_int, file = "data/temp/crash_int.csv")
 

@@ -521,17 +521,17 @@ intersection <- subset(intersection, !(Int_ID %in% excludedids))
 # Find Number of Unique primary Routes in intersections File
 num_intersection_routes <- intersection %>% pull(INT_RT_0) %>% unique() %>% length()
 
-# Filter SR_SR, Fed_Aid, and Signalized
-intersection <- intersection %>%
-  filter(
-    SR_SR == "YES" | 
-    TRAFFIC_CO == "SIGNAL" | 
-    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_0)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_1)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_2)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_3)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
-    as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_4)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes))
-  )
+# # Filter SR_SR, Fed_Aid, and Signalized
+# intersection <- intersection %>%
+#   filter(
+#     SR_SR == "YES" | 
+#     TRAFFIC_CO == "SIGNAL" | 
+#     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_0)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+#     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_1)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+#     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_2)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+#     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_3)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes)) |
+#     as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_4)) %in% as.integer(gsub(".*?([0-9]+).*", "\\1", fed_routes))
+#   )
 
 # Ensure Intersection IDs are Unique
 intersection <- intersection %>% arrange(Int_ID)

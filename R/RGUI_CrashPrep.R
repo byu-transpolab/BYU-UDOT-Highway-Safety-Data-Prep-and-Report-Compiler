@@ -90,7 +90,7 @@ for(i in 1:nrow(crash)){
         if(is.na(closest_row)){
           crash$int_id[i] <- "UNKNOWN"
           warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. Unknown error."))
-        } else if(offst > 0.002){
+        } else if(offst > 0.01){
           crash$int_id[i] <- "DNE"
           warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. FA error."))
         } else{
@@ -113,4 +113,5 @@ crash_int <- crash %>% filter(!is.na(int_id)) %>% select(-int_related)
 write_csv(crash, file = "data/temp/crash.csv")
 write_csv(crash_seg, file = "data/temp/crash_seg.csv")
 write_csv(crash_int, file = "data/temp/crash_int.csv")
+
 

@@ -63,7 +63,7 @@ urban_col <- c("ROUTE_ID",
                "TO_MEASURE",
                "URBAN_CODE")
 
-intersection_fp <- "data/csv/Intersections_CleanedRouteNames.csv"
+intersection_fp <- "data/csv/Intersections_Vol_MEV_2016_2020_9722_with_mps_&_89_fix.csv"
 intersection_col <- c("ROUTE",
                       "INT_RT_1",
                       "INT_RT_2",

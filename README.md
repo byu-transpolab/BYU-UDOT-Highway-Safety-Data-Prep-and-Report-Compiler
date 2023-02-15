@@ -88,7 +88,7 @@ If this does not work we use one of the following....
 Merge divided negative routes into positive routes for the full data set only. This is still a work in progress. Right now it's just a copy of the aadt_neg function because it will need to do the same thing in reverse essentially. This may need to be done because it seems like we are only given positive routes in the intersection file. We are still waiting for more clarification from UDOT. (update: There isn't a significant need for this. This was going to be used for the intersection dataframe, IC, but our current methodology is more streamlined and doesn't require as much data.)
 
 ### `fix_endpoints(df, routes)`
-Fixes the last ending milepoints (This is also a backchecker for the input files). Since our input datasets are apparently on different LRS's, the milepoints on one file don't match up with another file for the same route. This function does not convert the LRS, because that is not feasible to do without ArcGIS, but it does make sure at least the last milepoint of the route matches across all datasets to prevent the creation of nonexistent segments. Unfortunately, THIS DOES NOT FIX THE UNDERLYING PROBLEM, but it will still be useful when all input datasets are on the same LRS, because it will correct any slight differences that exist, perhaps due to rounding. In the meantime, it is also useful for identifying routes where the LRS is significantly different so we can pay special attention to those routes. (update: the input files are on the same LRS now, but this is still a very useful function.)
+Fixes the last ending milepoints (This is also a backchecker for the input files). Since our input datasets are apparently on different LRS's, the milepoints on one file don't match up with another file for the same route. This function does not convert the LRS, because that is not feasible to do without ArcGIS, but it does make sure at least the last milepoint of the route matches across all datasets to prevent the creation of nonexistent segments. Unfortunately, THIS DOES NOT FIX THE UNDERLYING PROBLEM, but it will still be useful when all input datasets are on the same LRS, because it will correct any slight differences that exist, perhaps due to rounding. In the meantime, it is also useful for identifying routes where the LRS is significantly different so we can pay special attention to those routes. (**Update:** the input files are on the same LRS now, but this is still a very useful function.)
 - **df:** (tibble) dataframe to be fixed. must include the columns ROUTE, BEG_MP, and END_MP.
 - **routes:** (tibble) dataframe containing routes data.
 
@@ -112,7 +112,22 @@ This function combines crash data to roadway segment data. There needs to be a c
 - **att_name:** (string) name of crash attribute to join.
 - **segs:** (tibble) segment dataframe to join to.
 - **csh:** (tibble) crash dataframe to pull crash attribute from.
-- **return_max_min:** (boolean) Does the crash attribute need to be added as a max/min variable or a single value?
+- **return_max_min:** (boolean) Does the crash attribute need to be added as max/min/avg variables? The default is to create a column for each possible value and tally the number of crashes where that outcome occured at each segment. However, sometimes max/min/avg is better for more quantitative variables such as number of vehicles involved in a crash.
+
+### `add_crash_attribute_int(att_name, ints, csh, return_max_min = FALSE)`
+This is essentially the same as "add_crash_attribute" but uses intersection variables instead. We could easily consolidate these into one function by adding additional parameters or conditions if we wanted to.
+- **att_name:** (string) name of crash attribute to join.
+- **ints:** (tibble) intersection dataframe to join to.
+- **csh:** (tibble) crash dataframe to pull crash attribute from.
+- **return_max_min:** (boolean) Does the crash attribute need to be added as max/min/avg variables? The default is to create a column for each possible value and tally the number of crashes where that outcome occured at each intersection. However, sometimes max/min/avg is better for more quantitative variables such as number of vehicles involved in a crash.
+
+### `add_medians(RC, median, min_portion = 0)`
+Since medians are not a segmenting variable, but still need to be added to segment data, we needed a different process to add them in. This process could be adapted to work for shoulders and other non segmenting segment data if we want to, but we already coded most of that into the "RGUI_RoadwayPrep.R" script. This function works by determining the most prevalent median type along the segment. It also creates a new column for each median type on the segments dataset and marks whether that median is present on the segment with a 1 or a 0. (*Note:* This function is not very robust to changes in the input data. If a new medians file is used, this function may need to be improved.)
+- **RC:** (tibble) segments dataframe to join to.
+- **median:** (tibble) medians dataframe to join from.
+- **min_portion:** (double) minimum allowable ratio of median length to segment length. This way, medians which take only a small portion of the segment aren't used to describe the segment.
+
+### `add_int_att(int, att, is_aadt, is_fc)`
 
 
 

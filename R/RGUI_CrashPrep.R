@@ -45,7 +45,7 @@ for(i in 1:nrow(crash)){
   row <- which(FA$ROUTE == rt &
                  FA$BEG_MP < mp &
                  FA$END_MP > mp)
-  if(length(row) > 0 | crash$intersection_related[i] == "Y"){
+  if(length(row) > 0 & crash$intersection_related[i] == "Y"){
     crash$int_related[i] <- TRUE
     if(length(row) > 0){
       # Identify Intersection IDs
@@ -62,7 +62,15 @@ for(i in 1:nrow(crash)){
           closest_row <- row[k]
         }
       }
-      crash$int_id[i] <- FA$Int_ID[closest_row]     
+      crash$int_id[i] <- FA$Int_ID[closest_row]   
+      
+      
+      
+      
+    # NOTICE: SINCE WE NOW ARE USING AND & INSTEAD OF AN | THE CODE UNDER THIS 
+    # ELSE STATEMENT WILL NEVER RUN. IF WE EVER WENT BACK TO AN | STATEMENT THIS
+    # CODE WILL BE USEFUL. RIGHT NOW, CRASHES ASSIGNED AS "INTERSECTION_RELATED"
+    # BUT OUTSIDE AN FA WILL BE ASSIGNED TO SEGMENTS.
     } else{                                      
       # Figure Out Closest Intersection if Crash is not within a Functional Area
       row <- which(FA$ROUTE == rt)      
@@ -90,7 +98,8 @@ for(i in 1:nrow(crash)){
         if(is.na(closest_row)){
           crash$int_id[i] <- "UNKNOWN"
           warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. Unknown error."))
-        } else if(offst > 0.01){
+        # buffer the FA to include "intersection_related" crashes close to FA (buffer currently set to zero.)
+        } else if(offst > 0){ 
           crash$int_id[i] <- "DNE"
           warning(paste("Crash", crash$crash_id[i], "could not be assigned to a segment or intersection. FA error."))
         } else{

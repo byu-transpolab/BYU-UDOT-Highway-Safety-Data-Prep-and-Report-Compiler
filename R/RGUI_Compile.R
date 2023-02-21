@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(dplyr)
+library(openxlsx)
 
 ###
 ## Read in temp files
@@ -143,6 +144,88 @@ RC <- add_crash_attribute("collision_with_fixed_object", RC, crash_seg) %>%
 # Create Parameters File
 crash_seg <- left_join(crash_seg, RC_byseg, by = c("seg_id" = "SEG_ID"))
 
+# Conform Parameters File to necessary formatting
+param_seg <- crash_seg %>%
+  mutate(
+    ROUTE_ID = as.integer(gsub(".*?([0-9]+).*", "\\1", route)),
+    ramp_id = ifelse(ramp_id == 0, NA, ramp_id),
+    route = substr(route, 1, 5)
+  ) %>%
+select(
+  SEG_ID = seg_id,
+  CRASH_ID = crash_id,
+  CRASH_DATETIME = crash_datetime, #needs reformatting in excel
+  ROUTE_ID, #just the numeric portion
+  DIRECTION = route_direction,
+  LABEL = route, #remove the M
+  RAMP_ID = ramp_id, #convert zeros to blanks
+  MILEPOINT = milepoint,
+  LATITUDE = lat,
+  LONGITUDE = long,
+  (number_vehicles_involved:collision_with_fixed_object),
+  (crash_severity_id:roadway_contrib_circum_id),
+  first_harmful_event_id
+  # NUMBER_VEHICLES_INVOLVED = number_vehicles_involved,
+  # NUMBER_FATALITIES = number_fatalities,
+  # NUMBER_FOUR_INJURIES = number_four_injuries,
+  # NUMBER_THREE_INJURIES = number_three_injuries,
+  # NUMBER_TWO_INJURIES = number_two_injuries,
+  # NUMBER_ONE_INJURIES = number_one_injuries,
+  # PEDESTRIAN_INVOLVED = pedestrian_involved,
+  # BICYCLIST_INVOLVED = pedalcycle_involved,
+  # MOTORCYCLE_INVOLVED = motorcycle_involved,
+  # # IMPROPER_RESTRAINT = , #not in the current dataset
+  # UNRESTRAINED = unrestrained,
+  # DUI = dui,
+  # AGGRESSIVE_DRIVING = aggressive_driving,
+  # DISTRACTED_DRIVING = distracted_driving,
+  # DROWSY_DRIVING = drowsy_driving,
+  # SPEED_RELATED = speed_related,
+  # INTERSECTION_RELATED = intersection_related,
+  # ADVERSE_WEATHER = adverse_weather,
+  # ADVERSE_ROADWAY_SURF_CONDITION = adverse_roadway_surf_condition,
+  # ROADWAY_GEOMETRY_RELATED = roadway_geometry_related,
+  # WILD_ANIMAL_RELATED = wild_animal_related,
+  # DOMESTIC_ANIMAL_RELATED = domestic_animal_related,
+  # ROADWAY_DEPARTURE = roadway_departure,
+  # OVERTURN_ROLLOVER = overturn_rollover,
+  # COMMERCIAL_MOTOR_VEH_INVOLVED = commercial_motor_veh_involved,
+  # INTERSTATE_HIGHWAY = interstate_highway,
+  # TEENAGE_DRIVER_INVOLVED = ,
+  # OLDER_DRIVER_INVOLVED = ,
+  # URBAN_COUNTY = ,
+  # ROUTE_TYPE = ,
+  # NIGHT_DARK_CONDITION = ,
+  # SINGLE_VEHICLE = ,
+  # TRAIN_INVOLVED = ,
+  # RAILROAD_CROSSING = ,
+  # TRANSIT_VEHICLE_INVOLVED = ,
+  # COLLISION_WITH_FIXED_OBJECT = collision_with_fixed_object,
+  # CRASH_SEVERITY_ID = crash_severity_id,
+  # LIGHT_CONDITION_ID = ,
+  # WEATHER_CONDITION_ID = ,
+  # MANNER_COLLISION_ID = ,
+  # # PAVEMENT_ID = , #Not in current dataset
+  # ROADWAY_SURF_CONDITION_ID = ,
+  # ROADWAY_JUNCT_FEATURE_ID = ,
+  # # WORK_ZONE_RELATED_YNU = , #Not in current dataset
+  # # WORK_ZONE_WORKER_PRESENT_YNU = , #Not in current dataset
+  # HORIZONTAL_ALIGNMENT_ID = ,
+  # VERTICAL_ALIGNMENT_ID = ,
+  # ROADWAY_CONTRIB_CIRCUM_ID = roadway_contrib_circum_id,
+  # FIRST_HARMFUL_EVENT_ID = first_harmful_event_id
+  # # VEHICLE_NUM = , #We haven't written code to join vehicle data to crash data
+  # # TRAVEL_DIRECTION_ID = , #We haven't written code to join vehicle data to crash data
+  # # EVENT_SEQUENCE_1_ID = , #We haven't written code to join vehicle data to crash data
+  # # EVENT_SEQUENCE_2_ID = , #We haven't written code to join vehicle data to crash data
+  # # EVENT_SEQUENCE_3_ID = , #We haven't written code to join vehicle data to crash data
+  # # EVENT_SEQUENCE_4_ID = , #We haven't written code to join vehicle data to crash data
+  # # MOST_HARMFUL_EVENT_ID = , #We haven't written code to join vehicle data to crash data
+  # # VEHICLE_MANEUVER_ID = , #We haven't written code to join vehicle data to crash data
+  # # VEHICLE_DETAIL_ID =  #We haven't written code to join vehicle data to crash data
+) %>%
+  arrange(LABEL, MILEPOINT)
+
 # Last Minute Changes to the Data
 
 # WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
@@ -250,6 +333,30 @@ IC <- add_crash_attribute_int("collision_with_fixed_object", IC, crash_int) %>%
 # Create Parameters File
 crash_int <- left_join(crash_int, IC_byint, by = c("int_id" = "Int_ID"))
 
+# Conform Parameters File to necessary formatting
+param_int <- crash_int %>%
+  mutate(
+    ROUTE_ID = as.integer(gsub(".*?([0-9]+).*", "\\1", route)),
+    ramp_id = ifelse(ramp_id == 0, NA, ramp_id),
+    route = substr(route, 1, 5)
+  ) %>%
+  select(
+    INT_ID = int_id,
+    CRASH_ID = crash_id,
+    CRASH_DATETIME = crash_datetime, #needs reformatting in excel
+    (number_vehicles_involved:collision_with_fixed_object),
+    (crash_severity_id:roadway_contrib_circum_id),
+    first_harmful_event_id,
+    ROUTE_ID, #just the numeric portion
+    LABEL = route, #remove the M
+    DIRECTION = route_direction,
+    RAMP_ID = ramp_id, #convert zeros to blanks
+    MILEPOINT = milepoint,
+    LATITUDE = lat,
+    LONGITUDE = long
+  ) %>%
+  arrange(LABEL, MILEPOINT)
+
 # Last Minute Changes to the Data
 
 # WARNING: MAKE SURE THIS DOESN'T REMOVE IMPORTANT INFORMATION
@@ -265,11 +372,33 @@ CAMSoutput <- paste0("data/output/CAMS_",format(Sys.time(),"%d%b%y_%H_%M"),".csv
 write_csv(RC, file = CAMSoutput)
 ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(IC, file = ISAMoutput)
-CAMSparameters <- paste0("data/output/CAMS_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
-write_csv(crash_seg, file = CAMSparameters)
-ISAMparameters <- paste0("data/output/ISAM_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
-write_csv(crash_int, file = ISAMparameters)
 
+# Paste header details into parameter files
+param_header_seg <- tibble(c("Severities", "Functional Area Definition", "Selected Years:"),
+                           c(12345, "UDOT", "2016-2020"))
+param_header_int <- tibble(c("Severities", "Functional Area Type", "Selected Years:"),
+                           c(12345, "UDOT", "2016-2020"))
+
+# Determine filepath for parameter files
+CAMSparameters <- paste0("data/output/CAMS_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+ISAMparameters <- paste0("data/output/ISAM_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+
+# Save parameters workbooks
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = "Parameters")
+
+writeData(wb, sheet = 1, x = param_header_seg, startRow = 1, colNames = FALSE, rowNames = FALSE)
+writeData(wb, sheet = 1, x = param_seg, startRow = 4, colNames = TRUE)
+
+saveWorkbook(wb, file = CAMSparameters)
+
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = "Parameters")
+
+writeData(wb, sheet = 1, x = param_header_int, startRow = 1, colNames = FALSE, rowNames = FALSE)
+writeData(wb, sheet = 1, x = param_int, startRow = 4, colNames = TRUE)
+
+saveWorkbook(wb, file = ISAMparameters)
 
 # # # reset RC and IC
 # RC <- RC %>% select(SEG_ID:CUTRK)

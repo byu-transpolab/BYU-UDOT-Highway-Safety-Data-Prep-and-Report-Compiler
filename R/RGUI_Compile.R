@@ -370,14 +370,18 @@ param_int <- crash_int %>%
 
 CAMSoutput <- paste0("data/output/CAMS_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(RC, file = CAMSoutput)
+write_csv(RC, "data/temp/CAMS.csv")
 ISAMoutput <- paste0("data/output/ISAM_",format(Sys.time(),"%d%b%y_%H_%M"),".csv")
 write_csv(IC, file = ISAMoutput)
+write_csv(IC, "data/temp/ISAM.csv")
 
 # Paste header details into parameter files
+latest_year <- max(IC$YEAR) # finds latest year
+earliest_year <- min(IC$YEAR) # finds earliest year
 param_header_seg <- tibble(c("Severities", "Functional Area Definition", "Selected Years:"),
-                           c(12345, "UDOT", "2016-2020"))
+                           c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
 param_header_int <- tibble(c("Severities", "Functional Area Type", "Selected Years:"),
-                           c(12345, "UDOT", "2016-2020"))
+                           c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
 
 # Determine filepath for parameter files
 CAMSparameters <- paste0("data/output/CAMS_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")

@@ -1598,3 +1598,13 @@ left_join_fill <- function(x, y, by, fill = 0L, ...){
   return(z)
 }
 
+# Dynamic user input function pulled from https://stackoverflow.com/questions/27112370/make-readline-wait-for-input-in-r
+user.input <- function(prompt) {
+  if (interactive()) {
+    return(readline(prompt))
+  } else {
+    cat(prompt)
+    return(readLines("stdin", n=1))
+  }
+}
+

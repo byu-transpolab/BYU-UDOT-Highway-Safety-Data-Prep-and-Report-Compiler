@@ -651,6 +651,7 @@ BEG_MP <- NA
 END_MP <- NA
 MP <- NA
 Int_ID <- NA
+PRIMARY <- NA
 row <- 0
 for(i in 1:nrow(intersection)){
   id <- intersection[["Int_ID"]][i]
@@ -670,12 +671,14 @@ for(i in 1:nrow(intersection)){
       END_MP[row] <- mp + (fa/5280)
       MP[row] <- mp
       Int_ID[row] <- id
+      if(j==0){PRIMARY[row] <- TRUE}
+      else{PRIMARY[row] <- FALSE}
     }
   }
 }
 
 # Create Functional Area Table
-FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID) %>% unique()
+FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID, PRIMARY) %>% unique()
 
 
 ###
@@ -833,7 +836,7 @@ schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
 ###
 
 # Check FA for errors in the data
-allowable_error <- 50  # allowable error in feet
+allowable_error <- 10  # allowable error in feet
 FA <- FA %>%
   group_by(Int_ID, ROUTE) %>%
   mutate(flag = ifelse(abs(max(MP)-min(MP)) > allowable_error/5280, TRUE, FALSE)) %>%
@@ -844,9 +847,14 @@ FA_errors <- FA %>%
   select(Int_ID, flag) %>%
   unique()
 num_errors <- length(FA_errors$flag)
+# Delete split FA on secondary routes
+FA <- FA %>% 
+  mutate(delete = ifelse(flag==TRUE & PRIMARY==FALSE,TRUE,FALSE)) %>%
+  filter(delete==FALSE) %>%
+  select(-delete)
 # Display FA warning
 if(num_errors>0){
-  print(paste0("WARNING: There are ",num_errors," intersections with split functional areas over ",allowable_error," feet apart."))
+  print(paste0("WARNING: There are ",num_errors," intersections with split functional areas over ",allowable_error," feet apart. Defaulting to Primary route milepoints."))
   resp <- user.input(prompt="Would you like to see the ID's for these intersections? (Y/N)")
   # Ask user if they want to see the faulty intersections. This is important
   # because it calls attention to the issue. The user can't ignore this warning.
@@ -854,3 +862,5 @@ if(num_errors>0){
     print(FA_errors$Int_ID)
   } 
 }
+
+

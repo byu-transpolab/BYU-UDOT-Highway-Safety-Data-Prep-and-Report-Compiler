@@ -404,6 +404,9 @@ num_speed_routes <- speed %>% pull(ROUTE) %>% unique() %>% length()
 # Fix Endpoints
 speed <- fix_endpoints(speed, routes)
 
+# Get Only State Routes
+speed <- speed %>% filter(ROUTE %in% substr(state_routes, 1, 6))
+
 
 ###
 ## Lanes Data Prep
@@ -855,12 +858,12 @@ FA <- FA %>%
 # Display FA warning
 if(num_errors>0){
   print(paste0("WARNING: There are ",num_errors," intersections with split functional areas over ",allowable_error," feet apart. Defaulting to Primary route milepoints."))
-  resp <- user.input(prompt="Would you like to see the ID's for these intersections? (Y/N)")
-  # Ask user if they want to see the faulty intersections. This is important
-  # because it calls attention to the issue. The user can't ignore this warning.
-  if(tolower(resp) == "y" | tolower(resp) == "yes"){
-    print(FA_errors$Int_ID)
-  } 
+  # resp <- user.input(prompt="Would you like to see the ID's for these intersections? (Y/N)")
+  # # Ask user if they want to see the faulty intersections. This is important
+  # # because it calls attention to the issue. The user can't ignore this warning.
+  # if(tolower(resp) == "y" | tolower(resp) == "yes"){
+  #   print(FA_errors$Int_ID)
+  # } 
 }
 
 

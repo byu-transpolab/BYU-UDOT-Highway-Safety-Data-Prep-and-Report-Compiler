@@ -13,7 +13,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 if (!require("pacman")) install.packages("pacman")
 # pacman must already be installed; then load contributed
 # packages (including pacman) with pacman
-pacman::p_load(magrittr, pacman, tidyverse, sf, reticulate)
+pacman::p_load(magrittr, pacman, tidyverse, sf, reticulate, openxlsx)
 
 source("R/RGUI_Functions.R")
 source("R/RGUI_ReadIn.R")

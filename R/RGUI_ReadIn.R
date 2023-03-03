@@ -842,22 +842,29 @@ schools <- read_sf("data/shapefile/Utah_Schools_PreK_to_12.shp") %>%
 allowable_error <- 10  # allowable error in feet
 FA <- FA %>%
   group_by(Int_ID, ROUTE) %>%
-  mutate(flag = ifelse(abs(max(MP)-min(MP)) > allowable_error/5280, TRUE, FALSE)) %>%
+  mutate(flag = ifelse(abs(max(MP)-min(MP)) > allowable_error/5280, 1, 0)) %>%
   ungroup()
 # Count FA errors
 FA_errors <- FA %>%
-  filter(flag==TRUE) %>%
+  filter(flag==1) %>%
   select(Int_ID, flag) %>%
   unique()
 num_errors <- length(FA_errors$flag)
-# Delete split FA on secondary routes
+# Delete split FA on secondary approach for primary route
 FA <- FA %>% 
-  mutate(delete = ifelse(flag==TRUE & PRIMARY==FALSE,TRUE,FALSE)) %>%
+  mutate(delete = ifelse(flag==1 & PRIMARY==FALSE,TRUE,FALSE)) %>%
   filter(delete==FALSE) %>%
+  select(-delete)
+# Check for split FA on secondary routes (choose the minimum MP if this happens)
+FA <- FA %>%
+  group_by(Int_ID, ROUTE) %>%
+  mutate(delete = ifelse(sum(flag)>1,TRUE,FALSE),
+         MP = ifelse(delete==TRUE,min(MP),MP)) %>%
+  ungroup() %>%
   select(-delete)
 # Display FA warning
 if(num_errors>0){
-  print(paste0("WARNING: There are ",num_errors," intersections with split functional areas over ",allowable_error," feet apart. Defaulting to Primary route milepoints."))
+  print(paste0("WARNING: There are ",num_errors," intersections with split functional areas over ",allowable_error," feet apart. Defaulting to Primary approach milepoints for primary routes and minimum milepoints for secondary routes."))
   # resp <- user.input(prompt="Would you like to see the ID's for these intersections? (Y/N)")
   # # Ask user if they want to see the faulty intersections. This is important
   # # because it calls attention to the issue. The user can't ignore this warning.
@@ -865,5 +872,6 @@ if(num_errors>0){
   #   print(FA_errors$Int_ID)
   # } 
 }
+
 
 

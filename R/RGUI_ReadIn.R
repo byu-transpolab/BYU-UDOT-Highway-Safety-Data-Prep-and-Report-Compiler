@@ -75,6 +75,7 @@ intersection_col <- c("ROUTE",
                       "INT_RT_3_M",
                       "INT_RT_4_M",
                       "OBJECTID_1",
+                      "MANDLI_ID",
                       "Group_",
                       "INT_TYPE",
                       "TRAFFIC_CO",
@@ -82,8 +83,8 @@ intersection_col <- c("ROUTE",
                       "SR_SR",
                       "STATION",
                       "REGION",
-                      "BEG_LONG",
-                      "BEG_LAT",
+                      "long_text",
+                      "lat_text",
                       "BEG_ELEV",
                       "IntVol2020",
                       "IntVol2019",
@@ -494,7 +495,7 @@ intersection <- read_csv_file(intersection_fp, intersection_col)
 # int_mp <- read_csv_file(int_mp_fp, int_mp_col)
 
 # Standardize Column Names
-names(intersection)[c(1,6,11,12)] <- c("INT_RT_0", "INT_RT_0_M", "Int_ID", "INT_DESC")
+names(intersection)[c(1,6,11,13)] <- c("INT_RT_0", "INT_RT_0_M", "Int_ID", "INT_DESC")
 
 # Organize Columns
 intersection <- intersection %>% select(Int_ID:BEG_ELEV, everything()) %>%
@@ -682,6 +683,65 @@ for(i in 1:nrow(intersection)){
 
 # Create Functional Area Table
 FA <- tibble(ROUTE, BEG_MP, END_MP, MP, Int_ID, PRIMARY) %>% unique()
+
+# Load Intersections shapefile
+intersection_sf <- read_sf("data/shapefile/Intersections_MEV_2016_2020.shp") %>%
+  st_transform(crs = 4326) %>%
+  select(MANDLI_ID) %>%
+  mutate(
+    long = st_coordinates(.)[,1],
+    lat = st_coordinates(.)[,2],
+    long_text = round(long, 6),
+    lat_text = round(lat, 6)
+  ) %>%
+  st_drop_geometry()
+
+# Join higher precision lat long data to intersections dataset
+intersection <- left_join(intersection, intersection_sf, by = c("MANDLI_ID", "long_text", "lat_text"))
+
+# delete joined intersections from sf dataset
+intersection_sf <- left_join(
+  intersection_sf, 
+  select(intersection,Int_ID,long_text,lat_text), 
+  by = c("long_text", "lat_text")
+  ) %>%
+  filter(is.na(Int_ID)) %>%
+  select(long, lat)
+
+# Find the remaining lat long data
+err <- 0
+for(i in 1:nrow(intersection)){
+  if(is.na(intersection$lat[i])){
+    lat <- intersection$lat_text[[i]]
+    long <- intersection$long_text[[i]]
+    closest_lat <- 0
+    closest_long <- 0
+    closest_dist <- 100
+    # loop through sf file. If lat long is close, assign precise lat long
+    for(j in 1:nrow(intersection_sf)){
+      lat_prec <- intersection_sf$lat[[j]]
+      long_prec <- intersection_sf$long[[j]]
+      dist <- sqrt((lat-lat_prec)^2+(long-long_prec)^2)
+      if(dist < closest_dist){
+        closest_dist <- dist
+        closest_lat <- lat_prec
+        closest_long <- long_prec
+      }
+    }
+    # make sure distance apart isn't too great 
+    # (The distance below equates to about 300-400 ft which is 
+    # unfortunately the best accuracy we get with 3 decimal places.)
+    if(closest_dist <= sqrt(.001^2+.001^2)){
+      intersection$lat[i] <- closest_lat
+      intersection$long[i] <- closest_long
+    } else{
+      err <- err + 1
+      intersection$lat[i] <- intersection$lat_text[i]
+      intersection$long[i] <- intersection$long_text[i]
+    }
+  }
+}
+if(err>0){print(paste0("WARNING: ",err," intersections couldn't be made more precise."))}
 
 
 ###

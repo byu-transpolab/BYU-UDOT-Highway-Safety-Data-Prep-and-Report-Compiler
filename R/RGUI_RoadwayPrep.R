@@ -436,7 +436,7 @@ for(i in 1:nrow(IC)){
 # Add spatial data
 IC <- IC %>%
   st_as_sf(
-    coords = c("BEG_LONG", "BEG_LAT"), 
+    coords = c("long", "lat"), 
     crs = 4326,
     remove = F) %>%
   st_transform(crs = 26912)

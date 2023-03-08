@@ -352,8 +352,8 @@ param_int <- crash_int %>%
     DIRECTION = route_direction,
     RAMP_ID = ramp_id, #convert zeros to blanks
     MILEPOINT = milepoint,
-    LATITUDE = lat,
-    LONGITUDE = long
+    LATITUDE = lat.x,
+    LONGITUDE = long.x
   ) %>%
   arrange(LABEL, MILEPOINT)
 

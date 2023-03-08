@@ -976,9 +976,9 @@ add_crash_attribute_int <- function(att_name, ints, csh, return_max_min){
       select(-!!att_name) %>%
       unique()
   }
-  # join to segments
+  # join to intersection
   ints <- left_join_fill(ints, csh, by = c("Int_ID"="int_id", "YEAR"="crash_year"), fill = 0L)
-  # return segments
+  # return intersection
   return(ints)
 }
 

@@ -127,7 +127,49 @@ Since medians are not a segmenting variable, but still need to be added to segme
 - **median:** (tibble) medians dataframe to join from.
 - **min_portion:** (double) minimum allowable ratio of median length to segment length. This way, medians which take only a small portion of the segment aren't used to describe the segment.
 
-### `add_int_att(int, att, is_aadt, is_fc)`
+### `add_int_att(int, att, is_aadt = FALSE, is_fc = FALSE)`
+Since there is no segmenting process for intersections, all roadway variables need to be added in afterwards from different datasets. We created different datasets with the suffix "_full" to indicate that these contain all available data from various routes, including non-state routes. We need this because our intersections dataset includes state routes that intersect with non-state routes. This is probably our longest function because it needs to account for a wide variety of different conditions and parameters. However, it uses a general process that works well for most input datasets. It creates columns for route 1, 2, 3, 4, and 5 as well as columns for min, max, and average. it is up to the function user to decide which of these columns they will keep for the specific application, or if they will use the resulting columns for additional analysis. However, this process falls short with the functional class and AADT inputs. For functional class, there are some routes listed on the intersection as "local". Although we don't know what route these are, we do know the functional class is "local", so there is a condition that checks for functional class and makes sure "local" is included. For AADT, we use an entirely different process because we need to estimate missing AADT where there is no route number given, and we need to combine the AADT and truck data in such a way that we get total entering vehicles instead. There is a condition in this function that checks for AADT and runs additional analysis if the input dataset is AADT.
+(**Update:** The latest intersection file has entering vehicles so we don't use the AADT data anymore. We still use trucks from the AADT data though.)
+- **int:** (tibble) intersection dataframe to join to.
+- **att:** (tibble) roadway attribute dataframe to join from.
+- **is_aadt:** (boolean) is att the AADT dataframe?
+- **is_fc:** (boolean) is att the functional class dataframe?
+
+### `expand_int_att <- function(IC, att, all_legs = TRUE)`
+This function may be used in conjunction with add_int_att to perform additional analysis. It uses the pivot functions to create new columns for each roadway attribute type (e.g. the types on functional class are "local", "interstate", "arterial", etc...). This is often a preferable format for statistical analysis. It also removes the need to have different columns for each approach at the intersection.
+- **IC:** (tibble) intersection dataframe to expand.
+- **att:** (string) name of the roadway attribute within the dataframe to expand.
+- **all_legs:** (boolean) is there only one column or a column for each intersection leg?
+
+### `mod_intersections <- function(intersections, UTA_Stops, schools)`
+Modify intersections to include bus stops and schools near intersections This function uses R's geospatial capabilities within the "sf" package to combine transit and school data to intersections. It uses a spatial buffer and spatial intersect to determine how many and which type of transit stops and schools are within 1000 feet from the intersection.
+(**Note:** The UTA stops and schools files need to be buffered before using this function.)
+- **intersections:** (tibble) intersection dataframe to join to.
+- **UTA_Stops:** (tibble) buffered UTA stops dataframe to join.
+- **schools:** (tibble) buffered schools dataframe to join.
 
 
+### Additional Interpolation / Data Cleaning Functions
 
+### `fill_all_missing <- function(df, missing, rt_col, subsetting_var, subset_vars)`
+This function simply looks through a list of columns and fills in missing data with data from adjacent segments or intersections
+- **df:** (tibble) dataframe to fill missing values for.
+- **missing:** (string list) list of columns which contain missing data.
+- **rt_col:** (string) name of the column which contains the route name to compare adjecent segments or intersections on.
+- **subsetting_var:** (string list) variables in missing which where expanded using the `expand_int_att()` function.
+- **subset_vars:** (list of string lists) the variables which were expanded. the order of this list must correlate to the order of subsetting_var.
+
+
+### Simple Comutational Functions
+
+### `substrRight <- function(x, n)`
+Modifies the substr function to take n characters from the right
+
+### `substrMinusRight <- function(x, n)`
+Modifies the substr function to remove n characters from the right
+
+### `left_join_fill <- function(x, y, by, fill = 0L, ...)`
+Adds an additional parameter to the left_join function which specifies how to fill in missing data rather than defaulting to "NA"
+
+### `user.input <- function(prompt)`
+Dynamic user input function pulled from https://stackoverflow.com/questions/27112370/make-readline-wait-for-input-in-r

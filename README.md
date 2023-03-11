@@ -1,6 +1,21 @@
 # BYU/UDOT Highway Safety Data Prep and Report Compiler
 This repository contains files related to data preparation and report compiling for UDOT highway safety network screening. These include VBA files which were used in the old Excel-based model. Instructions for how to use that model are contained within the accompanying excel file kept in a Box drive folder. The main folder contains a file "RGUI.Rmd" which is used as the graphical user interface (GUI) for the current project. The "R" folder contains all the R code referenced by the RGUI file. The "Python" folder contains some Python code which were used in tandem with ArcGIS Pro for visualization purposes but were not used within the model. The "data" folder contains all input and output data for the R model. The data folder is included in the ".gitignore" file so it needs to be populated with input data kept in the Box drive folder for this project.
 
+## ReadIn
+The code to read in and clean the raw data files are in the file called "RGUI_ReadIn.R". Currently, the user needs to specify which columns of data and the filenames to read in from this R script. In the future, it may be beneficial to include user inputs for this. New data cleaning code will need to be written if additional files are included.
+
+## CrashPrep
+The code to prepare the crash data are in the file called "RGUI_CrashPrep.R". This includes combining crash files into one, setting the formating for crash files, and separating crashes by intersection and segment crashes. Originally, milepoints were used to determine the functional area of the intersections for separating crashes. However, due to LRS inconsistencies in the intersection file, it was more reasonable to use spatial buffers to determine the functional areas. This required using a spatial join between the crashes and intersections, followed by code to determine the closest intersection using the euclidian distance.
+
+## RoadwayPrep
+The code to prepare the roadway data are in the file called "RGUI_RoadwayPrep.R". This includes creating a segments file using segmenting variables, adding roadway attributes to the segments and intersections files, and pivoting the data by year of available AADT data. This last step means the dataframes will contain multiple rows of data for each segment or intersection, so this must be accounted for in future scripts. This is also the step where missing data are filled in and segment boundaries are cleaned. It is important to clean or "compress" segments so there are not a large number of very small segments.
+
+## Compile
+The code to compile crash and roadway information into a single intersection and segments files are in the file called "RGUI_Compile.R". This is done with a modified version of the `left_join()` function in R. It is important that intersection and segment ID's are assigned to crashes prior to joining. This is also the step where "parameters" files are created to prepare for report compiling. These are essentially just a modified version of the crash dataframes which are designed specifically to work as inputs for the old excel report compiler.
+
+## Report Compiler
+The code to compile reports is contained in the file called "RGUI_Report_Compiler.R". This may eventually all be done in R, but for now, this just takes the statistical output files from the statistics team and reformats it to work as an input for the old excel report compiler.
+
 ## Functions
 The functions used within the R code are contained in the file called "RGUI_Functions.R". Below is a summary what each of these functions do.
 

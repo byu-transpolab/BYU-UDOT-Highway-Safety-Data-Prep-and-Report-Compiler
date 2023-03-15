@@ -641,7 +641,7 @@ for (i in 1:nrow(intersection)){
       speed_row4 <- NA
     }
   }
-  # fill values
+  # fill values (just take first match if there are multiple speed limits)
   intersection[["INT_RT_0_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row0]
   intersection[["INT_RT_1_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row1]
   intersection[["INT_RT_2_SL"]][i] <- speed_full$SPEED_LIMIT[speed_row2]

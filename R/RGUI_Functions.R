@@ -20,7 +20,7 @@ library(sf)
 read_csv_file <- function(filepath, columns) {
   if (str_detect(filepath, ".csv")) {
     print("reading csv")
-    read_csv(filepath) %>% select(all_of(columns))
+    read_csv(filepath, col_select = all_of(columns))
   }
   else {
     print("Error reading in:")
@@ -107,7 +107,7 @@ compress_seg <- function(df, col, variables) {
       ROUTE = unique(ROUTE),
       BEG_MP = min(BEG_MP),
       END_MP = max(END_MP), 
-      across(.cols = col)
+      across(.cols = all_of(col))
     ) %>%
     unique() %>%
     ungroup() %>%

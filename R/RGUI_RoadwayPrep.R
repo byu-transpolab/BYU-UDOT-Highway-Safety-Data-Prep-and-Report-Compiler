@@ -308,7 +308,7 @@ RC <- RC %>%
     SPEED_LIMIT = ifelse(ROUTE == "0291PM" & is.na(SPEED_LIMIT), 3, SPEED_LIMIT), # school for the deaf. Therefore very low speed limit
     THRU_CNT = if_else(ROUTE == "0291PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0291PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
-    Median_Type = if_else(ROUTE == "0291PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
+    Median_Type = if_else(ROUTE == "0291PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
     Right_Shoulder = if_else(ROUTE == "0291PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0291PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
@@ -325,8 +325,8 @@ RC <- RC %>%
     THRU_CNT = if_else(ROUTE == "0304PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0304PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0304PM" & is.na(Driveway_Freq), 28, Driveway_Freq),
-    Median_Type = if_else(ROUTE == "0304PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
-    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0304PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Median_Type = if_else(ROUTE == "0304PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
+    `MEDIAN_TYP_UNDIVIDED` = if_else(ROUTE == "0304PM" & is.na(`MEDIAN_TYP_UNDIVIDED`), 1, `MEDIAN_TYP_UNDIVIDED`),
     Right_Shoulder = if_else(ROUTE == "0304PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0304PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
@@ -334,8 +334,8 @@ RC <- RC %>%
     THRU_CNT = if_else(ROUTE == "0306PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0306PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0306PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
-    Median_Type = if_else(ROUTE == "0306PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
-    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0306PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Median_Type = if_else(ROUTE == "0306PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
+    `MEDIAN_TYP_UNDIVIDED` = if_else(ROUTE == "0306PM" & is.na(`MEDIAN_TYP_UNDIVIDED`), 1, `MEDIAN_TYP_UNDIVIDED`),
     Right_Shoulder = if_else(ROUTE == "0306PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0306PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
@@ -343,8 +343,8 @@ RC <- RC %>%
     THRU_CNT = if_else(ROUTE == "0309PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0309PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0309PM" & is.na(Driveway_Freq), 3, Driveway_Freq),
-    Median_Type = if_else(ROUTE == "0309PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
-    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0309PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Median_Type = if_else(ROUTE == "0309PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
+    `MEDIAN_TYP_UNDIVIDED` = if_else(ROUTE == "0309PM" & is.na(`MEDIAN_TYP_UNDIVIDED`), 1, `MEDIAN_TYP_UNDIVIDED`),
     Right_Shoulder = if_else(ROUTE == "0309PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0309PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
@@ -352,8 +352,8 @@ RC <- RC %>%
     THRU_CNT = if_else(ROUTE == "0310PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0310PM" & is.na(THRU_WDTH), 10, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0310PM" & is.na(Driveway_Freq), 2, Driveway_Freq),
-    Median_Type = if_else(ROUTE == "0310PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
-    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0310PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Median_Type = if_else(ROUTE == "0310PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
+    `MEDIAN_TYP_UNDIVIDED` = if_else(ROUTE == "0310PM" & is.na(`MEDIAN_TYP_UNDIVIDED`), 1, `MEDIAN_TYP_UNDIVIDED`),
     Right_Shoulder = if_else(ROUTE == "0310PM" & is.na(Right_Shoulder), 2, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0310PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
     
@@ -361,8 +361,8 @@ RC <- RC %>%
     THRU_CNT = if_else(ROUTE == "0317PM" & is.na(THRU_CNT), 2, THRU_CNT),
     THRU_WDTH = if_else(ROUTE == "0317PM" & is.na(THRU_WDTH), 12, THRU_WDTH),
     Driveway_Freq = if_else(ROUTE == "0317PM" & is.na(Driveway_Freq), 1, Driveway_Freq),
-    Median_Type = if_else(ROUTE == "0317PM" & is.na(Median_Type), "NO MEDIAN", Median_Type),
-    `MEDIAN_TYP_NO MEDIAN` = if_else(ROUTE == "0317PM" & is.na(`MEDIAN_TYP_NO MEDIAN`), 1, `MEDIAN_TYP_NO MEDIAN`),
+    Median_Type = if_else(ROUTE == "0317PM" & is.na(Median_Type), "UNDIVIDED", Median_Type),
+    `MEDIAN_TYP_UNDIVIDED` = if_else(ROUTE == "0317PM" & is.na(`MEDIAN_TYP_UNDIVIDED`), 1, `MEDIAN_TYP_UNDIVIDED`),
     Right_Shoulder = if_else(ROUTE == "0317PM" & is.na(Right_Shoulder), 0, Right_Shoulder),
     Left_Shoulder = if_else(ROUTE == "0317PM" & is.na(Left_Shoulder), 0, Left_Shoulder),
 

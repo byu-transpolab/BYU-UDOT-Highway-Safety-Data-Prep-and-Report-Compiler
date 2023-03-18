@@ -16,7 +16,7 @@ TOMS_int <- left_join(TOMS_int, ISAM, by = c("INT_ID" = "Int_ID"))
 
 # Format statistical output files
 # Format segments results
-latest_year <- max(TOMS_seg$YEAR) # finds latest year
+latest_year <- max(TOMS_seg$YEAR, na.rm = TRUE) # finds latest year
 TOMS_seg <- TOMS_seg %>%
   mutate(
     ROUTE_ID = as.integer(gsub(".*?([0-9]+).*", "\\1", ROUTE)), # numeric route number
@@ -96,7 +96,7 @@ TOMS_seg <- TOMS_seg %>%
   )
 
 # Format intersections results
-latest_year <- max(TOMS_int$YEAR) # finds latest year
+latest_year <- max(TOMS_int$YEAR, na.rm = TRUE) # finds latest year
 TOMS_int <- TOMS_int %>%
   mutate(
     ORIGINAL_INT_ID = NA, # not included in our latest files
@@ -139,8 +139,8 @@ TOMS_int <- TOMS_int %>%
   select(
     INT_ID,
     ORIGINAL_INT_ID,
-    LATITUDE = BEG_LAT,
-    LONGITUDE = BEG_LONG,
+    LATITUDE = lat,
+    LONGITUDE = long,
     ELEVATION = BEG_ELEV,
     YEAR,
     TRAFFIC_CO,
@@ -199,7 +199,49 @@ TOMS_int <- TOMS_int %>%
 
 
 # Reduce Data
+TOMS_seg <- TOMS_seg %>%
+  group_by(SEG_ID) %>%
+  mutate(across(Total_Crashes:collision_with_fixed_object_crashes, sum)) %>%
+  ungroup() %>%
+  filter(YEAR == latest_year)
+
+TOMS_int <- TOMS_int %>%
+  group_by(INT_ID) %>%
+  mutate(across(Total_Crashes:collision_with_fixed_object_crashes, sum)) %>%
+  ungroup() %>%
+  filter(YEAR == latest_year)
 
 
+# Rank Data
+TOMS_seg <- TOMS_seg %>%
+  group_by(REGION) %>%
+  mutate(Region_Rank = order(State_Rank)) %>%
+  group_by(COUNTY) %>%
+  mutate(County_Rank = order(State_Rank)) %>%
+  ungroup()
+
+TOMS_int <- TOMS_int %>%
+  group_by(REGION) %>%
+  mutate(Region_Rank = order(State_Rank)) %>%
+  group_by(COUNTY) %>%
+  mutate(County_Rank = order(State_Rank)) %>%
+  ungroup()
+
+
+# Determine filepath for stats files
+CAMSstats <- paste0("CAMS_stats_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+ISAMstats <- paste0("ISAM_stats_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+
+
+# Save stats workbooks
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = CAMSstats)
+writeData(wb, sheet = 1, x = TOMS_seg, colNames = TRUE)
+saveWorkbook(wb, file = paste0("data/output/",CAMSstats))
+
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = ISAMstats)
+writeData(wb, sheet = 1, x = TOMS_int, colNames = TRUE)
+saveWorkbook(wb, file = paste0("data/output/",ISAMstats))
 
 

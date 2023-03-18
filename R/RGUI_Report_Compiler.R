@@ -138,7 +138,7 @@ TOMS_int <- TOMS_int %>%
   ) %>%
   select(
     INT_ID,
-    ORIGINAL_INT_ID,
+    ORIGINAL_INT_ID = MANDLI_ID,
     LATITUDE = lat,
     LONGITUDE = long,
     ELEVATION = BEG_ELEV,

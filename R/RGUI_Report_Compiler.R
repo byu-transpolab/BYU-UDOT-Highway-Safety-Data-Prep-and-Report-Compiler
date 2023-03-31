@@ -83,6 +83,37 @@ TOMS_seg <- TOMS_seg %>%
     Sev_3_Crashes = crash_severity_id_3,
     Sev_2_Crashes = crash_severity_id_2,
     Sev_1_Crashes = crash_severity_id_1,
+    # ADVERSE_ROADWAY_SURF_CONDITION,
+    # ADVERSE_WEATHER,
+    # AGGRESSIVE_DRIVING,
+    # BICYCLIST_INVOLVED,
+    # COLLISION_WITH_FIXED_OBJECT,
+    # COMMERCIAL_MOTOR_VEH_INVOLVED,
+    # DISTRACTED_DRIVING,
+    # DOMESTIC_ANIMAL_RELATED,
+    # DROWSY_DRIVING,
+    # DUI,
+    # HEADON_COLLISION,
+    # IMPROPER_RESTRAINT,
+    # INTERSECTION_RELATED,
+    # INTERSTATE_HIGHWAY,
+    # MOTORCYCLE_INVOLVED,
+    # NIGHT_DARK_CONDITION,
+    # OLDER_DRIVER_INVOLVED,
+    # OVERTURN_ROLLOVER,
+    # PEDESTRIAN_INVOLVED,
+    # RAILROAD_CROSSING,
+    # ROADWAY_DEPARTURE,
+    # ROADWAY_GEOMETRY_RELATED,
+    # SINGLE_VEHICLE,
+    # SPEED_RELATED,
+    # TEENAGE_DRIVER_INVOLVED,
+    # TRAIN_INVOLVED,
+    # TRANSIT_VEHICLE_INVOLVED,
+    # UNRESTRAINED,
+    # URBAN_COUNTY,
+    # WILD_ANIMAL_RELATED,
+    # WORK_ZONE_RELATED_YNU,
     (light_condition_id_1:collision_with_fixed_object_crashes),
     VMT,
     logVMT,
@@ -134,7 +165,8 @@ TOMS_int <- TOMS_int %>%
     Percentile = percent_rank(`Ranking w/WRS`),
     cover = NA, # don't know what this is
     Region_Rank = NA, # these require grouping so we'll do it later
-    County_Rank = NA 
+    County_Rank = NA,
+    MIN.FC_TYPE = NA  # we did principals, not max/min
   ) %>%
   select(
     INT_ID,
@@ -162,7 +194,7 @@ TOMS_int <- TOMS_int %>%
     MAX.FC_CODE,
     # MIN.FC_CODE = , # we did principals, not max/min
     MAX.FC_TYPE = PRINCIPAL_FUNCTIONAL_CLASS,
-    # MIN.FC_TYPE = ,
+    MIN.FC_TYPE,
     # INT_DIST_0 = , # functional area on a different file right now
     # INT_DIST_4 = ,
     PERCENT_TRUCKS,

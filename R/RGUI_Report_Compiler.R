@@ -3,14 +3,17 @@ library(openxlsx)
 
 
 # Read in Statistical Files
-TOMS_seg <- read_csv("data/csv/Seg_Out_WRS.csv")
+TOMS_seg <- read_csv("data/csv/CAMS_avg_ebwrs.csv")
+TOMS_seg2 <- read_csv("data/csv/CAMS_out.csv")
+TOMS_seg <- left_join(TOMS_seg,TOMS_seg2) %>%
+  mutate(mean_rank = order(mean_rank))
 TOMS_int <- read_csv("data/csv/Int_Out_WRS.csv")
 CAMS <- read_csv("data/temp/CAMS.csv")
 ISAM <- read_csv("data/temp/ISAM.csv")
 
 
 # Join data to output files
-TOMS_seg <- left_join(TOMS_seg, CAMS, by = "SEG_ID")
+TOMS_seg <- left_join(TOMS_seg, CAMS, by = "SEG_ID") 
 TOMS_int <- left_join(TOMS_int, ISAM, by = c("INT_ID" = "Int_ID"))
 
 
@@ -46,7 +49,8 @@ TOMS_seg <- TOMS_seg %>%
     VMT = AADT * LENGTH_MILES,
     logVMT = log(VMT),
     hier = NA, # not sure what this is
-    Percentile = percent_rank(`Ranking w/WRS`),
+    Percentile = percent_rank(mean_rank),
+    State_Rank = mean_rank,
     Region_Rank = NA, # these require grouping so we'll do it later
     County_Rank = NA 
   ) %>%
@@ -121,7 +125,7 @@ TOMS_seg <- TOMS_seg %>%
     !!sym(paste0("Crashes",substr(latest_year,3,4))) := total_crashes,
     Predicted_Total = final_cost,
     Percentile,
-    State_Rank = `Ranking w/WRS`,
+    State_Rank,
     Region_Rank,
     County_Rank
   )

@@ -1,15 +1,13 @@
 library(tidyverse)
 library(openxlsx)
+source("R/RGUI_Functions.R")
 
 
 # Read in Statistical Files
-TOMS_seg <- read_csv("data/csv/CAMS_avg_ebwrs.csv")
-TOMS_seg2 <- read_csv("data/csv/CAMS_out.csv")
-TOMS_seg <- left_join(TOMS_seg,TOMS_seg2) %>%
-  mutate(mean_rank = order(mean_rank))
-TOMS_int <- read_csv("data/csv/Int_Out_WRS.csv")
-CAMS <- read_csv("data/temp/CAMS.csv")
-ISAM <- read_csv("data/temp/ISAM.csv")
+TOMS_seg <- read_csv("data/csv/CAMS_out2.csv")
+TOMS_int <- read_csv("data/csv/UICPM_out2.csv")
+CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
+ISAM <- read_csv("data/output/ISAM_07Mar23_22_21.csv")
 
 
 # Join data to output files

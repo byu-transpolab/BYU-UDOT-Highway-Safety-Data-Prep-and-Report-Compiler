@@ -8,11 +8,15 @@ TOMS_seg <- read_csv("data/csv/CAMS_out2.csv")
 TOMS_int <- read_csv("data/csv/UICPM_out2.csv")
 CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
 ISAM <- read_csv("data/output/ISAM_07Mar23_22_21.csv")
+seg_pred <- read_csv("data/csv/PredictedSegCrashes.csv")
+int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
 
 
 # Join data to output files
 TOMS_seg <- left_join(TOMS_seg, CAMS, by = "SEG_ID") 
 TOMS_int <- left_join(TOMS_int, ISAM, by = c("INT_ID" = "Int_ID"))
+TOMS_seg <- left_join(TOMS_seg, seg_pred, by = c("SEG_ID" = "Seg_ID")) 
+TOMS_int <- left_join(TOMS_int, int_pred, by = c("INT_ID" = "Int_ID"))
 
 
 # Format statistical output files

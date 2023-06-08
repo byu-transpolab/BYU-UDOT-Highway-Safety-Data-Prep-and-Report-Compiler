@@ -51,10 +51,11 @@ TOMS_seg <- TOMS_seg %>%
     VMT = AADT * LENGTH_MILES,
     logVMT = log(VMT),
     hier = NA, # not sure what this is
-    Percentile = percent_rank(mean_rank),
-    State_Rank = mean_rank,
+    Percentile = percent_rank(`...1`),
+    State_Rank = `...1`,
     Region_Rank = NA, # these require grouping so we'll do it later
-    County_Rank = NA 
+    County_Rank = NA,
+    Predicted_Total = Sev1+Sev2+Sev3+Sev4+Sev5
   ) %>%
   select(
     SEG_ID,
@@ -125,18 +126,23 @@ TOMS_seg <- TOMS_seg %>%
     logVMT,
     hier,
     !!sym(paste0("Crashes",substr(latest_year,3,4))) := total_crashes,
-    Predicted_Total = final_cost,
+    Predicted_Total,
     Percentile,
     State_Rank,
     Region_Rank,
-    County_Rank
+    County_Rank,
+    Predicted_Sev1 = Sev1,
+    Predicted_Sev2 = Sev2,
+    Predicted_Sev3 = Sev3,
+    Predicted_Sev4 = Sev4,
+    Predicted_Sev5 = Sev5
   )
 
 # Format intersections results
 latest_year <- max(TOMS_int$YEAR, na.rm = TRUE) # finds latest year
 TOMS_int <- TOMS_int %>%
   mutate(
-    ORIGINAL_INT_ID = NA, # not included in our latest files
+    ORIGINAL_INT_ID = MANDLI_ID, # not included in our latest files
     ROUTE = as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_0)), # numeric route number
     INT_RT_1 = ifelse(INT_RT_1 == "Local", "Local", as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_1))),
     INT_RT_2 = ifelse(INT_RT_2 == "Local", "Local", as.integer(gsub(".*?([0-9]+).*", "\\1", INT_RT_2))),
@@ -168,11 +174,12 @@ TOMS_int <- TOMS_int %>%
     Severe_Crashes = crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5,
     Sum_Total_Crashes = total_crashes,
     hier = NA, # not sure what this is
-    Percentile = percent_rank(`Ranking w/WRS`),
+    Percentile = percent_rank(`...1`),
     cover = NA, # don't know what this is
     Region_Rank = NA, # these require grouping so we'll do it later
     County_Rank = NA,
-    MIN.FC_TYPE = NA  # we did principals, not max/min
+    MIN.FC_TYPE = NA,  # we did principals, not max/min
+    Predicted_Total = Sev1+Sev2+Sev3+Sev4+Sev5
   ) %>%
   select(
     INT_ID,
@@ -227,12 +234,17 @@ TOMS_int <- TOMS_int %>%
     (light_condition_id_6:collision_with_fixed_object_crashes),
     hier,
     !!sym(paste0("Crashes",substr(latest_year,3,4))) := total_crashes,
-    Predicted_Total = final_cost,
+    Predicted_Total,
     Percentile,
     cover,
-    State_Rank = `Ranking w/WRS`,
+    State_Rank = `...1`,
     Region_Rank,
-    County_Rank
+    County_Rank,
+    Predicted_Sev1 = Sev1,
+    Predicted_Sev2 = Sev2,
+    Predicted_Sev3 = Sev3,
+    Predicted_Sev4 = Sev4,
+    Predicted_Sev5 = Sev5
   )
 
 

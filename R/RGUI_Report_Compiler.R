@@ -10,6 +10,8 @@ CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
 ISAM <- read_csv("data/output/ISAM_07Mar23_22_21.csv")
 seg_pred <- read_csv("data/csv/PredictedSegCrashes.csv")
 int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
+crash_seg <- read_csv("data/temp/crash_seg.csv")
+crash_int <- read_csv("data/temp/crash_int.csv")
 
 
 # Join data to output files
@@ -294,4 +296,112 @@ addWorksheet(wb, sheetName = ISAMstats)
 writeData(wb, sheet = 1, x = TOMS_int, colNames = TRUE)
 saveWorkbook(wb, file = paste0("data/output/",ISAMstats))
 
+
+
+
+
+
+# Create Segments Parameters File
+param_seg <- CAMS %>% select(SEG_ID:INTERSTATE) %>% unique()
+
+
+# identify segments for each crash
+crash_seg$seg_id <- NA
+for (i in 1:nrow(crash_seg)){
+  rt <- crash_seg$route[i]
+  mp <- crash_seg$milepoint[i]
+  seg_row <- which(param_seg$ROUTE == rt & 
+                     param_seg$BEG_MP < mp & 
+                     param_seg$END_MP > mp)
+  if(length(seg_row) > 0){
+    crash_seg[["seg_id"]][i] <- param_seg$SEG_ID[seg_row]
+  }
+}
+
+
+# Conform Parameters File to necessary formatting
+param_seg <- crash_seg %>%
+  mutate(
+    ROUTE_ID = as.integer(gsub(".*?([0-9]+).*", "\\1", route)),
+    ramp_id = ifelse(ramp_id == 0, NA, ramp_id),
+    route = substr(route, 1, 5)
+  ) %>%
+  select(
+    SEG_ID = seg_id,
+    CRASH_ID = crash_id,
+    CRASH_DATETIME = crash_datetime, #needs reformatting in excel
+    ROUTE_ID, #just the numeric portion
+    DIRECTION = route_direction,
+    LABEL = route, #remove the M
+    RAMP_ID = ramp_id, #convert zeros to blanks
+    MILEPOINT = milepoint,
+    LATITUDE = lat,
+    LONGITUDE = long,
+    (number_vehicles_involved:collision_with_fixed_object),
+    (crash_severity_id:roadway_contrib_circum_id),
+    first_harmful_event_id
+  ) %>%
+  arrange(LABEL, MILEPOINT)
+
+
+# Create Intersection Parameters File
+param_int <- ISAM %>% select(Int_ID:TOTAL_THRU_CNT) %>% unique()
+crash_int <- left_join(crash_int, param_int, by = c("int_id" = "Int_ID"))
+
+
+# Conform Parameters File to necessary formatting
+param_int <- crash_int %>%
+  mutate(
+    ROUTE_ID = as.integer(gsub(".*?([0-9]+).*", "\\1", route)),
+    ramp_id = ifelse(ramp_id == 0, NA, ramp_id),
+    route = substr(route, 1, 5)
+  ) %>%
+  select(
+    INT_ID = int_id,
+    CRASH_ID = crash_id,
+    CRASH_DATETIME = crash_datetime, #needs reformatting in excel
+    (number_vehicles_involved:collision_with_fixed_object),
+    (crash_severity_id:roadway_contrib_circum_id),
+    first_harmful_event_id,
+    ROUTE_ID, #just the numeric portion
+    LABEL = route, #remove the M
+    DIRECTION = route_direction,
+    RAMP_ID = ramp_id, #convert zeros to blanks
+    MILEPOINT = milepoint,
+    LATITUDE = lat.x,
+    LONGITUDE = long.x
+  ) %>%
+  arrange(LABEL, MILEPOINT)
+
+
+# Paste header details into parameter files
+latest_year <- max(ISAM$YEAR) # finds latest year
+earliest_year <- min(ISAM$YEAR) # finds earliest year
+param_header_seg <- tibble(c("Severities", "Functional Area Definition", "Selected Years:"),
+                           c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
+param_header_int <- tibble(c("Severities", "Functional Area Type", "Selected Years:"),
+                           c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
+
+
+# Determine filepath for parameter files
+CAMSparameters <- paste0("data/output/CAMS_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+ISAMparameters <- paste0("data/output/ISAM_parameters_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
+
+
+# Save parameters workbooks
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = "Parameters")
+
+writeData(wb, sheet = 1, x = param_header_seg, startRow = 1, colNames = FALSE, rowNames = FALSE)
+writeData(wb, sheet = 1, x = param_seg, startRow = 4, colNames = TRUE)
+
+saveWorkbook(wb, file = CAMSparameters)
+
+wb <- createWorkbook()
+addWorksheet(wb, sheetName = "Parameters")
+
+writeData(wb, sheet = 1, x = param_header_int, startRow = 1, colNames = FALSE, rowNames = FALSE)
+writeData(wb, sheet = 1, x = param_int, startRow = 4, colNames = TRUE)
+
+saveWorkbook(wb, file = ISAMparameters)
 

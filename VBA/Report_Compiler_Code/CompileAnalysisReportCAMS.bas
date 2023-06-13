@@ -464,7 +464,10 @@ MaxSLCol = FindColumn("SPEED_LIMIT")                           'Changed on 9/25/
 'MinSLCol = FindColumn("MIN_SPEED_LIMIT")   'not used (not enough info)
 TCrashCol = FindColumn("Sum_Total_Crashes")
 PCrashCol = FindColumn("Predicted_Total")
-ACrashCol = FindColumn("Crashes18")         'This variable name may change if the stats team changes the column name in the output/results file   !!!!!!
+ACrashCol = 1
+Do Until Left(Sheets(combosn).Cells(1, ACrashCol), 7) = "Crashes" And IsNumeric(Right(Sheets(combosn).Cells(1, ACrashCol), 2))  ' "ACrash" stands for Actual Crashes   'the column heading used to be "Total_Crashes" we want the actual number of crashes in the most recent year (the actual for the year predicted)
+    ACrashCol = ACrashCol + 1
+Loop
 PredTot = FindColumn("Predicted_Total")
 Sev5CrashCol = FindColumn("Sev_5_Crashes")
 Sev4CrashCol = FindColumn("Sev_4_Crashes")
@@ -485,8 +488,8 @@ DomAnCol2 = FindColumn("DOMESTIC_ANIMAL_RELATED")               'Changed on 9/25
 DrowsyCol2 = FindColumn("DROWSY_DRIVING")                       'Changed on 9/25/2019
 DUICol2 = FindColumn("DUI")                                     'Changed on 9/25/2019
 HeadOnCol = FindColumn("HEADON_COLLISION")                      'Changed on 9/25/2019
-ImpRestCol2 = FindColumn("IMPROPER_RESTRAINT")                  'Changed on 9/25/2019
-IntCol2 = FindColumn("INTERSECTION_RELATED")                    'Changed on 9/25/2019
+'ImpRestCol2 = FindColumn("IMPROPER_RESTRAINT")                  'Changed on 9/25/2019
+'IntCol2 = FindColumn("INTERSECTION_RELATED")                    'Changed on 9/25/2019
 InterstateCol2 = FindColumn("INTERSTATE_HIGHWAY")               'Changed on 9/25/2019
 MotoCol2 = FindColumn("MOTORCYCLE_INVOLVED")                    'Changed on 9/25/2019
 NightDarkCol2 = FindColumn("NIGHT_DARK_CONDITION")              'Changed on 9/25/2019
@@ -502,9 +505,9 @@ TeenDrivCol2 = FindColumn("TEENAGE_DRIVER_INVOLVED")            'Changed on 9/25
 TrainInvCol2 = FindColumn("TRAIN_INVOLVED")                     'Changed on 9/25/2019
 TransVehCol2 = FindColumn("TRANSIT_VEHICLE_INVOLVED")           'Changed on 9/25/2019
 UnrestCol2 = FindColumn("UNRESTRAINED")                         'Changed on 9/25/2019
-'UrbanCol2 = FindColumn("URBAN_COUNTY")                         'Changed on 9/25/2019
+'UrbanCol2 = FindColumn("URBAN_COUNTY")                          'Changed on 9/25/2019
 WildAnCol2 = FindColumn("WILD_ANIMAL_RELATED")                  'Changed on 9/25/2019
-WorkZoneCol2 = FindColumn("WORK_ZONE_RELATED_YNU")              'Changed on 9/25/2019
+'WorkZoneCol2 = FindColumn("WORK_ZONE_RELATED_YNU")              'Changed on 9/25/2019
 
 '----------------------------------------------------------------------------------
 '  Cycle through results data to index the results by region and county. Then have
@@ -544,7 +547,7 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
     ' County
         CountyName = Sheets(combosn).Cells(comborow, CountyCol)
         CountyRow = 2
-        Do Until Sheets("SegKey").Cells(CountyRow, 2) = CountyName
+        Do Until UCase(Sheets("SegKey").Cells(CountyRow, 2)) = UCase(CountyName)
             CountyRow = CountyRow + 1
         Loop
         CountyCount(CountyRow - 1) = CountyCount(CountyRow - 1) + 1
@@ -597,7 +600,7 @@ Do Until Sheets(crashsn).Cells(FARow, 1) = "Functional Area Definition"
 Loop
 
 DataYearsRow = 1
-Do Until Sheets(crashsn).Cells(DataYearsRow, 1) = "Selected Years"
+Do Until Sheets(crashsn).Cells(DataYearsRow, 1) = "Selected Years:"
     DataYearsRow = DataYearsRow + 1
 Loop
 
@@ -609,22 +612,22 @@ Loop
 CrashSevIDCol = FindPColumn("CRASH_SEVERITY_ID", CrashRow1)
 CrashIntIDCol = FindPColumn("SEG_ID", CrashRow1)
 CrashIDCol = FindPColumn("CRASH_ID", CrashRow1)
-NumVehCol = FindPColumn("VEHICLE_NUM", CrashRow1)
+NumVehCol = FindPColumn("number_vehicles_involved", CrashRow1)
 FirstHarmCol = FindPColumn("FIRST_HARMFUL_EVENT_ID", CrashRow1)
 ManColCol = FindPColumn("MANNER_COLLISION_ID", CrashRow1)
-Event1Col = FindPColumn("EVENT_SEQUENCE_1_ID", CrashRow1)
-Event2Col = FindPColumn("EVENT_SEQUENCE_2_ID", CrashRow1)
-Event3Col = FindPColumn("EVENT_SEQUENCE_3_ID", CrashRow1)
-Event4Col = FindPColumn("EVENT_SEQUENCE_4_ID", CrashRow1)
-MostHarmCol = FindPColumn("MOST_HARMFUL_EVENT_ID", CrashRow1)
-VehManCol = FindPColumn("VEHICLE_MANEUVER_ID", CrashRow1)
+'Event1Col = FindPColumn("EVENT_SEQUENCE_1_ID", CrashRow1)
+'Event2Col = FindPColumn("EVENT_SEQUENCE_2_ID", CrashRow1)
+'Event3Col = FindPColumn("EVENT_SEQUENCE_3_ID", CrashRow1)
+'Event4Col = FindPColumn("EVENT_SEQUENCE_4_ID", CrashRow1)
+'MostHarmCol = FindPColumn("MOST_HARMFUL_EVENT_ID", CrashRow1)
+'VehManCol = FindPColumn("VEHICLE_MANEUVER_ID", CrashRow1)
 CLatCol = FindPColumn("LATITUDE", CrashRow1)
 CLongCol = FindPColumn("LONGITUDE", CrashRow1)
-WorkZoneCol = FindPColumn("WORK_ZONE_RELATED_YNU", CrashRow1)
+'WorkZoneCol = FindPColumn("WORK_ZONE_RELATED_YNU", CrashRow1)
 PedCol = FindPColumn("PEDESTRIAN_INVOLVED", CrashRow1)
-BikeCol = FindPColumn("BICYCLIST_INVOLVED", CrashRow1)
+BikeCol = FindPColumn("PEDALCYCLE_INVOLVED", CrashRow1)
 MotoCol = FindPColumn("MOTORCYCLE_INVOLVED", CrashRow1)
-ImpRestCol = FindPColumn("IMPROPER_RESTRAINT", CrashRow1)
+'ImpRestCol = FindPColumn("IMPROPER_RESTRAINT", CrashRow1)
 UnrestCol = FindPColumn("UNRESTRAINED", CrashRow1)
 DUICol = FindPColumn("DUI", CrashRow1)
 AggCol = FindPColumn("AGGRESSIVE_DRIVING", CrashRow1)
@@ -641,9 +644,9 @@ RoadDepCol = FindPColumn("ROADWAY_DEPARTURE", CrashRow1)
 OverturnCol = FindPColumn("OVERTURN_ROLLOVER", CrashRow1)
 CommMotVehCol = FindPColumn("COMMERCIAL_MOTOR_VEH_INVOLVED", CrashRow1)
 InterstateCol = FindPColumn("INTERSTATE_HIGHWAY", CrashRow1)
-TeenDrivCol = FindPColumn("TEENAGE_DRIVER_INVOLVED", CrashRow1)
+TeenDrivCol = FindPColumn("TEEN_DRIVER_INVOLVED", CrashRow1)            'Updated 5/4/2023
 OldDrivCol = FindPColumn("OLDER_DRIVER_INVOLVED", CrashRow1)
-UrbanCol = FindPColumn("URBAN_COUNTY", CrashRow1)
+'UrbanCol = FindPColumn("URBAN_COUNTY", CrashRow1)
 NightDarkCol = FindPColumn("NIGHT_DARK_CONDITION", CrashRow1)
 SingleVehCol = FindPColumn("SINGLE_VEHICLE", CrashRow1)
 TrainInvCol = FindPColumn("TRAIN_INVOLVED", CrashRow1)
@@ -901,7 +904,7 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         '       The UCSM (CAMS-S) incorporates all the severities
         
         nrow = 5
-        Do Until Sheets(crashsn).Cells(nrow, 1) = ""
+        Do Until Sheets(crashsn).Cells(nrow, 2) = ""
             nrow = nrow + 1
         Loop
         
@@ -977,18 +980,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, ManColCol) = 3 Then
                 HeadOnCFCnt = HeadOnCFCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
-                WorkZoneCnt = WorkZoneCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
+            '    WorkZoneCnt = WorkZoneCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, PedCol) = "Y" Then
                 PedCnt = PedCnt + 1
             End If
             If Sheets(crashsn).Cells(i, BikeCol) = "Y" Then
                 BikeCnt = BikeCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
-                ImpRestCnt = ImpRestCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
+            '    ImpRestCnt = ImpRestCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, UnrestCol) = "Y" Then
                 UnrestCnt = UnrestCnt + 1
             End If
@@ -1067,18 +1070,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, HeadOnCol)
         Sheets("SegKey").Cells(nrow, 8) = HeadOnCFCnt
         nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, WorkZoneCol2)
-        Sheets("SegKey").Cells(nrow, 8) = WorkZoneCnt
-        nrow = nrow + 1
+        'Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, WorkZoneCol2)
+        'Sheets("SegKey").Cells(nrow, 8) = WorkZoneCnt
+        'nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, PedCol2)
         Sheets("SegKey").Cells(nrow, 8) = PedCnt
         nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, BikeCol2)
         Sheets("SegKey").Cells(nrow, 8) = BikeCnt
         nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, ImpRestCol2)
-        Sheets("SegKey").Cells(nrow, 8) = ImpRestCnt
-        nrow = nrow + 1
+        'Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, ImpRestCol2)
+        'Sheets("SegKey").Cells(nrow, 8) = ImpRestCnt
+        'nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, UnrestCol2)
         Sheets("SegKey").Cells(nrow, 8) = UnrestCnt
         nrow = nrow + 1
@@ -1148,8 +1151,8 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, FixedObjCol2)
         Sheets("SegKey").Cells(nrow, 8) = FixedObjCnt
         nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, IntCol2)
-        Sheets("SegKey").Cells(nrow, 8) = IntRelCnt
+        'Sheets("SegKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, IntCol2)
+        'Sheets("SegKey").Cells(nrow, 8) = IntRelCnt
         
         '=========begin PART I insert of total (severe & nonsevere) crash count========'
         'redim crashrow and endcrashrow
@@ -1165,18 +1168,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, ManColCol) = 3 Then
                 HeadOnCFCnt = HeadOnCFCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
-                WorkZoneCnt = WorkZoneCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
+            '    WorkZoneCnt = WorkZoneCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, PedCol) = "Y" Then
                 PedCnt = PedCnt + 1
             End If
             If Sheets(crashsn).Cells(i, BikeCol) = "Y" Then
                 BikeCnt = BikeCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
-                ImpRestCnt = ImpRestCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
+            '    ImpRestCnt = ImpRestCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, UnrestCol) = "Y" Then
                 UnrestCnt = UnrestCnt + 1
             End If
@@ -1255,14 +1258,14 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         nrow = 2
         Sheets("SegKey").Cells(nrow, 9) = HeadOnCFCnt
         nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 9) = WorkZoneCnt
-        nrow = nrow + 1
+        'Sheets("SegKey").Cells(nrow, 9) = WorkZoneCnt
+        'nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 9) = PedCnt
         nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 9) = BikeCnt
         nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 9) = ImpRestCnt
-        nrow = nrow + 1
+        'Sheets("SegKey").Cells(nrow, 9) = ImpRestCnt
+        'nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 9) = UnrestCnt
         nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 9) = DUICnt
@@ -1308,8 +1311,8 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         Sheets("SegKey").Cells(nrow, 9) = TransVehCnt
         nrow = nrow + 1
         Sheets("SegKey").Cells(nrow, 9) = FixedObjCnt
-        nrow = nrow + 1
-        Sheets("SegKey").Cells(nrow, 9) = IntRelCnt
+        'nrow = nrow + 1
+        'Sheets("SegKey").Cells(nrow, 9) = IntRelCnt
         
         '========end PART I insert of total (severe & nonsevere) crash count========'
 
@@ -1749,7 +1752,7 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             End If
         Next i
 
-        'paste the MofC sums on the IntKey Sheet
+        'paste the MofC sums on the SegKey Sheet
         nrow = 2
         Sheets("SegKey").Cells(nrow, 12) = AngleCnt
         nrow = nrow + 1
@@ -1856,40 +1859,40 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             Sheets(CurrentReport).Cells(reportrow + 2 + j, 4) = Sheets("Key").Cells(nrow, 4)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
+            'Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
             
             nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
+            'Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
         Next j
         
 '--------------------------- Begin Countermeasures ---------------------------
@@ -2030,7 +2033,7 @@ End Function
 Function FindPColumn(cname As String, ColRow As Integer) As Integer
 
 FindPColumn = 1
-Do Until Cells(ColRow, FindPColumn) = cname
+Do Until UCase(Cells(ColRow, FindPColumn)) = UCase(cname)
     FindPColumn = FindPColumn + 1
 Loop
 

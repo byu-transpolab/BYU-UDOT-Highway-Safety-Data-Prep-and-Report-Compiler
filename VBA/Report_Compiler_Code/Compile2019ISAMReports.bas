@@ -479,7 +479,7 @@ Sev1CrashCol = FindColumn("Sev_1_Crashes")
 
 'still searching in the results file
 HeadOnCol = FindColumn("HEADON_COLLISION")
-WorkZoneCol2 = FindColumn("WORKZONE_RELATED")
+'WorkZoneCol2 = FindColumn("WORKZONE_RELATED")
 PedCol2 = FindColumn("PEDESTRIAN_INVOLVED")
 BikeCol2 = FindColumn("BICYCLIST_INVOLVED")
 MotoCol2 = FindColumn("MOTORCYCLE_INVOLVED")
@@ -506,7 +506,7 @@ OldDrivCol2 = FindColumn("OLDER_DRIVER_INVOLVED")
 NightDarkCol2 = FindColumn("NIGHT_DARK_CONDITION")
 SingleVehCol2 = FindColumn("SINGLE_VEHICLE")
 TrainInvCol2 = FindColumn("TRAIN_INVOLVED")
-RailCrossCol2 = FindColumn("RAILROAD_CROSSING")
+'RailCrossCol2 = FindColumn("RAILROAD_CROSSING")
 TransVehCol2 = FindColumn("TRANSIT_VEHICLE_INVOLVED")
 FixedObjCol2 = FindColumn("COLLISION_WITH_FIXED_OBJECT")
 
@@ -534,7 +534,7 @@ Next i
 Sheets("IntKey").Range("A2:A10").ClearContents
 Sheets("IntKey").Range("C2:F1000").ClearContents
 
-'   Determine which segments to include
+'   Determine which intersections to include
 'Summarize intersection representation on IntKey sheet
 comborow = 2
 Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
@@ -552,7 +552,7 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
     ' County
         CountyName = Sheets(combosn).Cells(comborow, CountyCol)
         CountyRow = 2
-        Do Until Sheets("IntKey").Cells(CountyRow, 2) = CountyName
+        Do Until Sheets("IntKey").Cells(CountyRow, 2) = UCase(CountyName)
             CountyRow = CountyRow + 1
         Loop
         CountyCount(CountyRow - 1) = CountyCount(CountyRow - 1) + 1
@@ -644,7 +644,7 @@ CrashIDCol = FindPColumn("CRASH_ID", CrashRow1)
 CrashSevIDCol = FindPColumn("CRASH_SEVERITY_ID", CrashRow1)
 NumVehCol = FindPColumn("number_vehicles_involved", CrashRow1)
 FirstHarmCol = FindPColumn("FIRST_HARMFUL_EVENT_ID", CrashRow1)
-ManColCol = FindPColumn("HEADON_COLLISION", CrashRow1)
+ManColCol = FindPColumn("MANNER_COLLISION_ID", CrashRow1)
 'Event1Col = FindPColumn("EVENT_SEQUENCE_1_ID", CrashRow1)
 'Event2Col = FindPColumn("EVENT_SEQUENCE_2_ID", CrashRow1)
 'Event3Col = FindPColumn("EVENT_SEQUENCE_3_ID", CrashRow1)
@@ -653,7 +653,7 @@ ManColCol = FindPColumn("HEADON_COLLISION", CrashRow1)
 'VehManCol = FindPColumn("VEHICLE_MANEUVER_ID", CrashRow1)
 CLatCol = FindPColumn("LATITUDE", CrashRow1)
 CLongCol = FindPColumn("LONGITUDE", CrashRow1)
-WorkZoneCol = FindPColumn("WORKZONE_RELATED", CrashRow1)
+'WorkZoneCol = FindPColumn("WORKZONE_RELATED", CrashRow1)
 PedCol = FindPColumn("PEDESTRIAN_INVOLVED", CrashRow1)
 BikeCol = FindPColumn("PEDALCYCLE_INVOLVED", CrashRow1)     'updated 5/4/2023
 MotoCol = FindPColumn("MOTORCYCLE_INVOLVED", CrashRow1)
@@ -680,7 +680,7 @@ OldDrivCol = FindPColumn("OLDER_DRIVER_INVOLVED", CrashRow1)
 NightDarkCol = FindPColumn("NIGHT_DARK_CONDITION", CrashRow1)
 SingleVehCol = FindPColumn("SINGLE_VEHICLE", CrashRow1)
 TrainInvCol = FindPColumn("TRAIN_INVOLVED", CrashRow1)
-RailCrossCol = FindPColumn("RAILROAD_CROSSING", CrashRow1)
+'RailCrossCol = FindPColumn("RAILROAD_CROSSING", CrashRow1)
 TransVehCol = FindPColumn("TRANSIT_VEHICLE_INVOLVED", CrashRow1)
 FixedObjCol = FindPColumn("COLLISION_WITH_FIXED_OBJECT", CrashRow1)
 
@@ -1050,18 +1050,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, ManColCol) = 3 Then
                 HeadOnCFCnt = HeadOnCFCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
-                WorkZoneCnt = WorkZoneCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
+            '    WorkZoneCnt = WorkZoneCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, PedCol) = "Y" Then
                 PedCnt = PedCnt + 1
             End If
             If Sheets(crashsn).Cells(i, BikeCol) = "Y" Then
                 BikeCnt = BikeCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
-                ImpRestCnt = ImpRestCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
+            '    ImpRestCnt = ImpRestCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, UnrestCol) = "Y" Then
                 UnrestCnt = UnrestCnt + 1
             End If
@@ -1122,9 +1122,9 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, TrainInvCol) = "Y" Then
                 TrainInvCnt = TrainInvCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, RailCrossCol) = "Y" Then
-                RailCrossCnt = RailCrossCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, RailCrossCol) = "Y" Then
+            '    RailCrossCnt = RailCrossCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, TransVehCol) = "Y" Then
                 TransVehCnt = TransVehCnt + 1
             End If
@@ -1137,18 +1137,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, HeadOnCol)
         Sheets("IntKey").Cells(nrow, 8) = HeadOnCFCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, WorkZoneCol2)
-        Sheets("IntKey").Cells(nrow, 8) = WorkZoneCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, WorkZoneCol2)
+        'Sheets("IntKey").Cells(nrow, 8) = WorkZoneCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, PedCol2)
         Sheets("IntKey").Cells(nrow, 8) = PedCnt
         nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, BikeCol2)
         Sheets("IntKey").Cells(nrow, 8) = BikeCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, ImpRestCol2)
-        Sheets("IntKey").Cells(nrow, 8) = ImpRestCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, ImpRestCol2)
+        'Sheets("IntKey").Cells(nrow, 8) = ImpRestCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, UnrestCol2)
         Sheets("IntKey").Cells(nrow, 8) = UnrestCnt
         nrow = nrow + 1
@@ -1209,9 +1209,9 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, TrainInvCol2)
         Sheets("IntKey").Cells(nrow, 8) = TrainInvCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, RailCrossCol2)
-        Sheets("IntKey").Cells(nrow, 8) = RailCrossCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, RailCrossCol2)
+        'Sheets("IntKey").Cells(nrow, 8) = RailCrossCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 7) = Sheets(combosn).Cells(1, TransVehCol2)
         Sheets("IntKey").Cells(nrow, 8) = TransVehCnt
         nrow = nrow + 1
@@ -1234,18 +1234,18 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, ManColCol) = 3 Then
                 HeadOnCFCnt = HeadOnCFCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
-                WorkZoneCnt = WorkZoneCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, WorkZoneCol) = "Y" Then
+            '    WorkZoneCnt = WorkZoneCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, PedCol) = "Y" Then
                 PedCnt = PedCnt + 1
             End If
             If Sheets(crashsn).Cells(i, BikeCol) = "Y" Then
                 BikeCnt = BikeCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
-                ImpRestCnt = ImpRestCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, ImpRestCol) = "Y" Then
+            '    ImpRestCnt = ImpRestCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, UnrestCol) = "Y" Then
                 UnrestCnt = UnrestCnt + 1
             End If
@@ -1306,9 +1306,9 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             If Sheets(crashsn).Cells(i, TrainInvCol) = "Y" Then
                 TrainInvCnt = TrainInvCnt + 1
             End If
-            If Sheets(crashsn).Cells(i, RailCrossCol) = "Y" Then
-                RailCrossCnt = RailCrossCnt + 1
-            End If
+            'If Sheets(crashsn).Cells(i, RailCrossCol) = "Y" Then
+            '    RailCrossCnt = RailCrossCnt + 1
+            'End If
             If Sheets(crashsn).Cells(i, TransVehCol) = "Y" Then
                 TransVehCnt = TransVehCnt + 1
             End If
@@ -1321,14 +1321,14 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         nrow = 2
         Sheets("IntKey").Cells(nrow, 9) = HeadOnCFCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 9) = WorkZoneCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 9) = WorkZoneCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = PedCnt
         nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = BikeCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 9) = ImpRestCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 9) = ImpRestCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = UnrestCnt
         nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = DUICnt
@@ -1369,8 +1369,8 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = TrainInvCnt
         nrow = nrow + 1
-        Sheets("IntKey").Cells(nrow, 9) = RailCrossCnt
-        nrow = nrow + 1
+        'Sheets("IntKey").Cells(nrow, 9) = RailCrossCnt
+        'nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = TransVehCnt
         nrow = nrow + 1
         Sheets("IntKey").Cells(nrow, 9) = FixedObjCnt
@@ -1771,41 +1771,41 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             Loop
             Sheets(CurrentReport).Cells(reportrow + 2 + j, 4) = Sheets("Key").Cells(nrow, 4)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
             
-            nrow = 2
-            Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
-                nrow = nrow + 1
-            Loop
-            Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
+            'nrow = 2
+            'Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
+            '    nrow = nrow + 1
+            'Loop
+            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
         Next j
        
 '-------------------begin Countermeasures --------------------------------------------------------------------------------'
@@ -1947,7 +1947,7 @@ End Function
 Function FindPColumn(cname As String, ColRow As Integer) As Integer
 
 FindPColumn = 1
-Do Until Cells(ColRow, FindPColumn) = cname
+Do Until UCase(Cells(ColRow, FindPColumn)) = UCase(cname)
     FindPColumn = FindPColumn + 1
 Loop
 
@@ -2088,6 +2088,8 @@ Dim vArr
 vArr = Split(Cells(1, lngCol).Address(True, False), "$")
 Col_Letter = vArr(0)
 End Function
+
+
 
 
 

@@ -3,7 +3,7 @@ library(openxlsx)
 source("R/RGUI_Functions.R")
 
 
-# Read in Statistical Files
+# Read in Files
 TOMS_seg <- read_csv("data/csv/CAMS_out2.csv")
 TOMS_int <- read_csv("data/csv/UICPM_out2.csv")
 CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
@@ -12,6 +12,7 @@ seg_pred <- read_csv("data/csv/PredictedSegCrashes.csv")
 int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
 crash_seg <- read_csv("data/temp/crash_seg.csv")
 crash_int <- read_csv("data/temp/crash_int.csv")
+vehicle <- read_csv("data/csv/Vehicle_File.csv")
 
 
 # Join data to output files
@@ -404,6 +405,67 @@ param_int <- crash_int %>%
     LONGITUDE = long.x
   ) %>%
   arrange(LABEL, MILEPOINT)
+
+
+# Summarize vehicle details
+vehicle <- vehicle %>%
+  group_by(crash_id) %>%
+  arrange(crash_id, vehicle_num) %>%
+  summarize(
+    event_sequence_1_id = case_when(
+      nth(event_sequence_1_id, 1) < 88 ~ nth(event_sequence_1_id, 1),
+      nth(event_sequence_1_id, 2) < 88 ~ nth(event_sequence_1_id, 2),
+      nth(event_sequence_1_id, 3) < 88 ~ nth(event_sequence_1_id, 3),
+      nth(event_sequence_1_id, 4) < 88 ~ nth(event_sequence_1_id, 4),
+      nth(event_sequence_1_id, 5) < 88 ~ nth(event_sequence_1_id, 5),
+      TRUE ~ nth(event_sequence_1_id, 1)
+    ),
+    event_sequence_2_id = case_when(
+      nth(event_sequence_2_id, 1) < 88 ~ nth(event_sequence_2_id, 1),
+      nth(event_sequence_2_id, 2) < 88 ~ nth(event_sequence_2_id, 2),
+      nth(event_sequence_2_id, 3) < 88 ~ nth(event_sequence_2_id, 3),
+      nth(event_sequence_2_id, 4) < 88 ~ nth(event_sequence_2_id, 4),
+      nth(event_sequence_2_id, 5) < 88 ~ nth(event_sequence_2_id, 5),
+      TRUE ~ nth(event_sequence_2_id, 1)
+    ),
+    event_sequence_3_id = case_when(
+      nth(event_sequence_3_id, 1) < 88 ~ nth(event_sequence_3_id, 1),
+      nth(event_sequence_3_id, 2) < 88 ~ nth(event_sequence_3_id, 2),
+      nth(event_sequence_3_id, 3) < 88 ~ nth(event_sequence_3_id, 3),
+      nth(event_sequence_3_id, 4) < 88 ~ nth(event_sequence_3_id, 4),
+      nth(event_sequence_3_id, 5) < 88 ~ nth(event_sequence_3_id, 5),
+      TRUE ~ nth(event_sequence_3_id, 1)
+    ),
+    event_sequence_4_id = case_when(
+      nth(event_sequence_4_id, 1) < 88 ~ nth(event_sequence_4_id, 1),
+      nth(event_sequence_4_id, 2) < 88 ~ nth(event_sequence_4_id, 2),
+      nth(event_sequence_4_id, 3) < 88 ~ nth(event_sequence_4_id, 3),
+      nth(event_sequence_4_id, 4) < 88 ~ nth(event_sequence_4_id, 4),
+      nth(event_sequence_4_id, 5) < 88 ~ nth(event_sequence_4_id, 5),
+      TRUE ~ nth(event_sequence_4_id, 1)
+    ),
+    most_harmful_event_id = case_when(
+      nth(most_harmful_event_id, 1) < 88 ~ nth(most_harmful_event_id, 1),
+      nth(most_harmful_event_id, 2) < 88 ~ nth(most_harmful_event_id, 2),
+      nth(most_harmful_event_id, 3) < 88 ~ nth(most_harmful_event_id, 3),
+      nth(most_harmful_event_id, 4) < 88 ~ nth(most_harmful_event_id, 4),
+      nth(most_harmful_event_id, 5) < 88 ~ nth(most_harmful_event_id, 5),
+      TRUE ~ nth(most_harmful_event_id, 1)
+    ),
+    vehicle_maneuver_id = case_when(
+      nth(vehicle_maneuver_id, 1) < 88 ~ nth(vehicle_maneuver_id, 1),
+      nth(vehicle_maneuver_id, 2) < 88 ~ nth(vehicle_maneuver_id, 2),
+      nth(vehicle_maneuver_id, 3) < 88 ~ nth(vehicle_maneuver_id, 3),
+      nth(vehicle_maneuver_id, 4) < 88 ~ nth(vehicle_maneuver_id, 4),
+      nth(vehicle_maneuver_id, 5) < 88 ~ nth(vehicle_maneuver_id, 5),
+      TRUE ~ nth(vehicle_maneuver_id, 1)
+    )
+  )
+
+
+# Add vehicle details to parameters files
+param_seg <- left_join(param_seg, vehicle, by = "crash_id")
+param_int <- left_join(param_int, vehicle, by = "crash_id")
 
 
 # Paste header details into parameter files

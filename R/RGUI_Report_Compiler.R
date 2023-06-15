@@ -291,7 +291,7 @@ TOMS_seg <- TOMS_seg %>%
 
 TOMS_int <- TOMS_int %>%
   group_by(INT_ID) %>%
-  mutate(across(Total_Crashes:collision_with_fixed_object_crashes, sum)) %>%
+  mutate(across(Total_Crashes:WILD_ANIMAL_RELATED, sum)) %>%
   ungroup() %>%
   filter(YEAR == latest_year)
 
@@ -411,7 +411,7 @@ latest_year <- max(ISAM$YEAR) # finds latest year
 earliest_year <- min(ISAM$YEAR) # finds earliest year
 param_header_seg <- tibble(c("Severities", "Functional Area Definition", "Selected Years:"),
                            c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
-param_header_int <- tibble(c("Severities", "Functional Area Type", "Selected Years:"),
+param_header_int <- tibble(c("Severities:", "Functional Area Type:", "Selected Years:"),
                            c(12345, "UDOT", paste0(earliest_year,"-",latest_year)))
 
 

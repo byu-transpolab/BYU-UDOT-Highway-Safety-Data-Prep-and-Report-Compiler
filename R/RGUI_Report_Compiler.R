@@ -7,7 +7,7 @@ source("R/RGUI_Functions.R")
 TOMS_seg <- read_csv("data/csv/CAMS_out2.csv")
 TOMS_int <- read_csv("data/csv/UICPM_out2.csv")
 CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
-ISAM <- read_csv("data/output/ISAM_07Mar23_22_21.csv")
+ISAM <- read_csv("data/output/ISAM_07Mar23_22_21_MA.csv")
 seg_pred <- read_csv("data/csv/PredictedSegCrashes.csv")
 int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
 crash_seg <- read_csv("data/temp/crash_seg.csv")
@@ -181,7 +181,8 @@ TOMS_int <- TOMS_int %>%
     Region_Rank = NA, # these require grouping so we'll do it later
     County_Rank = NA,
     MIN.FC_TYPE = NA,  # we did principals, not max/min
-    Predicted_Total = Sev1+Sev2+Sev3+Sev4+Sev5
+    Predicted_Total = Sev1+Sev2+Sev3+Sev4+Sev5,
+    INTERSTATE = ifelse(FUNCTIONAL_CLASS_Interstate==0,0,1)
   ) %>%
   select(
     INT_ID,
@@ -233,7 +234,38 @@ TOMS_int <- TOMS_int %>%
     Sev_3_Crashes = crash_severity_id_3,
     Sev_2_Crashes = crash_severity_id_2,
     Sev_1_Crashes = crash_severity_id_1,
-    (light_condition_id_6:collision_with_fixed_object_crashes),
+    ADVERSE_ROADWAY_SURF_CONDITION = adverse_roadway_surf_condition_crashes,
+    ADVERSE_WEATHER = adverse_weather_crashes,
+    AGGRESSIVE_DRIVING = aggressive_driving_crashes,
+    BICYCLIST_INVOLVED = pedalcycle_involved_crashes,
+    COLLISION_WITH_FIXED_OBJECT = collision_with_fixed_object_crashes,
+    COMMERCIAL_MOTOR_VEH_INVOLVED = commercial_motor_veh_involved_crashes,
+    DISTRACTED_DRIVING = distracted_driving_crashes,
+    DOMESTIC_ANIMAL_RELATED = domestic_animal_related_crashes,
+    DROWSY_DRIVING = drowsy_driving_crashes,
+    DUI = dui_crashes,
+    HEADON_COLLISION = manner_collision_id_3,
+    # IMPROPER_RESTRAINT = improper_restraint_crashes,
+    # INTERSECTION_RELATED = intersection_related_crashes,
+    INTERSTATE_HIGHWAY = INTERSTATE,
+    MOTORCYCLE_INVOLVED = motorcycle_involved_crashes,
+    NIGHT_DARK_CONDITION = night_dark_condition_crashes,
+    OLDER_DRIVER_INVOLVED = older_driver_involved_crashes,
+    OVERTURN_ROLLOVER = overturn_rollover_crashes,
+    PEDESTRIAN_INVOLVED = pedestrian_involved_crashes,
+    # RAILROAD_CROSSING = railroad_crossing_crashes,
+    ROADWAY_DEPARTURE = roadway_departure_crashes,
+    ROADWAY_GEOMETRY_RELATED = roadway_geometry_related_crashes,
+    SINGLE_VEHICLE = single_vehicle_crashes,
+    SPEED_RELATED = speed_related_crashes,
+    TEENAGE_DRIVER_INVOLVED = teen_driver_involved_crashes,
+    TRAIN_INVOLVED = train_involved_crashes,
+    TRANSIT_VEHICLE_INVOLVED = transit_vehicle_involved_crashes,
+    UNRESTRAINED = unrestrained_crashes,
+    # URBAN_COUNTY,
+    WILD_ANIMAL_RELATED = wild_animal_related_crashes,
+    # WORK_ZONE_RELATED_YNU = work_zone_related_ynu_crashes,
+    # (light_condition_id_6:collision_with_fixed_object_crashes),
     hier,
     !!sym(paste0("Crashes",substr(latest_year,3,4))) := total_crashes,
     Predicted_Total,

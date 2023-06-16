@@ -469,8 +469,8 @@ vehicle <- vehicle %>%
 
 
 # Add vehicle details to parameters files
-param_seg <- left_join(param_seg, vehicle, by = "crash_id")
-param_int <- left_join(param_int, vehicle, by = "crash_id")
+param_seg <- left_join(param_seg, vehicle, by = c("CRASH_ID" = "crash_id"))
+param_int <- left_join(param_int, vehicle, by = c("CRASH_ID" = "crash_id"))
 
 
 # Paste header details into parameter files

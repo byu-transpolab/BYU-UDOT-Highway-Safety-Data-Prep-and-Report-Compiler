@@ -138,7 +138,12 @@ TOMS_seg <- TOMS_seg %>%
     Predicted_Sev2 = Sev2,
     Predicted_Sev3 = Sev3,
     Predicted_Sev4 = Sev4,
-    Predicted_Sev5 = Sev5
+    Predicted_Sev5 = Sev5,
+    Median_Type,
+    Right_Shoulder,
+    THRU_CNT,
+    THRU_WDTH,
+    Driveway_Density_dpm
   )
 
 # Format intersections results

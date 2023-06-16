@@ -645,12 +645,12 @@ CrashSevIDCol = FindPColumn("CRASH_SEVERITY_ID", CrashRow1)
 NumVehCol = FindPColumn("number_vehicles_involved", CrashRow1)
 FirstHarmCol = FindPColumn("FIRST_HARMFUL_EVENT_ID", CrashRow1)
 ManColCol = FindPColumn("MANNER_COLLISION_ID", CrashRow1)
-'Event1Col = FindPColumn("EVENT_SEQUENCE_1_ID", CrashRow1)
-'Event2Col = FindPColumn("EVENT_SEQUENCE_2_ID", CrashRow1)
-'Event3Col = FindPColumn("EVENT_SEQUENCE_3_ID", CrashRow1)
-'Event4Col = FindPColumn("EVENT_SEQUENCE_4_ID", CrashRow1)
-'MostHarmCol = FindPColumn("MOST_HARMFUL_EVENT_ID", CrashRow1)
-'VehManCol = FindPColumn("VEHICLE_MANEUVER_ID", CrashRow1)
+Event1Col = FindPColumn("EVENT_SEQUENCE_1_ID", CrashRow1)
+Event2Col = FindPColumn("EVENT_SEQUENCE_2_ID", CrashRow1)
+Event3Col = FindPColumn("EVENT_SEQUENCE_3_ID", CrashRow1)
+Event4Col = FindPColumn("EVENT_SEQUENCE_4_ID", CrashRow1)
+MostHarmCol = FindPColumn("MOST_HARMFUL_EVENT_ID", CrashRow1)
+VehManCol = FindPColumn("VEHICLE_MANEUVER_ID", CrashRow1)
 CLatCol = FindPColumn("LATITUDE", CrashRow1)
 CLongCol = FindPColumn("LONGITUDE", CrashRow1)
 'WorkZoneCol = FindPColumn("WORKZONE_RELATED", CrashRow1)
@@ -1771,41 +1771,41 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
             Loop
             Sheets(CurrentReport).Cells(reportrow + 2 + j, 4) = Sheets("Key").Cells(nrow, 4)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event1Col) Or Sheets("Key").Cells(nrow, 5) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 5) = Sheets("Key").Cells(nrow, 6)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event2Col) Or Sheets("Key").Cells(nrow, 5) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 6) = Sheets("Key").Cells(nrow, 6)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event3Col) Or Sheets("Key").Cells(nrow, 5) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 7) = Sheets("Key").Cells(nrow, 6)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 5) = Sheets(crashsn).Cells(crashrow + j, Event4Col) Or Sheets("Key").Cells(nrow, 5) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 8) = Sheets("Key").Cells(nrow, 6)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 7) = Sheets(crashsn).Cells(crashrow + j, MostHarmCol) Or Sheets("Key").Cells(nrow, 7) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 9) = Sheets("Key").Cells(nrow, 8)
             
-            'nrow = 2
-            'Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
-            '    nrow = nrow + 1
-            'Loop
-            'Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
+            nrow = 2
+            Do Until Sheets("Key").Cells(nrow, 9) = Sheets(crashsn).Cells(crashrow + j, VehManCol) Or Sheets("Key").Cells(nrow, 9) = ""
+                nrow = nrow + 1
+            Loop
+            Sheets(CurrentReport).Cells(reportrow + 2 + j, 10) = Sheets("Key").Cells(nrow, 10)
         Next j
        
 '-------------------begin Countermeasures --------------------------------------------------------------------------------'

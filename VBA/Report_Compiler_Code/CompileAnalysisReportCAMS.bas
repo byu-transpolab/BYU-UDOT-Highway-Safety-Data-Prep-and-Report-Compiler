@@ -874,8 +874,10 @@ Do While Sheets(combosn).Cells(comborow, StateRankCol) <> ""
         
         If modeltype = "UCSM" Then
             Sheets(CurrentReport).Cells(reportrow + 3, 1) = "12345"
-        Else
+        ElseIf modeltype = "CAMS" Then
             Sheets(CurrentReport).Cells(reportrow + 3, 1) = "345"
+        Else
+            Sheets(CurrentReport).Cells(reportrow + 3, 1) = "12345"
         End If
         Sheets(CurrentReport).Cells(reportrow + 3, 2) = FAMethod
         Sheets(CurrentReport).Cells(reportrow + 3, 4) = PCrash

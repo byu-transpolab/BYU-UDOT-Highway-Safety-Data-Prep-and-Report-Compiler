@@ -4,8 +4,8 @@ source("R/RGUI_Functions.R")
 
 
 # Read in Files
-TOMS_seg <- read_csv("data/csv/CAMS_out2.csv")
-TOMS_int <- read_csv("data/csv/UICPM_out2.csv")
+TOMS_seg <- read_csv("data/csv/EWRS_Seg_rank.csv")
+TOMS_int <- read_csv("data/csv/EWRS_Int_rank.csv")
 CAMS <- read_csv("data/output/CAMS_07Mar23_22_21_MA.csv")
 ISAM <- read_csv("data/output/ISAM_07Mar23_22_21_MA.csv")
 seg_pred <- read_csv("data/csv/PredictedSegCrashes.csv")
@@ -13,6 +13,11 @@ int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
 crash_seg <- read_csv("data/temp/crash_seg.csv")
 crash_int <- read_csv("data/temp/crash_int.csv")
 vehicle <- read_csv("data/csv/Vehicle_File.csv")
+
+
+# Create rank columns
+TOMS_seg <- TOMS_seg %>% rowid_to_column("rank") %>% rename(SEG_ID = Seg_ID)
+TOMS_int <- TOMS_int %>% rowid_to_column("rank") %>% rename(INT_ID = Int_ID)
 
 
 # Join data to output files
@@ -54,8 +59,8 @@ TOMS_seg <- TOMS_seg %>%
     VMT = AADT * LENGTH_MILES,
     logVMT = log(VMT),
     hier = NA, # not sure what this is
-    Percentile = percent_rank(`...1`),
-    State_Rank = `...1`,
+    Percentile = percent_rank(rank),
+    State_Rank = rank,
     Region_Rank = NA, # these require grouping so we'll do it later
     County_Rank = NA,
     Predicted_Total = Sev1+Sev2+Sev3+Sev4+Sev5
@@ -182,7 +187,7 @@ TOMS_int <- TOMS_int %>%
     Severe_Crashes = crash_severity_id_3 + crash_severity_id_4 + crash_severity_id_5,
     Sum_Total_Crashes = total_crashes,
     hier = NA, # not sure what this is
-    Percentile = percent_rank(`...1`),
+    Percentile = percent_rank(rank),
     cover = NA, # don't know what this is
     Region_Rank = NA, # these require grouping so we'll do it later
     County_Rank = NA,
@@ -277,7 +282,7 @@ TOMS_int <- TOMS_int %>%
     Predicted_Total,
     Percentile,
     cover,
-    State_Rank = `...1`,
+    State_Rank = rank,
     Region_Rank,
     County_Rank,
     Predicted_Sev1 = Sev1,

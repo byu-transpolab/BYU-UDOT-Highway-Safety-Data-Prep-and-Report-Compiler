@@ -323,6 +323,14 @@ TOMS_int <- TOMS_int %>%
   ungroup()
 
 
+# Final data cleaning
+TOMS_seg <- TOMS_seg %>%
+  mutate(BEG_MILEPOINT = round(BEG_MILEPOINT, 3),
+         END_MILEPOINT = round(END_MILEPOINT, 3),
+         Seg_Length = round(Seg_Length, 3),
+         Predicted_Total = round(Predicted_Total, 2))
+
+
 # Determine filepath for stats files
 CAMSstats <- paste0("CAMS_stats_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")
 ISAMstats <- paste0("ISAM_stats_",format(Sys.time(),"%d%b%y_%H_%M"),".xlsx")

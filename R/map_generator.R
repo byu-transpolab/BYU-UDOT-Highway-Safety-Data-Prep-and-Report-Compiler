@@ -15,7 +15,7 @@ int <- read.xlsx("data/output/ISAM_stats_05Jul23_11_49.xlsx") %>%
 
 
 # choose site
-sites <- seg %>% filter(State_Rank >= 1 & State_Rank <= 10)
+sites <- seg %>% filter(Region_Ran >= 1 & Region_Ran <= 10)
 
 
 # indicate segment or intersection
@@ -29,11 +29,11 @@ for(i in 1:nrow(sites)){
   
   # get bounding box
   bbox <- st_bbox(site)
-  bbox <- c(left = bbox[[1]], bottom = bbox[[2]], right = bbox[[3]], top = bbox[[4]])
+  bbox <- c(left = bbox[[1]]-0.01, bottom = bbox[[2]]-0.01, right = bbox[[3]]+0.01, top = bbox[[4]]+0.01)
   
   
   # get map
-  map <- get_stamenmap(bbox, maptype = "terrain", zoom = 13)
+  map <- get_stamenmap(bbox, maptype = "terrain", zoom = calc_zoom(bbox))
   
   
   # display map
@@ -42,6 +42,7 @@ for(i in 1:nrow(sites)){
             aes(fill = YEAR), 
             linewidth = 4, 
             alpha = 0.5, 
+            color = "#DC4C4C",
             inherit.aes = FALSE) +
     theme(axis.title = element_blank(),
           axis.text = element_blank(),

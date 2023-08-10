@@ -13,6 +13,10 @@ int_pred <- read_csv("data/csv/PredictedIntCrashes.csv")
 crash_seg <- read_csv("data/temp/crash_seg.csv")
 crash_int <- read_csv("data/temp/crash_int.csv")
 vehicle <- read_csv("data/csv/Vehicle_File.csv")
+rumble <- read_csv("data/csv/Rumble_Strips.csv")
+barrier <- read_csv("data/csv/Barriers.csv")
+grade <- read_csv("data/csv/Route_Grades.csv")
+shoulder <- read_csv("data/csv/Shoulders.csv")
 
 
 # Create rank columns
@@ -323,12 +327,140 @@ TOMS_int <- TOMS_int %>%
   ungroup()
 
 
+# Add rumble strip data
+rumble <- rumble %>% 
+  mutate(RUMBLE = ifelse(TYPE == "None", FALSE, TRUE),
+         BEG_MP = ifelse(START_ACCUM > END_ACCUM, END_ACCUM, START_ACCUM),
+         END_MP = ifelse(START_ACCUM > END_ACCUM, START_ACCUM, END_ACCUM)) %>%
+  filter(RUMBLE == TRUE)
+TOMS_seg$Rumble <- "No"
+for(i in 1:nrow(TOMS_seg)){
+  rte <- TOMS_seg$LABEL[i]
+  bmp <- TOMS_seg$BEG_MILEPOINT[i]
+  emp <- TOMS_seg$END_MILEPOINT[i]
+  rumble_row <- which(rumble$ROUTE == rte &
+                        rumble$BEG_MP < emp &
+                        rumble$END_MP > bmp)
+  if(length(rumble_row) > 0){
+    rumble_length <- 0
+    for(j in 1:length(rumble_row)){
+      rumble_bmp <- rumble$BEG_MP[rumble_row[j]]
+      rumble_emp <- rumble$END_MP[rumble_row[j]]
+      if(rumble_bmp < bmp){rumble_bmp <- bmp}
+      if(rumble_emp > emp){rumble_emp <- emp}
+      length <- rumble_emp - rumble_bmp
+      rumble_length <- rumble_length + length
+    }
+    # if(rumble_length / (emp - bmp) >= 0.1){
+    #   TOMS_seg$Rumble[i] <- "Yes"
+    # }
+    TOMS_seg$Rumble[i] <- paste0(round((rumble_length / (emp - bmp)) * 100, 0),"%")
+  }
+}
+
+
+# Add barrier data
+barrier <- barrier %>% 
+  mutate(BEG_MP = ifelse(START_ACCUM > END_ACCUM, END_ACCUM, START_ACCUM),
+         END_MP = ifelse(START_ACCUM > END_ACCUM, START_ACCUM, END_ACCUM))
+TOMS_seg$Barrier <- "No"
+for(i in 1:nrow(TOMS_seg)){
+  rte <- TOMS_seg$LABEL[i]
+  bmp <- TOMS_seg$BEG_MILEPOINT[i]
+  emp <- TOMS_seg$END_MILEPOINT[i]
+  barrier_row <- which(barrier$ROUTE_NAME == rte &
+                        barrier$BEG_MP < emp &
+                        barrier$END_MP > bmp)
+  if(length(barrier_row) > 0){
+    barrier_length <- 0
+    # there is overlap. This isn't a perfect solution because it doesn't account for gaps but good enough
+    barrier_bmp <- 1000000
+    barrier_emp <- 0
+    for(j in 1:length(barrier_row)){
+      barrier_bmp <- ifelse(barrier$BEG_MP[barrier_row[j]] < barrier_bmp, barrier$BEG_MP[barrier_row[j]], barrier_bmp)
+      barrier_emp <- ifelse(barrier$END_MP[barrier_row[j]] > barrier_bmp, barrier$END_MP[barrier_row[j]], barrier_bmp)
+    }
+    if(barrier_bmp < bmp){barrier_bmp <- bmp}
+    if(barrier_emp > emp){barrier_emp <- emp}
+    length <- barrier_emp - barrier_bmp
+    barrier_length <- barrier_length + length
+    # if(barrier_length / (emp - bmp) >= 0.1){
+    #   TOMS_seg$Barrier[i] <- "Yes"
+    # }
+    TOMS_seg$Barrier[i] <- paste0(round((barrier_length / (emp - bmp)) * 100, 0),"%")
+  }
+}
+
+
+# Add grade data
+grade <- grade %>% 
+  mutate(BEG_MP = ifelse(UDOT_START > UDOT_END_M, UDOT_END_M, UDOT_START),
+         END_MP = ifelse(UDOT_START > UDOT_END_M, UDOT_START, UDOT_END_M))
+TOMS_seg$Grade <- NA
+for(i in 1:nrow(TOMS_seg)){
+  rte <- TOMS_seg$LABEL[i]
+  bmp <- TOMS_seg$BEG_MILEPOINT[i]
+  emp <- TOMS_seg$END_MILEPOINT[i]
+  grade_row <- which(grade$Route == rte &
+                        grade$BEG_MP < emp &
+                        grade$END_MP > bmp)
+  if(length(grade_row) > 0){
+    wtd_grade <- 0
+    total_length <- 0
+    for(j in 1:length(grade_row)){
+      grade_bmp <- grade$BEG_MP[grade_row[j]]
+      grade_emp <- grade$END_MP[grade_row[j]]
+      if(grade_bmp < bmp){grade_bmp <- bmp}
+      if(grade_emp > emp){grade_emp <- emp}
+      length <- grade_emp - grade_bmp
+      wtd_grade <- wtd_grade + abs(grade$Grade[grade_row[j]]) * length/(emp-bmp)
+    }
+    wtd_grade <- wtd_grade / length(grade_row)
+    # if(grade_length / (emp - bmp) >= 0.1){
+    #   TOMS_seg$Grade[i] <- "Yes"
+    # }
+    TOMS_seg$Grade[i] <- paste0(round(wtd_grade, 1),"%")
+  }
+}
+
+
+# Add shoulder type data
+shoulder <- shoulder %>% 
+  mutate(BEG_MP = ifelse(START_ACCUM > END_ACCUM, END_ACCUM, START_ACCUM),
+         END_MP = ifelse(START_ACCUM > END_ACCUM, START_ACCUM, END_ACCUM)) %>%
+  filter(UTPOSITION == "RIGHT")
+TOMS_seg$Right_Shoulder_Type <- "Unknown"
+for(i in 1:nrow(TOMS_seg)){
+  rte <- TOMS_seg$LABEL[i]
+  bmp <- TOMS_seg$BEG_MILEPOINT[i]
+  emp <- TOMS_seg$END_MILEPOINT[i]
+  shoulder_row <- which(shoulder$ROUTE == rte &
+                        shoulder$BEG_MP < emp &
+                        shoulder$END_MP > bmp)
+  if(length(shoulder_row) > 0){
+    length <- 0
+    for(j in 1:length(shoulder_row)){
+      shoulder_bmp <- shoulder$BEG_MP[shoulder_row[j]]
+      shoulder_emp <- shoulder$END_MP[shoulder_row[j]]
+      if(shoulder_bmp < bmp){shoulder_bmp <- bmp}
+      if(shoulder_emp > emp){shoulder_emp <- emp}
+      if((shoulder_emp - shoulder_bmp) > length){
+        shld_type <- shoulder$SHLDR_TYPE[shoulder_row[j]]
+      }
+      length <- shoulder_emp - shoulder_bmp
+    }
+    TOMS_seg$Right_Shoulder_Type[i] <- str_to_title(shld_type)
+  }
+}
+
+
 # Final data cleaning
 TOMS_seg <- TOMS_seg %>%
   mutate(BEG_MILEPOINT = round(BEG_MILEPOINT, 3),
          END_MILEPOINT = round(END_MILEPOINT, 3),
          Seg_Length = round(Seg_Length, 3),
-         Predicted_Total = round(Predicted_Total, 2))
+         Predicted_Total = round(Predicted_Total, 3),
+         Median_Type = str_to_title(Median_Type))
 
 
 # Determine filepath for stats files

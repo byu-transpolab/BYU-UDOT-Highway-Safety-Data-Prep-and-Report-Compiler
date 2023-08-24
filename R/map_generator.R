@@ -12,6 +12,16 @@ int <- read.xlsx("data/output/ISAM_stats_05Jul23_11_49.xlsx") %>%
     coords = c("LONGITUDE", "LATITUDE"), 
     crs = 4326,
     remove = F)
+crash_seg <- read_csv("data/temp/crash_seg.csv") %>%
+  st_as_sf(
+    coords = c("long", "lat"), 
+    crs = 4326,
+    remove = F)
+crash_int <- read_csv("data/temp/crash_int.csv") %>%
+  st_as_sf(
+    coords = c("long", "lat"), 
+    crs = 4326,
+    remove = F)
 
 
 # choose site
@@ -36,6 +46,14 @@ for(i in 1:nrow(sites)){
   map <- get_stamenmap(bbox, maptype = "terrain", zoom = calc_zoom(bbox))
   
   
+  # filter crashes
+  if(site_type == "Seg"){
+    site_crashes <- crash_seg %>% filter(seg_id == site$SEG_ID[1])
+  } else if(site_type == "Int"){
+    site_crashes <- crash_int %>% filter(int_id == site$INT_ID[1])
+  }
+  
+  
   # display map
   ggmap(map) +
     geom_sf(data = site %>% st_zm(), 
@@ -43,6 +61,10 @@ for(i in 1:nrow(sites)){
             linewidth = 4, 
             alpha = 0.5, 
             color = "#DC4C4C",
+            inherit.aes = FALSE) +
+    geom_sf(data = site_crashes,
+            aes(fill = crash_severity_id),
+            color = "#0033cc",
             inherit.aes = FALSE) +
     theme(axis.title = element_blank(),
           axis.text = element_blank(),

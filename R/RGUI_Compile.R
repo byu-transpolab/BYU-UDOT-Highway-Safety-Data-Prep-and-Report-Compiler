@@ -34,6 +34,9 @@ for (i in 1:nrow(crash_seg)){
   }
 }
 
+# save crash_seg with ids
+write_csv(crash_seg, "data/temp/crash_seg.csv")
+
 # REPLACE WITH ADDITION METHOD BELOW
 # # Add Segment Crashes
 # RC$TotalCrashes <- 0

@@ -39,7 +39,7 @@ for(i in 1:nrow(sites)){
   
   # get bounding box
   bbox <- st_bbox(site)
-  bbox <- c(left = bbox[[1]]-0.01, bottom = bbox[[2]]-0.01, right = bbox[[3]]+0.01, top = bbox[[4]]+0.01)
+  bbox <- c(left = bbox[[1]]-0.03, bottom = bbox[[2]]-0.03, right = bbox[[3]]+0.03, top = bbox[[4]]+0.03)
   
   
   # get map
